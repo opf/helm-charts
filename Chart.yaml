@@ -8,6 +8,10 @@ dependencies:
   - name: postgresql
     repository: "https://charts.bitnami.com/bitnami"
     version: 11.9.11
+    condition: postgresql.enabled
   - name: memcached
     repository: "https://charts.bitnami.com/bitnami"
     version: 6.2.7
+  - name: common
+    repository: "https://charts.bitnami.com/bitnami"
+    version: 1.x.x
