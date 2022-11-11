@@ -7,6 +7,7 @@ replicaCount: 1
 image:
   repository: openproject/community
   pullPolicy: Always
+  tag: ""
 
 imagePullSecrets: []
 nameOverride: ""
@@ -25,7 +26,11 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 80
+  ports: 
+    http: 80
+
+containerPorts:
+  http: 8080
 
 ingress:
   enabled: true
@@ -55,10 +60,25 @@ tolerations: []
 
 affinity: {}
 
+# @section Database parameters
+# @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
+# host openproject-postgresql.openproject.svc.cluster.local
 postgresql:
+  enabled: true
   auth:
+    username: bn_openproject
     database: openproject
+    password: "easyPassword"
     postgresPassword: foobar
+
+# External PostgreSQL configuration
+# Just if postgresql.enabled is false
+externalDatabase:
+  host: ""
+  port: 5432
+  user: bn_openproject
+  database: openproject
+  password: ""
 
 memcached:
   auth:
