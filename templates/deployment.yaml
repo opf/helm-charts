@@ -32,15 +32,15 @@ spec:
           persistentVolumeClaim:
             claimName: opdata
       containers:
-        - name: {{ .Chart.Name }}
+        - name: "{{ .Chart.Name }}"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: "DATABASE_URL"
               # using 'postgres' as db for now since I don't know why setting the 'database' in the postgres value doesn't create the db
-              value: "postgresql://postgres:{{ .Values.postgresql.auth.postgresPassword }}@openproject-postgresql.openproject.svc.cluster.local:5432/postgres"
+              value: "postgresql://{{ include "openproject.databaseUser" . }}:{{ include "openproject.databasePassword" .}}@{{ include "openproject.databaseHost" . }}:{{ include "openproject.databasePort" . }}/{{ include "openproject.databaseName" . }}"
             - name: "RAILS_CACHE_STORE"
               value: "memcache"
             - name: "CACHE_MEMCACHE_SERVER"
@@ -55,7 +55,7 @@ spec:
               mountPath: /var/openproject/assets
           ports:
             - name: http
-              containerPort: 8080
+              containerPort: {{ .Values.containerPorts.http }}
               protocol: TCP
           livenessProbe:
             httpGet:
