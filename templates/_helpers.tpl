@@ -1,4 +1,12 @@
 {{/*
+Return the proper OpenProject image name
+*/}}
+{{- define "openProject.image" -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) }}
+{{- end -}}
+
+
+{{/*
 Expand the name of the chart.
 */}}
 {{- define "openproject.name" -}}

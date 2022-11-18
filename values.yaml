@@ -1,13 +1,17 @@
 # Default values for openproject.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
 
 replicaCount: 1
 
 image:
+  registry: docker.io
   repository: openproject/community
   pullPolicy: Always
-  tag: ""
+  tag: "12.3.0"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -34,7 +38,7 @@ containerPorts:
 
 ingress:
   enabled: true
-  className: ""
+  className: "nginx"
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
