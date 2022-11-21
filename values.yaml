@@ -1,12 +1,17 @@
 # Default values for openproject.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
 
 replicaCount: 1
 
 image:
+  registry: docker.io
   repository: openproject/community
   pullPolicy: Always
+  tag: "12.3.0"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -25,11 +30,15 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 80
+  ports: 
+    http: 80
+
+containerPorts:
+  http: 8080
 
 ingress:
   enabled: true
-  className: ""
+  className: "nginx"
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
@@ -55,10 +64,25 @@ tolerations: []
 
 affinity: {}
 
+# @section Database parameters
+# @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
+# host openproject-postgresql.openproject.svc.cluster.local
 postgresql:
+  enabled: true
   auth:
+    username: bn_openproject
     database: openproject
+    password: "easyPassword"
     postgresPassword: foobar
+
+# External PostgreSQL configuration
+# Just if postgresql.enabled is false
+externalDatabase:
+  host: ""
+  port: 5432
+  user: bn_openproject
+  database: openproject
+  password: ""
 
 memcached:
   auth:
