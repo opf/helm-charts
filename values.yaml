@@ -42,12 +42,16 @@ ingress:
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: demo.openproject-dev.com
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []
+  host: openproject.local    
+  path: /
+  pathType: Prefix
+  tls: true
+  ## @param ingress.tlsSecret The tls configuration for hostnames to be covered with this ingress record.
+  ## tlsSecret:
+  ## - hosts:
+  ##     - openproject.local
+  ##   secretName: openproject-local-tls
+  tlsSecret: []
 
 resources: {}
 
