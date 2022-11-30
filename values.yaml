@@ -45,7 +45,7 @@ ingress:
   host: openproject.local    
   path: /
   pathType: Prefix
-  tls: true
+  tls: false
   ## @param ingress.tlsSecret The tls configuration for hostnames to be covered with this ingress record.
   ## tlsSecret:
   ## - hosts:

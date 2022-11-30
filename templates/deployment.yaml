@@ -46,8 +46,7 @@ spec:
             - name: "CACHE_MEMCACHE_SERVER"
               value: "openproject-memcached.openproject.svc.cluster.local"
             - name: "OPENPROJECT_HTTPS"
-              # TODO: https
-              value: "false"
+              value: "{{ .Values.ingress.tls }}"
             - name: "OPENPROJECT_HOST__NAME"
               value: "demo.openproject-dev.com"
           volumeMounts:
