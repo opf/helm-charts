@@ -6,6 +6,9 @@ Right now it is just used locally to be developed on.
 **Install**
 
 ```
+helm dependency build # run once to fetch dependencies
+kubectl create namespace openproject # we recommend working in a separate namespace
+
 helm install -n openproject openproject .
 ```
 
@@ -19,6 +22,14 @@ You can access OpenProject under http://demo.openproject-dev.com.
 
 ```
 helm uninstall -n openproject openproject
+```
+
+Simply uninstalling will not remove any created volume mounts (e.g. for the database and attachments).
+If you want to reset those then the easiest way to achieve that is to re-create the namespace:
+
+```
+kubectl delete namespace openproject
+kubectl create namespace openproject
 ```
 
 ## Things to do
