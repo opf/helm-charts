@@ -36,11 +36,17 @@ Finally, install the application:
 helm install -n openproject openproject .
 ```
 
-**Access**
+**Access with minikube**
 
-> Note: If using minikube run `minikube tunnel` first
+If you're using minikube, you can try running `minikube tunnel` first.
 
 You can access OpenProject under http://demo.openproject-dev.com.
+
+If you already have services bound locally, try mapping the port explicitly like so:
+
+```
+kubectl port-forward -n openproject service/openproject 8080:80
+```
 
 **Uninstall**
 
