@@ -5,10 +5,34 @@ Right now it is just used locally to be developed on.
 
 **Install**
 
-```
-helm dependency build # run once to fetch dependencies
-kubectl create namespace openproject # we recommend working in a separate namespace
+First, clone this repository
 
+```
+git clone https://github.com/opf/openproject-helm-chart
+cd openproject-helm-chart
+```
+
+If not already done, you need to add the dependency repos:
+
+```
+helm repo add bitnami https://charts.bitnami.com/bitnami
+```
+
+Update dependencies
+
+```
+helm dependency build
+```
+
+Optional, but recommended: Work in a separate namespace
+
+```
+kubectl create namespace openproject
+```
+
+Finally, install the application:
+
+```
 helm install -n openproject openproject .
 ```
 
