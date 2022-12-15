@@ -11,7 +11,7 @@ image:
   registry: docker.io
   repository: openproject/community
   pullPolicy: Always
-  tag: "12.3.0"
+  tag: "12.4"
 
 imagePullSecrets: []
 nameOverride: ""
