@@ -1,0 +1,431 @@
+# Default values for openproject.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  ## Credentials to fetch images from private registry.
+  ##
+  ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ##
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  #
+  imagePullSecrets: []
+
+## Number of OpenProject replicas.
+#
+replicaCount: 1
+
+## Define image setting
+#
+image:
+  ## Define docker registry address.
+  #
+  registry: "docker.io"
+
+  ## Define repository string.
+  #
+  repository: "openproject/community"
+
+  ## Define a imagePullPolicy.
+  ##
+  ## Ref.: https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy
+  ##
+  ## "IfNotPresent" => The image is pulled only if it is not already present locally.
+  ## "Always" => Every time the kubelet launches a container, the kubelet queries the container image registry to
+  ##             resolve the name to an image digest. If the kubelet has a container image with that exact digest cached
+  ##             locally, the kubelet uses its cached image; otherwise, the kubelet pulls the image with the resolved
+  ##             digest, and uses that image to launch the container.
+  ## "Never" => The kubelet does not try fetching the image. If the image is somehow already present locally, the
+  ##            kubelet attempts to start the container; otherwise, startup fails
+  #
+  imagePullPolicy: "Always"
+
+  ## Define image tag.
+  ##
+  tag: "12.4"
+
+
+## Credentials to fetch images from private registry.
+##
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+##
+## imagePullSecrets:
+##   - myRegistryKeySecretName
+#
+imagePullSecrets: []
+
+## String to partially override release name.
+#
+nameOverride: ""
+
+## Provide a name to substitute for the full names of resources.
+#
+fullnameOverride: ""
+
+
+## Define Service Accounts for Pods.
+##
+## Ref.: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+#
+serviceAccount:
+  ## Whether to create service account.
+  #
+  create: true
+
+  ## Define custom service account annotations.
+  #
+  annotations: {}
+
+## Define custom pod annotations.
+#
+podAnnotations: {}
+
+## Pod Security Context.
+##
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+#
+podSecurityContext: {}
+
+## Security Context.
+##
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+#
+securityContext: {}
+
+## Define additional environment variables.
+##
+## You can get a list of all environment variables when executing:
+## "RAILS_ENV=production bundle exec rake setting:available_envs"
+##
+## environment:
+##   OPENPROJECT_ATTACHMENT__MAX__SIZE: 5120
+#
+environment: {}
+
+## Whether to allocate persistent volume disk for the data directory.
+## In case of node failure, the node data directory will still persist.
+##
+## Ref.: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+#
+persistence:
+  ## Whether to enable session affinity or not. It is required by ingress.
+  #
+  enabled: true
+
+  ## Define the volume access modes:
+  ##
+  ## "ReadWriteOnce" => The volume can be mounted as read-write by a single node. ReadWriteOnce access mode still can
+  ##                    allow multiple pods to access the volume when the pods are running on the same node.
+  ## "ReadOnlyMany" => The volume can be mounted as read-only by many nodes.
+  ## "ReadWriteMany" => The volume can be mounted as read-write by many nodes.
+  ## "ReadWriteOncePod" => The volume can be mounted as read-write by a single Pod. Use ReadWriteOncePod access mode if
+  ##                       you want to ensure that only one pod across whole cluster can read that PVC or write to it.
+  #
+  accessModes:
+    - "ReadWriteOnce"
+
+  ## Define custom storage annotations:
+  ##
+  annotations: {}
+
+  ## Define the volume size.
+  #
+  size: "1Gi"
+
+  ## Define the class of PV.
+  storageClassName: ""
+
+
+## Define and create Kubernetes Service.
+##
+## Ref.: https://kubernetes.io/docs/concepts/services-networking/service
+#
+service:
+  ## Whether to enable session affinity or not. It is required by ingress.
+  #
+  enabled: true
+
+  ## Choose the kind of Service:
+  ##
+  ## "ClusterIP" => Exposes the Service on a cluster-internal IP. Choosing this value makes the Service only reachable
+  ##                from within the cluster. This is the default that is used if you don't explicitly specify a type for
+  ##                a Service.
+  ## "NodePort" => Exposes the Service on each Node's IP at a static port (the NodePort). To make the node port
+  ##               available, Kubernetes sets up a cluster IP address, the same as if you had requested a Service of
+  ##               type: ClusterIP.
+  ## "LoadBalancer" => Exposes the Service externally using a cloud provider's load balancer.
+  ##
+  ## Ref.: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  #
+  type: "ClusterIP"
+
+  ## Define the ports of Service.
+  ## You can set the port value to an arbitrary value, it will map the container port by name.
+  ##
+  ## Custom NodePort example:
+  ## ports:
+  ##   http:
+  ##     port: 8080
+  ##     protocol: "TCP"
+  ##     nodePort: "38080"
+  #
+  ports:
+    http:
+      containerPort: 8080
+      port: 8080
+      protocol: "TCP"
+
+  ## Configure session affinity for to hit the same backend for the period specified in `timeoutSeconds`.
+  ##
+  ## Ref.: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity
+  #
+  sessionAffinity:
+    ## Whether to enable session affinity or not.
+    #
+    enabled: false
+    ## The session duration in seconds.
+    #
+    timeoutSeconds: 10800
+
+## Define and create Kubernetes Service.
+##
+## Ref.: https://kubernetes.io/docs/concepts/services-networking/ingress/
+#
+ingress:
+  ## Whether to enable session affinity or not. It is required by ingress.
+  #
+  enabled: true
+
+  ## Define the name if the ingress class.
+  #
+  ingressClassName: "nginx"
+
+  ## Define custom ingress annotations:
+  ##
+  ## Example:
+  ## annotations:
+  ##   nginx.ingress.kubernetes.io/rewrite-target: /
+  annotations: {}
+
+  ## Define the Fully Qualified Domain Name (FQDN) where OpenProject should be reachable.
+  #
+  host: "openproject.example.com"
+
+  ## Define the path for OpenProject on your host.
+  #
+  path: /
+
+  ## Each path in an Ingress is required to have a corresponding path type. Paths that do not include an explicit
+  ## pathType will fail validation. There are three supported path types:
+  ##
+  ## "ImplementationSpecific" => With this path type, matching is up to the IngressClass. Implementations can treat this
+  ##                             as a separate pathType or treat it identically to Prefix or Exact path types.
+  ## "Exact" => Matches the URL path exactly and with case sensitivity.
+  ## "Prefix" => Matches based on a URL path prefix split by /.
+  ##
+  ## Ref.: https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types
+  #
+  pathType: "Prefix"
+
+  ## You can secure an Ingress by specifying a Secret that contains a TLS private key and certificate.
+  ##
+  ## Ref.: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+  #
+  tls:
+    ## Whether to enable tls or not.
+    #
+    enabled: true
+
+    ## The name of the kubernetes secret which contains a TLS private key and certificate.
+    ## Hint: This secret is not created by this chart and must be provided.
+    ##
+    #
+    secretName: ""
+
+## Configure resource requests and limits.
+##
+## http://kubernetes.io/docs/user-guide/compute-resources/
+#
+resources:
+  requests:
+    memory: "2Gi"
+    cpu: "2"
+  limits:
+    memory: "4Gi"
+    cpu: "4"
+
+## Node labels for pod assignment.
+##
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+#
+nodeSelector: {}
+
+## Tolerations for pod assignment.
+##
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+#
+tolerations: []
+
+## Affinity for pod assignment.
+##
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+#
+affinity: {}
+
+
+## OpenProject related settings.
+##
+## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/environment/#supported-environment-variables
+#
+openproject:
+
+  ## Enable https in backend response. Not recommended when using TLS Termination on Kubernetes Ingress.
+  #
+  https: false
+
+  ## Define the host, defaults to value of "ingress.host".
+  #
+  host:
+
+  ## Enable HSTS.
+  #
+  hsts: true
+
+  ## Define Cache settings.
+  #
+  cache:
+    store: "memcache"
+
+  ## Define OpenID Connect providers
+  oidc:
+    enabled: false
+    provider: "Keycloak"
+    host: ""
+    identifier: ""
+    secret: ""
+    authorizationEndpoint: ""
+    tokenEndpoint: ""
+    userinfoEndpoint: ""
+
+
+  ## Modify PostgreSQL statement timout.
+  ## Increase in case you get errors such as "ERROR: canceling statement due to statement timeout".
+  ##
+  ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/environment/#postgresql-statement_timeout
+  #
+  postgresStatementTimeout: 120
+
+## Configure PostgreSQL settings.
+#
+postgresql:
+  ## When set to true, a postgres server will be deployed into current namespace, when false you have to provide your
+  ## own database instance.
+  #
+  bundled: true
+
+  ## When "bundled" is set to false, you need to define the database connection details.
+  #
+  connection:
+    host:
+    port:
+
+  ## Database auth details.
+  #
+  auth:
+    ## Database username.
+    #
+    username: "openproject"
+
+    ## Database name.
+    #
+    database: "openproject"
+
+    ## Database password.
+    #
+    password: "easyPassword"
+
+    ## Database root password.
+    #
+    postgresPassword: "postgres"
+
+##
+#
+memcached:
+  ## When set to true, a memcached will be deployed into current namespace, when false you have to provide your own
+  ## memcached instance.
+  #
+  bundled: true
+
+  ## When "bundled" is set to false, you need to define the memcached connection details.
+  #
+  connection:
+    host:
+    port:
+
+  ## Memcached auth details.
+  #
+  auth:
+    user: "memcached"
+    password: "memcached"
+
+## Configure liveness and readiness probes.
+##
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+probes:
+  liveness:
+    ## Whether to enable liveness probes.
+    #
+    enabled: true
+
+    ## Number of seconds after the container has started before startup, liveness or readiness probes are initiated.
+    ## Defaults to 0 seconds. Minimum value is 0.
+    #
+    initialDelaySeconds: 120
+
+    ## Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1.
+    #
+    timeoutSeconds: 3
+
+    ## How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.
+    #
+    periodSeconds: 30
+
+    ## When a probe fails, Kubernetes will try failureThreshold times before giving up. Giving up in case of liveness
+    ## probe means restarting the container. In case of readiness probe the Pod will be marked Unready. Defaults to 3.
+    ## Minimum value is 1.
+    #
+    failureThreshold: 3
+
+    ## Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1.
+    ## Must be 1 for liveness and startup Probes. Minimum value is 1.
+    #
+    successThreshold: 1
+  readiness:
+    ## Whether to enable liveness probes.
+    #
+    enabled: true
+
+    ## Number of seconds after the container has started before startup, liveness or readiness probes are initiated.
+    ## Defaults to 0 seconds. Minimum value is 0.
+    #
+    initialDelaySeconds: 30
+
+    ## Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1.
+    #
+    timeoutSeconds: 3
+
+    ## How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.
+    #
+    periodSeconds: 15
+
+    ## When a probe fails, Kubernetes will try failureThreshold times before giving up. Giving up in case of liveness
+    ## probe means restarting the container. In case of readiness probe the Pod will be marked Unready. Defaults to 3.
+    ## Minimum value is 1.
+    #
+    failureThreshold: 30
+
+    ## Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1.
+    ## Must be 1 for liveness and startup Probes. Minimum value is 1.
+    #
+    successThreshold: 1

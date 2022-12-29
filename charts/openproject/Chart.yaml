@@ -1,0 +1,20 @@
+---
+apiVersion: "v2"
+name: "openproject"
+description: "A Helm chart for running OpenProject via Kubernetes"
+type: "application"
+version: "0.1.0"
+appVersion: "12.3.0"
+dependencies:
+  - name: "postgresql"
+    repository: "https://charts.bitnami.com/bitnami"
+    version: "^12.1.6"
+    condition: "postgresql.bundled"
+  - name: "memcached"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: "memcached.bundled"
+    version: "^6.3.2"
+  - name: "common"
+    repository: "https://charts.bitnami.com/bitnami"
+    version: "^2.2.2"
+...
