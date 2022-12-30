@@ -30,7 +30,7 @@ prepare:
   script:
     - echo RELEASE_VERSION=$(semantic-release --dry-run --branches $CI_COMMIT_REF_NAME --plugins "@semantic-release/gitlab" | grep -oP "Published release [0-9]+\.[0-9]+\.[0-9]+ on" | grep -oP "[0-9]+\.[0-9]+\.[0-9]+") > ${CI_PROJECT_DIR}/deploy.env
     - "cat ${CI_PROJECT_DIR}/deploy.env"
-  stage: "prepare"
+  stage: ".pre"
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
     GIT_STRATEGY: "clone"
@@ -99,7 +99,7 @@ release:
         PLUGINS="--plugins @semantic-release/gitlab,@semantic-release/release-notes-generator,@semantic-release/changelog"
       fi
     - "semantic-release --branches $CI_COMMIT_REF_NAME $PLUGINS"
-  stage: "release"
+  stage: ".post"
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
     GIT_STRATEGY: "clone"
