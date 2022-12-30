@@ -196,7 +196,7 @@ openproject:
   ##
   ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/environment/#postgresql-statement_timeout
   #
-  postgresStatementTimeout: 120
+  postgresStatementTimeout: 120s
 
 ## Whether to allocate persistent volume disk for the data directory.
 ## In case of node failure, the node data directory will still persist.
