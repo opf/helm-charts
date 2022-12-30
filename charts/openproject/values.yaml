@@ -12,86 +12,12 @@ global:
   #
   imagePullSecrets: []
 
-## Number of OpenProject replicas.
-#
-replicaCount: 1
 
-## Define image setting
-#
-image:
-  ## Define docker registry address.
-  #
-  registry: "docker.io"
-
-  ## Define repository string.
-  #
-  repository: "openproject/community"
-
-  ## Define a imagePullPolicy.
-  ##
-  ## Ref.: https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy
-  ##
-  ## "IfNotPresent" => The image is pulled only if it is not already present locally.
-  ## "Always" => Every time the kubelet launches a container, the kubelet queries the container image registry to
-  ##             resolve the name to an image digest. If the kubelet has a container image with that exact digest cached
-  ##             locally, the kubelet uses its cached image; otherwise, the kubelet pulls the image with the resolved
-  ##             digest, and uses that image to launch the container.
-  ## "Never" => The kubelet does not try fetching the image. If the image is somehow already present locally, the
-  ##            kubelet attempts to start the container; otherwise, startup fails
-  #
-  imagePullPolicy: "Always"
-
-  ## Define image tag.
-  ##
-  tag: "12.4"
-
-
-## Credentials to fetch images from private registry.
+## Affinity for pod assignment.
 ##
-## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-##
-## imagePullSecrets:
-##   - myRegistryKeySecretName
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
 #
-imagePullSecrets: []
-
-## String to partially override release name.
-#
-nameOverride: ""
-
-## Provide a name to substitute for the full names of resources.
-#
-fullnameOverride: ""
-
-
-## Define Service Accounts for Pods.
-##
-## Ref.: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-#
-serviceAccount:
-  ## Whether to create service account.
-  #
-  create: true
-
-  ## Define custom service account annotations.
-  #
-  annotations: {}
-
-## Define custom pod annotations.
-#
-podAnnotations: {}
-
-## Pod Security Context.
-##
-## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-#
-podSecurityContext: {}
-
-## Security Context.
-##
-## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-#
-securityContext: {}
+affinity: {}
 
 ## Define additional environment variables.
 ##
@@ -103,90 +29,9 @@ securityContext: {}
 #
 environment: {}
 
-## Whether to allocate persistent volume disk for the data directory.
-## In case of node failure, the node data directory will still persist.
-##
-## Ref.: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+## Provide a name to substitute for the full names of resources.
 #
-persistence:
-  ## Whether to enable session affinity or not. It is required by ingress.
-  #
-  enabled: true
-
-  ## Define the volume access modes:
-  ##
-  ## "ReadWriteOnce" => The volume can be mounted as read-write by a single node. ReadWriteOnce access mode still can
-  ##                    allow multiple pods to access the volume when the pods are running on the same node.
-  ## "ReadOnlyMany" => The volume can be mounted as read-only by many nodes.
-  ## "ReadWriteMany" => The volume can be mounted as read-write by many nodes.
-  ## "ReadWriteOncePod" => The volume can be mounted as read-write by a single Pod. Use ReadWriteOncePod access mode if
-  ##                       you want to ensure that only one pod across whole cluster can read that PVC or write to it.
-  #
-  accessModes:
-    - "ReadWriteOnce"
-
-  ## Define custom storage annotations:
-  ##
-  annotations: {}
-
-  ## Define the volume size.
-  #
-  size: "1Gi"
-
-  ## Define the class of PV.
-  storageClassName: ""
-
-
-## Define and create Kubernetes Service.
-##
-## Ref.: https://kubernetes.io/docs/concepts/services-networking/service
-#
-service:
-  ## Whether to enable session affinity or not. It is required by ingress.
-  #
-  enabled: true
-
-  ## Choose the kind of Service:
-  ##
-  ## "ClusterIP" => Exposes the Service on a cluster-internal IP. Choosing this value makes the Service only reachable
-  ##                from within the cluster. This is the default that is used if you don't explicitly specify a type for
-  ##                a Service.
-  ## "NodePort" => Exposes the Service on each Node's IP at a static port (the NodePort). To make the node port
-  ##               available, Kubernetes sets up a cluster IP address, the same as if you had requested a Service of
-  ##               type: ClusterIP.
-  ## "LoadBalancer" => Exposes the Service externally using a cloud provider's load balancer.
-  ##
-  ## Ref.: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
-  #
-  type: "ClusterIP"
-
-  ## Define the ports of Service.
-  ## You can set the port value to an arbitrary value, it will map the container port by name.
-  ##
-  ## Custom NodePort example:
-  ## ports:
-  ##   http:
-  ##     port: 8080
-  ##     protocol: "TCP"
-  ##     nodePort: "38080"
-  #
-  ports:
-    http:
-      containerPort: 8080
-      port: 8080
-      protocol: "TCP"
-
-  ## Configure session affinity for to hit the same backend for the period specified in `timeoutSeconds`.
-  ##
-  ## Ref.: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity
-  #
-  sessionAffinity:
-    ## Whether to enable session affinity or not.
-    #
-    enabled: false
-    ## The session duration in seconds.
-    #
-    timeoutSeconds: 10800
+fullnameOverride: ""
 
 ## Define and create Kubernetes Service.
 ##
@@ -243,36 +88,73 @@ ingress:
     #
     secretName: ""
 
-## Configure resource requests and limits.
-##
-## http://kubernetes.io/docs/user-guide/compute-resources/
+## Define image setting
 #
-resources:
-  requests:
-    memory: "2Gi"
-    cpu: "2"
-  limits:
-    memory: "4Gi"
-    cpu: "4"
+image:
+  ## Define docker registry address.
+  #
+  registry: "docker.io"
+
+  ## Define repository string.
+  #
+  repository: "openproject/community"
+
+  ## Define a imagePullPolicy.
+  ##
+  ## Ref.: https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy
+  ##
+  ## "IfNotPresent" => The image is pulled only if it is not already present locally.
+  ## "Always" => Every time the kubelet launches a container, the kubelet queries the container image registry to
+  ##             resolve the name to an image digest. If the kubelet has a container image with that exact digest cached
+  ##             locally, the kubelet uses its cached image; otherwise, the kubelet pulls the image with the resolved
+  ##             digest, and uses that image to launch the container.
+  ## "Never" => The kubelet does not try fetching the image. If the image is somehow already present locally, the
+  ##            kubelet attempts to start the container; otherwise, startup fails
+  #
+  imagePullPolicy: "Always"
+
+  ## Define image tag.
+  ##
+  tag: "12.4"
+
+## Credentials to fetch images from private registry.
+##
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+##
+## imagePullSecrets:
+##   - myRegistryKeySecretName
+#
+imagePullSecrets: []
+
+## Configure memcached settings.
+#
+memcached:
+  ## When set to true, a memcached will be deployed into current namespace, when false you have to provide your own
+  ## memcached instance.
+  #
+  bundled: true
+
+  ## When "bundled" is set to false, you need to define the memcached connection details.
+  #
+  connection:
+    host:
+    port:
+
+  ## Memcached auth details.
+  #
+  auth:
+    user: "memcached"
+    password: "memcached"
+
+## String to partially override release name.
+#
+nameOverride: ""
 
 ## Node labels for pod assignment.
 ##
 ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
 #
 nodeSelector: {}
-
-## Tolerations for pod assignment.
-##
-## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-#
-tolerations: []
-
-## Affinity for pod assignment.
-##
-## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-#
-affinity: {}
-
 
 ## OpenProject related settings.
 ##
@@ -316,6 +198,49 @@ openproject:
   #
   postgresStatementTimeout: 120
 
+## Whether to allocate persistent volume disk for the data directory.
+## In case of node failure, the node data directory will still persist.
+##
+## Ref.: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+#
+persistence:
+  ## Whether to enable session affinity or not. It is required by ingress.
+  #
+  enabled: true
+
+  ## Define the volume access modes:
+  ##
+  ## "ReadWriteOnce" => The volume can be mounted as read-write by a single node. ReadWriteOnce access mode still can
+  ##                    allow multiple pods to access the volume when the pods are running on the same node.
+  ## "ReadOnlyMany" => The volume can be mounted as read-only by many nodes.
+  ## "ReadWriteMany" => The volume can be mounted as read-write by many nodes.
+  ## "ReadWriteOncePod" => The volume can be mounted as read-write by a single Pod. Use ReadWriteOncePod access mode if
+  ##                       you want to ensure that only one pod across whole cluster can read that PVC or write to it.
+  #
+  accessModes:
+    - "ReadWriteOnce"
+
+  ## Define custom storage annotations:
+  ##
+  annotations: {}
+
+  ## Define the volume size.
+  #
+  size: "1Gi"
+
+  ## Define the class of PV.
+  storageClassName: ""
+
+## Define custom pod annotations.
+#
+podAnnotations: {}
+
+## Pod Security Context.
+##
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+#
+podSecurityContext: {}
+
 ## Configure PostgreSQL settings.
 #
 postgresql:
@@ -349,30 +274,13 @@ postgresql:
     #
     postgresPassword: "postgres"
 
-##
-#
-memcached:
-  ## When set to true, a memcached will be deployed into current namespace, when false you have to provide your own
-  ## memcached instance.
-  #
-  bundled: true
-
-  ## When "bundled" is set to false, you need to define the memcached connection details.
-  #
-  connection:
-    host:
-    port:
-
-  ## Memcached auth details.
-  #
-  auth:
-    user: "memcached"
-    password: "memcached"
-
 ## Configure liveness and readiness probes.
 ##
 ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+#
 probes:
+  ## Configure liveness probe.
+  #
   liveness:
     ## Whether to enable liveness probes.
     #
@@ -401,6 +309,9 @@ probes:
     ## Must be 1 for liveness and startup Probes. Minimum value is 1.
     #
     successThreshold: 1
+
+  ## Configure readiness probe.
+  #
   readiness:
     ## Whether to enable liveness probes.
     #
@@ -429,3 +340,95 @@ probes:
     ## Must be 1 for liveness and startup Probes. Minimum value is 1.
     #
     successThreshold: 1
+
+## Number of OpenProject replicas.
+#
+replicaCount: 1
+
+## Configure resource requests and limits.
+##
+## http://kubernetes.io/docs/user-guide/compute-resources/
+#
+resources:
+  requests:
+    memory: "2Gi"
+    cpu: "2"
+  limits:
+    memory: "4Gi"
+    cpu: "4"
+
+## Security Context.
+##
+## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+#
+securityContext: {}
+
+## Define and create Kubernetes Service.
+##
+## Ref.: https://kubernetes.io/docs/concepts/services-networking/service
+#
+service:
+  ## Whether to enable session affinity or not. It is required by ingress.
+  #
+  enabled: true
+
+  ## Choose the kind of Service:
+  ##
+  ## "ClusterIP" => Exposes the Service on a cluster-internal IP. Choosing this value makes the Service only reachable
+  ##                from within the cluster. This is the default that is used if you don't explicitly specify a type for
+  ##                a Service.
+  ## "NodePort" => Exposes the Service on each Node's IP at a static port (the NodePort). To make the node port
+  ##               available, Kubernetes sets up a cluster IP address, the same as if you had requested a Service of
+  ##               type: ClusterIP.
+  ## "LoadBalancer" => Exposes the Service externally using a cloud provider's load balancer.
+  ##
+  ## Ref.: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  #
+  type: "ClusterIP"
+
+  ## Define the ports of Service.
+  ## You can set the port value to an arbitrary value, it will map the container port by name.
+  ##
+  ## Custom NodePort example:
+  ## ports:
+  ##   http:
+  ##     port: 8080
+  ##     protocol: "TCP"
+  ##     nodePort: "38080"
+  #
+  ports:
+    http:
+      containerPort: 8080
+      port: 8080
+      protocol: "TCP"
+
+  ## Configure session affinity for to hit the same backend for the period specified in `timeoutSeconds`.
+  ##
+  ## Ref.: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity
+  #
+  sessionAffinity:
+    ## Whether to enable session affinity or not.
+    #
+    enabled: false
+    ## The session duration in seconds.
+    #
+    timeoutSeconds: 10800
+
+## Define Service Accounts for Pods.
+##
+## Ref.: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+#
+serviceAccount:
+  ## Whether to create service account.
+  #
+  create: true
+
+  ## Define custom service account annotations.
+  #
+  annotations: {}
+
+## Tolerations for pod assignment.
+##
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+#
+tolerations: []
