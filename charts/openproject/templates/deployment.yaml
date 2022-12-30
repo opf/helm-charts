@@ -19,7 +19,12 @@ spec:
       labels:
         {{- include "common.labels.standard" . | nindent 8 }}
     spec:
-      {{- include "common.images.pullSecrets" . | nindent 6 }}
+      {{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range (coalesce .Values.imagePullSecrets .Values.global.imagePullSecrets) }}
+        - name: "{{ . }}"
+        {{- end }}
+      {{- end }}
       {{- with .Values.affinity }}
       affinity:
         {{ toYaml . | nindent 8 | trim }}
