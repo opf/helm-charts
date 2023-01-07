@@ -166,9 +166,9 @@ nodeSelector: {}
 #
 openproject:
 
-  ## Enable https in backend response. Not recommended when using TLS Termination on Kubernetes Ingress.
+  ## Enable https in backend response.
   #
-  https: false
+  https: true
 
   ## Define the host, defaults to value of "ingress.host".
   #
@@ -355,8 +355,8 @@ replicaCount: 1
 #
 resources:
   requests:
-    memory: "2Gi"
-    cpu: "2"
+    memory: "512Mi"
+    cpu: "250m"
   limits:
     memory: "4Gi"
     cpu: "4"

@@ -1,69 +1,35 @@
-# OpenProject
+# OpenProject Helm Chart
 
-This is a helm chart for OpenProject. It is nowhere near production ready.
-Right now it is just used locally to be developed on.
+OpenProject is a web-based project management system for location-independent team collaboration.
 
-**Install**
+## TL;DR
 
-First, clone this repository
-
-```
-git clone https://github.com/opf/openproject-helm-chart
-cd openproject-helm-chart
+```bash
+helm repo add openproject https://gitlab.souvap-univention.de/api/v4/projects/63/packages/helm/stable
+helm upgrade --install my-openproject openproject/openproject
 ```
 
-If not already done, you need to add the dependency repos:
+## Introduction
 
-```
-helm repo add bitnami https://charts.bitnami.com/bitnami
-```
+This chart bootstraps an OpenProject instance and optional with PostgreSQL database and instance and Memcached.
 
-Update dependencies
+## Prerequisites
+- Kubernetes 1.16+
+- Helm 3.0.0+
+- PV provisioner support in the underlying infrastructure
 
-```
-helm dependency build
-```
+## Installing the Chart
 
-Optional, but recommended: Work in a separate namespace
+To install the chart with the release name my-openproject:
 
-```
-kubectl create namespace openproject
-```
-
-Finally, install the application:
-
-```
-helm install -n openproject openproject .
+```bash
+helm upgrade --install my-openproject openproject/openproject
 ```
 
-**Access with minikube**
+## Uninstalling the Chart
 
-If you're using minikube, you can try running `minikube tunnel` first.
+To install the release with name my-openproject:
 
-You can access OpenProject under http://demo.openproject-dev.com.
-
-If you already have services bound locally, try mapping the port explicitly like so:
-
+```bash
+helm uninstall my-openproject
 ```
-kubectl port-forward -n openproject service/openproject 8080:80
-```
-
-**Uninstall**
-
-```
-helm uninstall -n openproject openproject
-```
-
-Simply uninstalling will not remove any created volume mounts (e.g. for the database and attachments).
-If you want to reset those then the easiest way to achieve that is to re-create the namespace:
-
-```
-kubectl delete namespace openproject
-kubectl create namespace openproject
-```
-
-## Things to do
-
-* TLS
-* auto scaling
-* and many other things
