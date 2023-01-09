@@ -193,7 +193,7 @@ openproject:
     authorizationEndpoint: ""
     tokenEndpoint: ""
     userinfoEndpoint: ""
-
+    scope: "[openid]"
 
   ## Modify PostgreSQL statement timout.
   ## Increase in case you get errors such as "ERROR: canceling statement due to statement timeout".
