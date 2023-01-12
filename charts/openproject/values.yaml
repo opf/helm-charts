@@ -193,6 +193,7 @@ openproject:
     authorizationEndpoint: ""
     tokenEndpoint: ""
     userinfoEndpoint: ""
+    endSessionEndpoint: ""
     scope: "[openid]"
 
   ## Modify PostgreSQL statement timout.
