@@ -5,7 +5,7 @@ OpenProject is a web-based project management system for location-independent te
 ## TL;DR
 
 ```bash
-helm repo add openproject https://gitlab.souvap-univention.de/api/v4/projects/63/packages/helm/stable
+helm repo add openproject https://opf.github.io/helm-charts
 helm upgrade --install my-openproject openproject/openproject
 ```
 
