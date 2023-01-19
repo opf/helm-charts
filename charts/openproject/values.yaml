@@ -285,6 +285,8 @@ postgresql:
 #
 probes:
   ## Configure liveness probe.
+  ##
+  ## If the liveness probe fails, the container will be restarted.
   #
   liveness:
     ## Whether to enable liveness probes.
@@ -316,6 +318,8 @@ probes:
     successThreshold: 1
 
   ## Configure readiness probe.
+  ##
+  ## If the readiness probe failes, no traffic will be routed to the container.
   #
   readiness:
     ## Whether to enable liveness probes.

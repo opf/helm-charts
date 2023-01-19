@@ -70,8 +70,9 @@ spec:
             {{- end }}
           {{- if .Values.probes.liveness.enabled }}
           livenessProbe:
-            tcpSocket:
-              port: http
+            httpGet:
+              path: /health_checks/default
+              port: 8080
             initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
             periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
@@ -80,8 +81,9 @@ spec:
           {{- end }}
           {{- if .Values.probes.readiness.enabled }}
           readinessProbe:
-            tcpSocket:
-              port: http
+            httpGet:
+              path: /health_checks/default
+              port: 8080
             initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}

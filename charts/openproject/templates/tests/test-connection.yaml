@@ -12,6 +12,10 @@ spec:
     - name: "wget"
       image: "busybox"
       command: ['wget']
-      args: ['{{ include "common.names.fullname" . }}:{{ .Values.service.ports.http.port }}']
+      args:
+        - '--no-verbose'
+        - '--tries=1'
+        - '--spider'
+        - '{{ include "common.names.fullname" . }}:{{ .Values.service.ports.http.port }}/health_checks/all'
   restartPolicy: "Never"
 ...
