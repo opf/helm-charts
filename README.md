@@ -23,9 +23,7 @@ This chart bootstraps an OpenProject instance and optional with PostgreSQL datab
 You can install the chart with the release name `my-openproject` in its own namespace like this:
 
 ```bash
-kubectl create namespace openproject
-
-helm upgrade --namespace openproject --install my-openproject openproject/openproject
+helm upgrade --create-namespace --namespace openproject --install my-openproject openproject/openproject
 ```
 
 The namespace is optional, but using it does make it easier to manage the resources
