@@ -41,3 +41,21 @@ helm uninstall --namespace openproject my-openproject
 > The easiest way to ensure all PVCs are deleted as well is to delete the openproject namespace
 > (`kubectl delete namespace openproject`). If you installed OpenProject into the default
 > namespace, you can delete the volumes manually one by one.
+
+## Troubleshooting
+
+### Web deployment stuck in `CrashLoopBackoff`
+
+Describing the pod may yield an error like the following:
+
+```
+65s)  kubelet            Error: failed to start container "openproject": Error response from daemon: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error setting cgroup config for procHooks process: failed to write "400000": write /sys/fs/cgroup/cpu,cpuacct/kubepods/burstable/pod990fa25e-dbf0-4fb7-9b31-9d7106473813/openproject/cpu.cfs_quota_us: invalid argument: unknown
+```
+
+This can happen when using **minikube**. By default it initialised the cluster with 2 CPUs only.
+
+Either increase the cluster's resources to have at least 4 CPUs or install the OpenProject helm chart with a reduced CPU limit by adding the following option to the install command:
+
+```
+--set resources.limits.cpu=2
+```
