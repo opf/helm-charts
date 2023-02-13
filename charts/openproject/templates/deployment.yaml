@@ -14,10 +14,14 @@ spec:
       {{- include "common.labels.matchLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- range $key, $val := .Values.podAnnotations }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+        # annotate pods with env value checksum so changes trigger re-deployments
+        {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace (include "common.names.fullname" .)) | default dict }}
+        {{- $secretData := (get $secretObj "data") | default dict }}
+        checksum/config: {{ values $secretData | sortAlpha | cat | sha256sum }}
       labels:
         {{- include "common.labels.standard" . | nindent 8 }}
     spec:
