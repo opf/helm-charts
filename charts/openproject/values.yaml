@@ -244,7 +244,7 @@ persistence:
   size: "1Gi"
 
   ## Define the class of PV.
-  storageClassName: ""
+  storageClassName:
 
 ## Define custom pod annotations.
 #
