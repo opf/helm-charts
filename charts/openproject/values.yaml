@@ -160,6 +160,16 @@ nameOverride: ""
 #
 nodeSelector: {}
 
+## Deployment strategy
+##
+## Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+#
+strategy:
+  ## Re-create pod during deployments by default since a writable volume is mounted.
+  ## Should your cluster support WriteMany volumes, you can change this
+  ## to `RollingUpdate`.
+  type: "Recreate"
+
 ## OpenProject related settings.
 ##
 ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/environment/#supported-environment-variables
