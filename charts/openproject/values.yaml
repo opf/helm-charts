@@ -42,9 +42,12 @@ ingress:
   #
   enabled: true
 
-  ## Define the name if the ingress class.
+  ## Define the name of the ingress class.
+  ##
+  ## If left empty, the cluster default is used.
+  ## Set this if you need a specific class, for instance `nginx`.
   #
-  ingressClassName: "nginx"
+  ingressClassName:
 
   ## Define custom ingress annotations:
   ##
