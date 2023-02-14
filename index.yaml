@@ -3,6 +3,33 @@ entries:
   openproject:
   - apiVersion: v2
     appVersion: "12.4"
+    created: "2023-02-14T08:47:23.958401493Z"
+    dependencies:
+    - condition: postgresql.bundled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: ^12.1.6
+    - condition: memcached.bundled
+      name: memcached
+      repository: https://charts.bitnami.com/bitnami
+      version: ^6.3.2
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      version: ^2.2.2
+    description: A Helm chart for running OpenProject via Kubernetes
+    digest: 1553fde4d1f3d23419f706e462e1b08ec9e5b7bb157f017ebf198efbe65eca86
+    home: https://www.openproject.org/
+    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    maintainers:
+    - name: OpenProject
+      url: https://github.com/opf/helm-charts
+    name: openproject
+    type: application
+    urls:
+    - https://github.com/opf/helm-charts/releases/download/openproject-1.5.0/openproject-1.5.0.tgz
+    version: 1.5.0
+  - apiVersion: v2
+    appVersion: "12.4"
     created: "2023-01-19T12:30:04.693669444Z"
     dependencies:
     - condition: postgresql.bundled
@@ -52,4 +79,4 @@ entries:
     urls:
     - https://github.com/opf/helm-charts/releases/download/openproject-0.0.0/openproject-0.0.0.tgz
     version: 0.0.0
-generated: "2023-01-19T12:30:04.693685444Z"
+generated: "2023-02-14T08:47:23.958419394Z"
