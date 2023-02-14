@@ -29,6 +29,19 @@ helm upgrade --create-namespace --namespace openproject --install my-openproject
 The namespace is optional, but using it does make it easier to manage the resources
 created for OpenProject.
 
+## Updating the configuration
+
+The OpenProject configuration can be changed through environment variables.
+You can use `helm upgrade` to set individual values.
+
+For instance:
+
+```
+helm upgrade --reuse-values --namespace openproject my-openproject --set environment.OPENPROJECT_IMPRESSUM__LINK=https://www.openproject.org/legal/imprint/ --set environment.OPENPROJECT_APP__TITLE='My OpenProject'
+```
+
+You find out more about the configuration in our [documentation](https://www.openproject.org/docs/installation-and-operations/configuration/environment/).
+
 ## Uninstalling the Chart
 
 To install the release with name my-openproject:
