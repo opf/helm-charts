@@ -152,7 +152,7 @@ memcached:
   auth:
     user: "memcached"
     password: "memcached"
-
+    existingPasswordSecret: ""
 ## String to partially override release name.
 #
 nameOverride: ""
@@ -195,6 +195,8 @@ openproject:
   #
   cache:
     store: "memcache"
+
+  extraEnvVarsSecret: ""
 
   ## Define OpenID Connect providers
   oidc:
@@ -276,6 +278,11 @@ postgresql:
   ## Database auth details.
   #
   auth:
+    existingSecret: ""
+    secretKeys:
+      adminPasswordKey: ""
+      userPasswordKey: ""
+    
     ## Database username.
     #
     username: "openproject"
