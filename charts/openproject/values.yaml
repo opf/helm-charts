@@ -147,12 +147,6 @@ memcached:
     host:
     port:
 
-  ## Memcached auth details.
-  #
-  auth:
-    user: "memcached"
-    password: "memcached"
-    existingPasswordSecret: ""
 ## String to partially override release name.
 #
 nameOverride: ""
