@@ -67,8 +67,8 @@ spec:
             - secretRef:
                 name: {{ .Values.extraEnvVarsSecret }}
             {{- end }}
-          env:
           {{- if .Values.postgresql.auth.existingSecret }}
+          env:
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretRef:
