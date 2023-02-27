@@ -63,6 +63,25 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
+            {{- if .Values.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ .Values.extraEnvVarsSecret }}
+            {{- end }}
+          env:
+          {{- if .Values.postgresql.auth.existingSecret }}
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretRef:
+                  name: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}          
+          {{- if .Values.postgresql.bundled }}
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.postgresql.auth.username }}:$(DATABASE_PASSWORD)@{{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}:{{ .Values.postgresql.primary.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}"
+          {{- else }}
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.postgresql.auth.username }}:$(DATABASE_PASSWORD)@{{ .Values.postgresql.connection.host }}:{{ .Values.postgresql.connection.port }}/{{ .Values.postgresql.auth.database }}"
+          {{- end }}
+          {{- end }}
           {{- if .Values.persistence.enabled }}
           volumeMounts:
             - name: "data"
