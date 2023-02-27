@@ -71,8 +71,8 @@ spec:
           env:
             - name: DATABASE_PASSWORD
               valueFrom:
-                secretRef:
-                  name: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.existingSecret }}
                   key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}          
           {{- if .Values.postgresql.bundled }}
             - name: DATABASE_URL
