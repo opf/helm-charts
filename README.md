@@ -72,3 +72,9 @@ Either increase the cluster's resources to have at least 4 CPUs or install the O
 ```
 --set resources.limits.cpu=2
 ```
+
+### Root access in OpenShift
+
+The OpenProject container performs tasks as root during setup.
+In [OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift) this is not allowed. You will have to [add the `anyuid` SCC](https://examples.openshift.pub/deploy/scc-anyuid/) (Security Context Constraint)
+to OpenProject's service account.
