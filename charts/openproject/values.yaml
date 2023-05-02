@@ -273,6 +273,9 @@ postgresql:
     host:
     port:
 
+  ## Use a connection string instead
+  # connectionstr: 
+
   ## Database auth details.
   #
   auth:
