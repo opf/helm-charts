@@ -196,6 +196,11 @@ openproject:
   cache:
     store: "memcache"
 
+  ## Define the language to seed the instance in
+  # and for users to set as a default language.
+  #
+  default_language: "en"
+
   ## Define OpenID Connect providers
   oidc:
     enabled: false
