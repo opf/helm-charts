@@ -118,7 +118,7 @@ image:
 
   ## Define image tag.
   ##
-  tag: "12.4"
+  tag: "12"
 
   ## Define image sha256 - mutual exclusive with image tag.
   ## The sha256 has a higher precedence than
@@ -191,6 +191,19 @@ openproject:
     store: "memcache"
 
   extraEnvVarsSecret: ""
+
+  ## Define the language to seed the instance in
+  #
+  seed_locale: "en"
+
+  ## Define admin user details
+  # only applicable on first installation
+  # Note: Only applicable for versions >= 13.0
+  admin_user:
+    password: 'admin'
+    password_reset: 'true'
+    name: 'OpenProject Admin'
+    mail: 'admin@example.net'
 
   ## Define OpenID Connect providers
   oidc:
