@@ -67,6 +67,10 @@ spec:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}-environment
           {{- end }}
+          {{- if .Values.openproject.oidc.enabled }}
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}-oidc
+          {{- end }}
           {{- if .Values.persistence.enabled }}
           volumeMounts:
             - name: "data"
