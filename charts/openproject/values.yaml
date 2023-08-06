@@ -305,6 +305,12 @@ postgresql:
     #
     postgresPassword: "postgres"
 
+  ## When using the "bundled" postgresql chart, you can configure the storageClass and other settings similar to this
+  ## Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
+  #
+  # global:
+  #  storageClass: my-storage-class-name
+
 ## Configure liveness and readiness probes.
 ##
 ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
