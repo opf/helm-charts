@@ -60,6 +60,18 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          env:
+            {{- if .Values.postgresql.auth.existingSecret }}
+            - name: THIS_VARIABLE_NEEDS_A_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.auth.existingSecret }}
+                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+            {{- end }}
+            {{- if and (.Values.postgresql.auth.password) (not .Values.postgresql.auth.existingSecret ) }}
+            - name: THIS_VARIABLE_NEEDS_A_NAME
+              value: {{ .Values.postgresql.auth.password }}
+            {{- end }}
           envFrom:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
