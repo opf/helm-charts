@@ -71,6 +71,10 @@ spec:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}-oidc
           {{- end }}
+          {{- if eq .Values.openproject.cache.store "memcache" }}
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}-memcached
+          {{- end }}
           {{- if .Values.persistence.enabled }}
           volumeMounts:
             - name: "data"
