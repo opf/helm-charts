@@ -308,13 +308,16 @@ postgresql:
     #  adminPasswordKey:
     #  userPasswordKey:
 
+    ## If you are not using a Kubernetes secret to store your postgresql credentials,
+    ## you can specify them here if you really must. Please handle with care!
+
     ## Database password.
     #
-    password: "easyPassword"
+    #password: ""
 
     ## Database root password.
     #
-    postgresPassword: "postgres"
+    #postgresPassword: ""
 
 ## Configure liveness and readiness probes.
 ##
