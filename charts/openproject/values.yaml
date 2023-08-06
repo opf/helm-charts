@@ -297,6 +297,17 @@ postgresql:
     #
     database: "openproject"
 
+    ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
+    ## use an existing secret containing the PostgreSQL credentials. Specify the name of this
+    ## existing secret here
+    #
+    existingSecret: ""
+
+    ## In case your secret does not use the default keys in the secret, you can adjust them here
+    #secretKeys:
+    #  adminPasswordKey:
+    #  userPasswordKey:
+
     ## Database password.
     #
     password: "easyPassword"
