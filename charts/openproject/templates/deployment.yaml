@@ -63,6 +63,10 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
+          {{- if .Values.environment }}
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}-environment
+          {{- end }}
           {{- if .Values.persistence.enabled }}
           volumeMounts:
             - name: "data"
