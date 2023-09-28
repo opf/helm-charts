@@ -118,7 +118,7 @@ image:
 
   ## Define image tag.
   ##
-  tag: "12"
+  tag: "13-slim"
 
   ## Define image sha256 - mutual exclusive with image tag.
   ## The sha256 has a higher precedence than

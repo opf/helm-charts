@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "common.names.fullname" . }}-seeder-{{ now | date "20060102150405" }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: 6000
+  template:
+    spec:
+      containers:
+        - name: seeder
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - bash
+            - /app/docker/prod/seeder
+          envFrom:
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}
+      restartPolicy: Never

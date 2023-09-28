@@ -2,7 +2,7 @@
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
-  name: {{ include "common.names.fullname" . }}
+  name: {{ include "common.names.fullname" . }}-web
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
@@ -54,6 +54,19 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "common.names.fullname" . }}
       {{- end }}
+      initContainers:
+        - name: wait-for-db
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}
+          command:
+            - bash
+            - -c
+            - 'bundle exec rails runner "require %(timeout); Timeout::timeout(120) do; while true do; puts %(waiting for db); sleep 2; begin; ActiveRecord::Migration.check_pending!; puts %(db ready); exit 0; rescue; end; end; end"'
       containers:
         - name: "openproject"
           securityContext:
