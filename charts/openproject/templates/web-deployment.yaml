@@ -65,8 +65,7 @@ spec:
                 name: {{ include "common.names.fullname" . }}
           command:
             - bash
-            - -c
-            - 'bundle exec rails runner "require %(timeout); Timeout::timeout(120) do; while true do; puts %(waiting for db); sleep 2; begin; ActiveRecord::Migration.check_pending!; puts %(db ready); exit 0; rescue; end; end; end"'
+            - /app/docker/prod/wait-for-db
       containers:
         - name: "openproject"
           securityContext:
