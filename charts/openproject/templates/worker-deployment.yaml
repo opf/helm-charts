@@ -5,6 +5,7 @@ metadata:
   name: {{ include "common.names.fullname" . }}-worker
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
+    openproject/process: worker
 spec:
   replicas: {{ .Values.backgroundReplicaCount }}
   strategy:
@@ -12,6 +13,7 @@ spec:
   selector:
     matchLabels:
       {{- include "common.labels.matchLabels" . | nindent 6 }}
+      openproject/process: worker
   template:
     metadata:
       annotations:
@@ -24,6 +26,7 @@ spec:
         checksum/config: {{ values $secretData | sortAlpha | cat | sha256sum }}
       labels:
         {{- include "common.labels.standard" . | nindent 8 }}
+        openproject/process: worker
     spec:
       {{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
       imagePullSecrets:
