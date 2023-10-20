@@ -91,6 +91,12 @@ ingress:
     #
     secretName: ""
 
+egress:
+  tls:
+    rootCA:
+      configMap: ""
+      fileName: ""
+
 ## Define image setting
 #
 image:
@@ -382,9 +388,13 @@ probes:
     #
     successThreshold: 1
 
-## Number of OpenProject replicas.
+## Number of OpenProject web process replicas.
 #
 replicaCount: 1
+
+## Number of OpenProject background worker process replicas.
+#
+backgroundReplicaCount: 1
 
 ## Configure resource requests and limits.
 ##

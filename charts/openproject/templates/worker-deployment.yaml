@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.backgroundReplicaCount }}
   strategy:
     type: {{ .Values.strategy.type }}
   selector:
@@ -48,8 +48,13 @@ spec:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
       serviceAccountName: {{ include "common.names.fullname" . }}
-      {{- if .Values.persistence.enabled }}
       volumes:
+      {{- if .Values.egress.tls.rootCA.fileName }}
+        - name: ca-pemstore
+          configMap:
+            name: "{{- .Values.egress.tls.rootCA.configMap }}"
+      {{- end }}
+      {{- if .Values.persistence.enabled }}
         - name: "data"
           persistentVolumeClaim:
             claimName: {{ include "common.names.fullname" . }}
@@ -75,13 +80,24 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
+          {{- if .Values.egress.tls.rootCA.fileName }}
+          env:
+            - name: SSL_CERT_FILE
+              value: "/etc/ssl/certs/custom-ca.pem"
+          {{- end }}
           command:
             - bash
             - /app/docker/prod/worker
-          {{- if .Values.persistence.enabled }}
           volumeMounts:
+          {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"
+          {{- end }}
+          {{- if .Values.egress.tls.rootCA.fileName }}
+            - name: ca-pemstore
+              mountPath: /etc/ssl/certs/custom-ca.pem
+              subPath: {{ .Values.egress.tls.rootCA.fileName }}
+              readOnly: false
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
