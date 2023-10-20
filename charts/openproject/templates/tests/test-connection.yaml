@@ -16,6 +16,6 @@ spec:
         - '--no-verbose'
         - '--tries=1'
         - '--spider'
-        - '{{ include "common.names.fullname" . }}:{{ .Values.service.ports.http.port }}/health_checks/all'
+        - '{{ include "common.names.fullname" . }}:{{ .Values.service.ports.http.port }}/health_check'
   restartPolicy: "Never"
 ...

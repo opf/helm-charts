@@ -1,0 +1,131 @@
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}-web
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+    openproject/process: web
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      openproject/process: web
+  template:
+    metadata:
+      annotations:
+        {{- range $key, $val := .Values.podAnnotations }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+        # annotate pods with env value checksum so changes trigger re-deployments
+        {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace (include "common.names.fullname" .)) | default dict }}
+        {{- $secretData := (get $secretObj "data") | default dict }}
+        checksum/config: {{ values $secretData | sortAlpha | cat | sha256sum }}
+      labels:
+        {{- include "common.labels.standard" . | nindent 8 }}
+        openproject/process: web
+    spec:
+      {{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range (coalesce .Values.imagePullSecrets .Values.global.imagePullSecrets) }}
+        - name: "{{ . }}"
+        {{- end }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      serviceAccountName: {{ include "common.names.fullname" . }}
+      volumes:
+      {{- if .Values.egress.tls.rootCA.fileName }}
+        - name: ca-pemstore
+          configMap:
+            name: "{{- .Values.egress.tls.rootCA.configMap }}"
+      {{- end }}
+      {{- if .Values.persistence.enabled }}
+        - name: "data"
+          persistentVolumeClaim:
+            claimName: {{ include "common.names.fullname" . }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-db
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}
+          command:
+            - bash
+            - /app/docker/prod/wait-for-db
+      containers:
+        - name: "openproject"
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}
+          {{- if .Values.egress.tls.rootCA.fileName }}
+          env:
+            - name: SSL_CERT_FILE
+              value: "/etc/ssl/certs/custom-ca.pem"
+          {{- end }}
+          volumeMounts:
+          {{- if .Values.persistence.enabled }}
+            - name: "data"
+              mountPath: "/var/openproject/assets"
+          {{- end }}
+          {{- if .Values.egress.tls.rootCA.fileName }}
+            - name: ca-pemstore
+              mountPath: /etc/ssl/certs/custom-ca.pem
+              subPath: {{ .Values.egress.tls.rootCA.fileName }}
+              readOnly: false
+          {{- end }}
+          ports:
+            {{- range $key, $value := .Values.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $value.containerPort }}
+              protocol: {{ $value.protocol }}
+            {{- end }}
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /health_checks/default
+              port: 8080
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+            successThreshold: {{ .Values.probes.liveness.successThreshold }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /health_checks/default
+              port: 8080
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+            successThreshold: {{ .Values.probes.readiness.successThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
