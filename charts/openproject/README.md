@@ -31,7 +31,7 @@ kubectl -n openproject create secret tls openproject-tls \
 Set the tls secret value during installation or an upgrade by adding the following.
 
 ```
---set tls.enabled=true --set tls.secretName=openproject-tls
+--set ingress.tls.enabled=true --set tls.secretName=openproject-tls
 ```
 
 #### Root CA
