@@ -8,6 +8,17 @@ spec:
   ttlSecondsAfterFinished: 6000
   template:
     spec:
+      initContainers:
+        - name: check-db-ready
+          image: postgres:13
+          command: [
+            'sh',
+            '-c',
+            'until pg_isready -h $DATABASE_HOST -p $DATABASE_PORT; do echo "waiting for database $DATABASE_HOST:$DATABASE_PORT"; sleep 2; done;'
+          ]
+          envFrom:
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}
       containers:
         - name: seeder
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
