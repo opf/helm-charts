@@ -276,7 +276,8 @@ podAnnotations: {}
 ##
 ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 #
-podSecurityContext: {}
+podSecurityContext:
+  fsGroup: 1000
 
 ## Configure PostgreSQL settings.
 #
