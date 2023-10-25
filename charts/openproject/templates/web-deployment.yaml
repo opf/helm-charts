@@ -57,11 +57,6 @@ spec:
           configMap:
             name: "{{- .Values.egress.tls.rootCA.configMap }}"
       {{- end }}
-      {{- if .Values.persistence.enabled }}
-        - name: "data"
-          persistentVolumeClaim:
-            claimName: {{ include "common.names.fullname" . }}
-      {{- end }}
       initContainers:
         - name: wait-for-db
           securityContext:
@@ -88,10 +83,17 @@ spec:
             - name: SSL_CERT_FILE
               value: "/etc/ssl/certs/custom-ca.pem"
           {{- end }}
+          {{- if .Values.persistence.enabled }}
+          volumes:
+            - name: "data"
+              persistentVolumeClaim:
+                claimName: {{ include "common.names.fullname" . }}
           volumeMounts:
           {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"
+              persistentVolumeClaim:
+                claimName: {{ include "common.names.fullname" . }}
           {{- end }}
           {{- if .Values.egress.tls.rootCA.fileName }}
             - name: ca-pemstore
