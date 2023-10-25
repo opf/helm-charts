@@ -255,7 +255,7 @@ persistence:
   ##                       you want to ensure that only one pod across whole cluster can read that PVC or write to it.
   #
   accessModes:
-    - "ReadWriteOnce"
+    - "ReadWriteMany"
 
   ## Define custom storage annotations:
   ##
