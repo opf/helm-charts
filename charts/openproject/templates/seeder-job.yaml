@@ -13,9 +13,6 @@ spec:
         - name: "data"
           persistentVolumeClaim:
             claimName: {{ include "common.names.fullname" . }}
-      volumeMounts:
-        - name: "data"
-          mountPath: "/var/openproject/assets"
       {{- end }}
       initContainers:
         - name: check-db-ready
@@ -38,4 +35,9 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: "data"
+              mountPath: "/var/openproject/assets"
+          {{- end }}
       restartPolicy: OnFailure
