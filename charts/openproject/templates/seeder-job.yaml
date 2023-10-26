@@ -16,7 +16,8 @@ spec:
       {{- end }}
       initContainers:
         - name: check-db-ready
-          image: postgres:13
+          image: "{{ .Values.initdb.image.registry }}/{{ .Values.initdb.image.repository }}:{{ .Values.initdb.image.tag }}"
+          imagePullPolicy: {{ .Values.initdb.image.imagePullPolicy }}
           command: [
             'sh',
             '-c',
@@ -25,6 +26,8 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
+          resources:
+            {{- toYaml .Values.initdb.resources | nindent 12 }}
       containers:
         - name: seeder
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
