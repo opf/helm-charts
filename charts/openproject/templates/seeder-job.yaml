@@ -13,6 +13,9 @@ spec:
         - name: "data"
           persistentVolumeClaim:
             claimName: {{ include "common.names.fullname" . }}
+      volumeMounts:
+        - name: "data"
+          mountPath: "/var/openproject/assets"
       {{- end }}
       initContainers:
         - name: check-db-ready
