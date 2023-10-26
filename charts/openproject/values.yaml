@@ -33,6 +33,10 @@ environment: {}
 #
 fullnameOverride: ""
 
+##
+# Override the cluster domain name used in templating
+clusterDomain: "cluster.local"
+
 ## Define settings for wait-for-db init-container
 #
 initdb:
