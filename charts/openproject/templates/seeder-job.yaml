@@ -8,6 +8,10 @@ spec:
   ttlSecondsAfterFinished: 6000
   template:
     spec:
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext:
+        {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 | trim }}
+      {{- end }}
       {{- if .Values.persistence.enabled }}
       volumes:
         - name: "data"
@@ -42,5 +46,9 @@ spec:
           volumeMounts:
             - name: "data"
               mountPath: "/var/openproject/assets"
+          {{- end }}
+          {{- if .Values.securityContext.enabled }}
+          securityContext:
+            {{- omit .Values.securityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
       restartPolicy: OnFailure

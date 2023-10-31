@@ -46,9 +46,9 @@ spec:
       nodeSelector:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
-      {{- with .Values.podSecurityContext }}
+      {{- if .Values.podSecurityContext.enabled }}
       securityContext:
-        {{ toYaml . | nindent 8 | trim }}
+        {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 | trim }}
       {{- end }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
@@ -64,8 +64,10 @@ spec:
       {{- end }}
       initContainers:
         - name: wait-for-db
+          {{- if .Values.securityContext.enabled }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- omit .Values.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           envFrom:
@@ -76,8 +78,10 @@ spec:
             - /app/docker/prod/wait-for-db
       containers:
         - name: "openproject"
+          {{- if .Values.securityContext.enabled }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- omit .Values.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           envFrom:
