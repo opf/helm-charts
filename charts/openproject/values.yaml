@@ -280,8 +280,6 @@ openproject:
 ## Ref.: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
 #
 persistence:
-  ## Whether to enable session affinity or not. It is required by ingress.
-  #
   enabled: true
 
   ## Define the volume access modes:
@@ -306,6 +304,40 @@ persistence:
 
   ## Define the class of PV.
   storageClassName:
+
+## Whether to use an S3-compatible object storage to store OpenProject attachments.
+## If this is enabled, files will NOT be stored in the mounted volume configured in `persistence` above.
+## The volume will not be used at all, so it `persistence.enabled` should be set to `false` in this case.
+##
+## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/#attachments-storage
+#
+s3:
+  enabled: false
+  accessKeyId:
+  secretAccessKey:
+  region:
+  bucketName:
+
+  ## Remove or leave empty to use default AWS S3 endpoint
+  #
+  endpoint:
+  pathStyle: false
+  signatureVersion: 4
+  use_iam_profile: false
+
+  ## If enabled, upload files directly to S3 from the browser instead of going through OpenProject.
+  ## May not be supported by providers other than AWS S3 itself.
+  ##
+  ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/#direct-uploads
+  #
+  directUploads: true
+
+  ## You can always override these options via the environment, for instance:
+  ##
+  ## environment:
+  ##   OPENPROJECT_FOG_CREDENTIALS_REGION: 'us-east-1'
+  ##
+  ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/#attachments-storage
 
 ## Define custom pod annotations.
 #
