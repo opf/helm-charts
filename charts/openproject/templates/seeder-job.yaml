@@ -12,11 +12,15 @@ spec:
       securityContext:
         {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 | trim }}
       {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
       {{- if .Values.persistence.enabled }}
       volumes:
         - name: "data"
           persistentVolumeClaim:
-            claimName: {{ include "common.names.fullname" . }}
+            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
       {{- end }}
       initContainers:
         - name: check-db-ready
