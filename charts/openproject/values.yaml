@@ -557,6 +557,12 @@ serviceAccount:
   #
   annotations: {}
 
+# Options for the seeder job
+seederJob:
+  ## Define custom seeder job annotations.
+  #
+  annotations: {}
+
 ## Tolerations for pod assignment.
 ##
 ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
