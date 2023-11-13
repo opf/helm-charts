@@ -4,6 +4,10 @@ metadata:
   name: {{ include "common.names.fullname" . }}-seeder-{{ now | date "20060102150405" }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
+  {{- with .Values.seederJob.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ttlSecondsAfterFinished: 6000
   template:
