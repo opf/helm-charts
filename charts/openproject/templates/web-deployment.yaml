@@ -60,7 +60,7 @@ spec:
       {{- if .Values.persistence.enabled }}
         - name: "data"
           persistentVolumeClaim:
-            claimName: {{ include "common.names.fullname" . }}
+            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
       {{- end }}
       initContainers:
         - name: wait-for-db
