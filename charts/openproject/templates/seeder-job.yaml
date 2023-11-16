@@ -27,12 +27,22 @@ spec:
       nodeSelector:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
-      {{- if .Values.persistence.enabled }}
       volumes:
+        - name: tmp
+          # we can't use emptyDir due to the sticky bit issue
+          # see: https://github.com/kubernetes/kubernetes/issues/110835
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 1Gi
+        {{- if .Values.persistence.enabled }}
         - name: "data"
           persistentVolumeClaim:
             claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
-      {{- end }}
+        {{- end }}
       initContainers:
         - name: check-db-ready
           image: "{{ .Values.initdb.image.registry }}/{{ .Values.initdb.image.repository }}:{{ .Values.initdb.image.tag }}"
@@ -40,16 +50,16 @@ spec:
           command: [
             'sh',
             '-c',
-            'until pg_isready -h $DATABASE_HOST -p $DATABASE_PORT; do echo "waiting for database $DATABASE_HOST:$DATABASE_PORT"; sleep 2; done;'
+            'until pg_isready -h $DATABASE_HOST -p $DATABASE_PORT -U {{ .Values.postgresql.auth.username }}; do echo "waiting for database $DATABASE_HOST:$DATABASE_PORT"; sleep 2; done;'
           ]
           envFrom:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
           resources:
             {{- toYaml .Values.initdb.resources | nindent 12 }}
-          {{- if .Values.securityContext.enabled }}
+          {{- if .Values.containerSecurityContext.enabled }}
           securityContext:
-            {{- omit .Values.securityContext "enabled" | toYaml | nindent 12 }}
+            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
       containers:
         - name: seeder
@@ -61,13 +71,15 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
-          {{- if .Values.persistence.enabled }}
           volumeMounts:
+            - mountPath: /tmp
+              name: tmp
+            {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"
-          {{- end }}
-          {{- if .Values.securityContext.enabled }}
+            {{- end }}
+          {{- if .Values.containerSecurityContext.enabled }}
           securityContext:
-            {{- omit .Values.securityContext "enabled" | toYaml | nindent 12 }}
+            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
       restartPolicy: OnFailure

@@ -358,12 +358,23 @@ podSecurityContext:
   enabled: true
   fsGroup: 1000
 
-## Security Context.
+## Container security context using as a default best practice values
+## granting minimum privileges.
 ##
 ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 #
-securityContext:
-  enabled: false
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  seccompProfile:
+    type: "RuntimeDefault"
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
 
 ## Configure PostgreSQL settings.
 #

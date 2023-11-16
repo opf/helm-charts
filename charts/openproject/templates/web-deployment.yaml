@@ -52,21 +52,33 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
-      {{- if .Values.egress.tls.rootCA.fileName }}
+        - name: tmp
+          # we can't use emptyDir due to the sticky bit issue
+          # see: https://github.com/kubernetes/kubernetes/issues/110835
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 1Gi
+        - name: app-tmp
+          emptyDir: {}
+        {{- if .Values.egress.tls.rootCA.fileName }}
         - name: ca-pemstore
           configMap:
             name: "{{- .Values.egress.tls.rootCA.configMap }}"
-      {{- end }}
-      {{- if .Values.persistence.enabled }}
+        {{- end }}
+        {{- if .Values.persistence.enabled }}
         - name: "data"
           persistentVolumeClaim:
             claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
-      {{- end }}
+        {{- end }}
       initContainers:
         - name: wait-for-db
-          {{- if .Values.securityContext.enabled }}
+          {{- if .Values.containerSecurityContext.enabled }}
           securityContext:
-            {{- omit .Values.securityContext "enabled" | toYaml | nindent 12 }}
+            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
@@ -78,9 +90,9 @@ spec:
             - /app/docker/prod/wait-for-db
       containers:
         - name: "openproject"
-          {{- if .Values.securityContext.enabled }}
+          {{- if .Values.containerSecurityContext.enabled }}
           securityContext:
-            {{- omit .Values.securityContext "enabled" | toYaml | nindent 12 }}
+            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
@@ -93,16 +105,20 @@ spec:
               value: "/etc/ssl/certs/custom-ca.pem"
           {{- end }}
           volumeMounts:
-          {{- if .Values.persistence.enabled }}
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /app/tmp
+              name: app-tmp
+            {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"
-          {{- end }}
-          {{- if .Values.egress.tls.rootCA.fileName }}
+            {{- end }}
+            {{- if .Values.egress.tls.rootCA.fileName }}
             - name: ca-pemstore
               mountPath: /etc/ssl/certs/custom-ca.pem
               subPath: {{ .Values.egress.tls.rootCA.fileName }}
               readOnly: false
-          {{- end }}
+            {{- end }}
           ports:
             {{- range $key, $value := .Values.service.ports }}
             - name: {{ $key }}
