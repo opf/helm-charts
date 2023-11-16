@@ -186,6 +186,18 @@ memcached:
   #
   bundled: true
 
+  global:
+    containerSecurityContext:
+      enabled: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      seccompProfile:
+        type: "RuntimeDefault"
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+
   ## When "bundled" is set to false, you need to define the memcached connection details.
   #
   connection:
@@ -383,6 +395,18 @@ postgresql:
   ## own database instance.
   #
   bundled: true
+
+  global:
+    containerSecurityContext:
+      enabled: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      seccompProfile:
+        type: "RuntimeDefault"
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
 
   ## When "bundled" is set to false, you need to define the database connection details.
   #
