@@ -11,6 +11,13 @@ metadata:
 spec:
   ttlSecondsAfterFinished: 6000
   template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" . | nindent 8 }}
+      {{- with .Values.seederJob.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       {{- if .Values.podSecurityContext.enabled }}
       securityContext:
