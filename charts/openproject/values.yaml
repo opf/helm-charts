@@ -266,6 +266,8 @@ openproject:
     userinfoEndpoint: ""
     endSessionEndpoint: ""
     scope: "[openid]"
+    # Optional attribute mappings from the id token
+    attribute_map: {}
 
   ## Modify PostgreSQL statement timout.
   ## Increase in case you get errors such as "ERROR: canceling statement due to statement timeout".
