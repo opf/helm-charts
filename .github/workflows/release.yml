@@ -6,47 +6,22 @@ on:
       - main
 
 jobs:
-  changeset:
-    name: Changeset
+  release:
+    name: Changeset and Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20.10.0
-
-      - name: Install Dependencies
-        run: yarn
-
-      - name: Create Release Pull Request
-        id: changesets
-        uses: changesets/action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish
-        if: steps.changesets.outputs.hasChangesets == 'false'
-        # You can do something when a publish should happen.
-        run: yarn publish
-  release:
-    # depending on default permission settings for your org (contents being read-only or read-write for workloads), you will have to add permissions
-    # see: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
       - name: Setup Node.js 
         uses: actions/setup-node@v3
         with:
           node-version: 20.10.0
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
 
       - name: Install Helm
         uses: azure/setup-helm@v3          
@@ -71,14 +46,21 @@ jobs:
           echo "CR_KEYRING=$keyring" >> "$GITHUB_ENV"
         env:
           GPG_OPERATIONS_BASE64: "${{ secrets.GPG_OPERATIONS_BASE64 }}"
-          GPG_OPERATIONS_PASSPHRASE: "${{ secrets.GPG_OPERATIONS_PASSPHRASE }}"
+          GPG_OPERATIONS_PASSPHRASE: "${{ secrets.GPG_OPERATIONS_PASSPHRASE }}"        
 
-      - name: Install Helm
-        uses: azure/setup-helm@v3
+      - name: Create Release Pull Request
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: script/bump-version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run chart-releaser
+      - name: Publish
+        if: steps.changesets.outputs.hasChangesets == 'false'
         uses: helm/chart-releaser-action@v1.5.0
         with:
           config: .github/workflows/cr.yaml
+          chart_version: version von changesets
         env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"        

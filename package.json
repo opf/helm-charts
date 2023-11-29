@@ -1,0 +1,10 @@
+{
+    "name": "@openproject/helm-charts",
+    "private": true,
+    "author": "OpenProject GmbH",
+    "version": "2.6.3",
+    "license": "",
+    "scripts": {
+        "changeset:version": "changeset version && script/version"
+    }
+}
