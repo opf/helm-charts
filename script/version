@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+require 'json'
+require 'yaml'
+
+package_file = File.expand_path('../package.json', __dir__)
+package_content = JSON.parse File.read(package_file)
+new_version = package_content['version']
+
+chart_file = File.expand_path('../charts/openproject/Chart.yaml', __dir__)
+contents = YAML.load_file chart_file
+contents['version'] = new_version
+File.open(chart_file, 'w') do |f|
+    f.write contents.to_yaml
+end
+
