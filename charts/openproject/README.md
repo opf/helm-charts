@@ -7,12 +7,31 @@ This is the chart for OpenProject itself.
 To install or update from this directory run the following command.
 
 ```bash
-helm upgrade \
-  --create-namespace --namespace openproject \
-  --install --reuse-values openproject-dev .
+bin/install-dev
 ```
 
-### TLS
+This will install the chart with `--set develop=true` which is recommended
+on local clusters such as **minikube** or **kind**.
+
+This will also set `OPENPROJECT_HTTPS` to false so no TLS certificate is required
+to access it.
+
+You can set other options just like when installing via `--set`
+(e.g. `bin/install-dev --set persistence.enabled=false`).
+
+### Debugging
+
+Changes to the chart can be debugged using the following.
+
+```bash
+bin/debug
+```
+
+This will try to render the templates and show any errors.
+You can set values just like when installing via `--set`
+(e.g. `bin/debug --set persistence.enabled=false`).
+
+## TLS
 
 Create a TLS certificate, e.g. using [mkcert](https://github.com/FiloSottile/mkcert).
 
@@ -34,7 +53,7 @@ Set the tls secret value during installation or an upgrade by adding the followi
 --set ingress.tls.enabled=true --set tls.secretName=openproject-tls
 ```
 
-#### Root CA
+### Root CA
 
 If you want to add your own root CA for outgoing TLS connection, do the following.
 

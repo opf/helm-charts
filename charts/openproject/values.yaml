@@ -2,6 +2,15 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+## Enable development mode.
+##
+## Set this to true if you want are working on the charts locally using
+## local clusters such as minikube or kind.
+##
+## This will set `OPENPROJECT_HTTPS` to `false` and avoid using volumes for
+## tmp folders as (permissions for) these don't work correctly in local clusters.
+develop: false
+
 global:
   ## Credentials to fetch images from private registry.
   ##
@@ -186,6 +195,18 @@ memcached:
   #
   bundled: true
 
+  global:
+    containerSecurityContext:
+      enabled: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      seccompProfile:
+        type: "RuntimeDefault"
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+
   ## When "bundled" is set to false, you need to define the memcached connection details.
   #
   connection:
@@ -358,12 +379,23 @@ podSecurityContext:
   enabled: true
   fsGroup: 1000
 
-## Security Context.
+## Container security context using as a default best practice values
+## granting minimum privileges.
 ##
 ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 #
-securityContext:
-  enabled: false
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  seccompProfile:
+    type: "RuntimeDefault"
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
 
 ## Configure PostgreSQL settings.
 #
@@ -372,6 +404,18 @@ postgresql:
   ## own database instance.
   #
   bundled: true
+
+  global:
+    containerSecurityContext:
+      enabled: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      seccompProfile:
+        type: "RuntimeDefault"
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
 
   ## When "bundled" is set to false, you need to define the database connection details.
   #
