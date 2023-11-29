@@ -32,8 +32,13 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run chart-testing (lint)
+      - name: Run chart-testing (lint) WITHOUT version check
+        if: github.event.pull_request.title != 'Release Tracking'
         run: ct lint --target-branch ${{ github.event.repository.default_branch }} --check-version-increment=false
+
+      - name: Run chart-testing (lint) WITH version check
+        if: github.event.pull_request.title == 'Release Tracking'
+        run: ct lint --target-branch ${{ github.event.repository.default_branch }} --check-version-increment=true
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.5.0
