@@ -1,2 +1,3 @@
 charts/openproject/charts
 Chart.lock
+node_modules/
