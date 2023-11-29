@@ -2,6 +2,15 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+## Enable development mode.
+##
+## Set this to true if you want are working on the charts locally using
+## local clusters such as minikube or kind.
+##
+## This will set `OPENPROJECT_HTTPS` to `false` and avoid using volumes for
+## tmp folders as (permissions for) these don't work correctly in local clusters.
+develop: false
+
 global:
   ## Credentials to fetch images from private registry.
   ##

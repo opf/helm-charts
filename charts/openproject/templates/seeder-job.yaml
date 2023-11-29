@@ -19,15 +19,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- if .Values.podSecurityContext.enabled }}
-      securityContext:
-        {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 | trim }}
-      {{- end }}
+      {{- include "openproject.podSecurityContext" . | indent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
       volumes:
+        {{- if (include "openproject.useTmpVolumes" .) }}
         - name: tmp
           # we can't use emptyDir due to the sticky bit issue
           # see: https://github.com/kubernetes/kubernetes/issues/110835
@@ -38,6 +36,7 @@ spec:
                 resources:
                   requests:
                     storage: 1Gi
+        {{- end }}
         {{- if .Values.persistence.enabled }}
         - name: "data"
           persistentVolumeClaim:
@@ -57,10 +56,7 @@ spec:
                 name: {{ include "common.names.fullname" . }}
           resources:
             {{- toYaml .Values.initdb.resources | nindent 12 }}
-          {{- if .Values.containerSecurityContext.enabled }}
-          securityContext:
-            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          {{- end }}
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
       containers:
         - name: seeder
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
@@ -72,14 +68,13 @@ spec:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
           volumeMounts:
+            {{- if (include "openproject.useTmpVolumes" .) }}
             - mountPath: /tmp
               name: tmp
+            {{- end }}
             {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"
             {{- end }}
-          {{- if .Values.containerSecurityContext.enabled }}
-          securityContext:
-            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          {{- end }}
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
       restartPolicy: OnFailure

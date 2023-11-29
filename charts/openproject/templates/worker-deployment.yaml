@@ -46,12 +46,10 @@ spec:
       nodeSelector:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
-      {{- if .Values.podSecurityContext.enabled }}
-      securityContext:
-        {{ omit .Values.podSecurityContext "enabled" | toYaml | nindent 8 | trim }}
-      {{- end }}
+      {{- include "openproject.podSecurityContext" . | indent 6 }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
+        {{- if (include "openproject.useTmpVolumes" .) }}
         - name: tmp
           # we can't use emptyDir due to the sticky bit issue
           # see: https://github.com/kubernetes/kubernetes/issues/110835
@@ -65,6 +63,7 @@ spec:
                     # or backups
                     # @todo put this into a separate PVC per replica
                     storage: 5Gi
+        {{- end }}
         {{- if .Values.egress.tls.rootCA.fileName }}
         - name: ca-pemstore
           configMap:
@@ -77,11 +76,8 @@ spec:
         {{- end }}
       initContainers:
         - name: wait-for-db
-          {{- if .Values.containerSecurityContext.enabled }}
-          securityContext:
-            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          {{- end }}
-          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
+          image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           envFrom:
             - secretRef:
@@ -91,11 +87,8 @@ spec:
             - /app/docker/prod/wait-for-db
       containers:
         - name: "openproject"
-          {{- if .Values.containerSecurityContext.enabled }}
-          securityContext:
-            {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          {{- end }}
-          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
+          image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           envFrom:
             - secretRef:
@@ -109,8 +102,10 @@ spec:
             - bash
             - /app/docker/prod/worker
           volumeMounts:
+            {{- if (include "openproject.useTmpVolumes" .) }}
             - mountPath: /tmp
               name: tmp
+            {{- end }}
             {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"
