@@ -1,0 +1,13 @@
+{
+    "name": "@openproject/helm-charts",
+    "private": true,
+    "author": "OpenProject GmbH",
+    "version": "2.7.2",
+    "license": "",
+    "scripts": {
+        "changeset:version": "./node_modules/.bin/changeset version && script/version"
+    },
+    "devDependencies": {
+        "@changesets/cli": "^2.27.1"
+    }
+}
