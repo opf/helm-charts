@@ -19,6 +19,8 @@ global:
 #
 affinity: {}
 
+new-value: {}
+
 ## Define additional environment variables.
 ##
 ## You can get a list of all environment variables when executing:
