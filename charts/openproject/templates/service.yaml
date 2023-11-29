@@ -13,6 +13,7 @@ spec:
   sessionAffinityConfig:
     clientIP:
       timeoutSeconds: {{ .Values.service.sessionAffinity.timeoutSeconds }}
+      foobar: bla
   {{- end }}
   ports:
     {{- range $key, $value := .Values.service.ports }}
