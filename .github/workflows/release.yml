@@ -27,7 +27,7 @@ jobs:
         uses: azure/setup-helm@v3          
 
       - name: Install Dependencies
-        run: yarn
+        run: npm install
 
       - name: Configure Git
         run: |
@@ -52,7 +52,7 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          version: script/bump-version
+          version: npm run changeset:version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
