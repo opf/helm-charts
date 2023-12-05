@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 3.0.1
+
+### Patch Changes
+
+- Publish helm charts on GitHub package registry: https://github.com/opf/helm-charts/pkgs/container/helm-charts%2Fopenproject
+
+
 ## 3.0.0
 
 ### Major Changes

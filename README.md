@@ -9,6 +9,10 @@ using helm's [chart-releaser](https://github.com/helm/chart-releaser-action) act
 
 Please refer to our [documentation](https://www.openproject.org/docs/installation-and-operations/installation/helm-chart/) for instructions on how to install the OpenProject helm chart.
 
+## GitHub package registry
+
+We publish newer versions of this chart to the GitHub package registry: https://github.com/opf/helm-charts/pkgs/container/helm-charts%2Fopenproject
+
 
 ## Helm chart signing
 
