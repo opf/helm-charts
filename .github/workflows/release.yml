@@ -72,6 +72,7 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"        
       - name: Login to GitHub Container Registry
+        if: steps.changesets.outputs.hasChangesets == 'false'
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
@@ -79,6 +80,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push Charts to GHCR
+        if: steps.changesets.outputs.hasChangesets == 'false'
         run: |
           for pkg in .cr-release-packages/*.tgz; do
             if [ -z "${pkg:-}" ]; then
