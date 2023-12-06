@@ -3,4 +3,4 @@
 sign: true
 # UID of the GPG key to use
 key: "operations@openproject.com"
-release-notes-file: CHANGELOG.md
+release-notes-file: RELEASE-NOTES.md

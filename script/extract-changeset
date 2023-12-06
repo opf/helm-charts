@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+require 'json'
+require 'yaml'
+
+changelog_file = File.expand_path('../CHANGELOG.md', __dir__)
+changelog = File.read changelog_file
+
+chart_file = File.expand_path('../charts/openproject/RELEASE-NOTES.md', __dir__)
+release_notes = changelog.split(/^## \d+\.\d+\.\d+$/)[1]
+
+puts "Writing to #{chart_file}:"
+puts release_notes
+
+File.open(chart_file, 'w') do |f|
+    f.write release_notes
+end
+

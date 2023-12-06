@@ -67,8 +67,7 @@ jobs:
       - name: Prepare for publish
         if: steps.changesets.outputs.hasChangesets == 'false'
         run: |
-          cp -f CHANGELOG.md charts/openproject/CHANGELOG.md
-
+          ruby script/extract-changeset
       - name: Publish
         if: steps.changesets.outputs.hasChangesets == 'false'
         uses: helm/chart-releaser-action@v1.5.0
