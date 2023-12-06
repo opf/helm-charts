@@ -88,6 +88,7 @@ jobs:
       - name: Push Charts to GHCR
         if: steps.changesets.outputs.hasChangesets == 'false'
         run: |
+          shopt -s nullglob
           for pkg in .cr-release-packages/*.tgz; do
             if [ -z "${pkg:-}" ]; then
               break
