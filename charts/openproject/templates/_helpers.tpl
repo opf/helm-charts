@@ -18,7 +18,10 @@ securityContext:
   {{-
     mergeOverwrite
       (omit .Values.containerSecurityContext "enabled" | deepCopy)
-      (dict "readOnlyRootFilesystem" (not .Values.develop))
+      (dict "readOnlyRootFilesystem" (and
+        (not .Values.develop)
+        (get .Values.containerSecurityContext "readOnlyRootFilesystem")
+      ))
     | toYaml
     | nindent 2
   }}
