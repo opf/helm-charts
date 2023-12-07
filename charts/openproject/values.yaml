@@ -213,12 +213,6 @@ memcached:
     host:
     port:
 
-  ## Memcached auth details.
-  #
-  auth:
-    user: "memcached"
-    password: "memcached"
-
 ## String to partially override release name.
 #
 nameOverride: ""
@@ -261,6 +255,8 @@ openproject:
   #
   cache:
     store: "memcache"
+
+  extraEnvVarsSecret: ""
 
   ## Define the language to seed the instance in
   #
@@ -426,6 +422,11 @@ postgresql:
   ## Database auth details.
   #
   auth:
+    existingSecret: ""
+    secretKeys:
+      adminPasswordKey: ""
+      userPasswordKey: ""
+    
     ## Database username.
     #
     username: "openproject"
