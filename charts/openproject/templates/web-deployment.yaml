@@ -100,6 +100,18 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "common.names.fullname" . }}
+            {{- if .Values.environment }}
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}-environment
+            {{- end }}
+            {{- if .Values.openproject.oidc.enabled }}
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}-oidc
+            {{- end }}
+            {{- if eq .Values.openproject.cache.store "memcache" }}
+            - secretRef:
+                name: {{ include "common.names.fullname" . }}-memcached
+            {{- end }}
             {{- if .Values.extraEnvVarsSecret }}
             - secretRef:
                 name: {{ .Values.extraEnvVarsSecret }}
@@ -122,6 +134,10 @@ spec:
             - name: DATABASE_URL
               value: "postgresql://{{ .Values.postgresql.auth.username }}:$(DATABASE_PASSWORD)@{{ .Values.postgresql.connection.host }}:{{ .Values.postgresql.connection.port }}/{{ .Values.postgresql.auth.database }}"
             {{- end }}
+            {{- end }}
+            {{- if and (.Values.postgresql.auth.password) (not .Values.postgresql.auth.existingSecret ) }}
+            - name: OPENPROJECT_DB_PASSWORD
+              value: {{ .Values.postgresql.auth.password }}
             {{- end }}
           {{- if .Values.persistence.enabled }}
           volumeMounts:
