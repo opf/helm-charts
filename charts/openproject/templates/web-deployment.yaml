@@ -20,10 +20,7 @@ spec:
         {{- range $key, $val := .Values.podAnnotations }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
-        # annotate pods with env value checksum so changes trigger re-deployments
-        {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace (include "common.names.fullname" .)) | default dict }}
-        {{- $secretData := (get $secretObj "data") | default dict }}
-        checksum/config: {{ values $secretData | sortAlpha | cat | sha256sum }}
+        {{- include "openproject.envChecksums" . | nindent 8 }}
       labels:
         {{- include "common.labels.standard" . | nindent 8 }}
         openproject/process: web
@@ -86,9 +83,8 @@ spec:
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          envFrom:
-            - secretRef:
-                name: {{ include "common.names.fullname" . }}
+          {{- include "openproject.envFrom" . | nindent 10 }}
+          {{- include "openproject.env" . | nindent 10 }}
           command:
             - bash
             - /app/docker/prod/wait-for-db
@@ -97,49 +93,8 @@ spec:
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          envFrom:
-            - secretRef:
-                name: {{ include "common.names.fullname" . }}
-            {{- if .Values.environment }}
-            - secretRef:
-                name: {{ include "common.names.fullname" . }}-environment
-            {{- end }}
-            {{- if .Values.openproject.oidc.enabled }}
-            - secretRef:
-                name: {{ include "common.names.fullname" . }}-oidc
-            {{- end }}
-            {{- if eq .Values.openproject.cache.store "memcache" }}
-            - secretRef:
-                name: {{ include "common.names.fullname" . }}-memcached
-            {{- end }}
-            {{- if .Values.extraEnvVarsSecret }}
-            - secretRef:
-                name: {{ .Values.extraEnvVarsSecret }}
-            {{- end }}
-          env:
-            {{- if .Values.egress.tls.rootCA.fileName }}
-            - name: SSL_CERT_FILE
-              value: "/etc/ssl/certs/custom-ca.pem"
-            {{- end }}
-            {{- if .Values.postgresql.auth.existingSecret }}
-            - name: OPENPROJECT_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.postgresql.auth.existingSecret }}
-                  key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
-            {{- if .Values.postgresql.bundled }}
-            - name: DATABASE_URL
-              value: "postgresql://{{ .Values.postgresql.auth.username }}:$(DATABASE_PASSWORD)@{{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}:{{ .Values.postgresql.primary.service.ports.postgresql }}/{{ .Values.postgresql.auth.database }}"
-            {{- else }}
-            - name: DATABASE_URL
-              value: "postgresql://{{ .Values.postgresql.auth.username }}:$(DATABASE_PASSWORD)@{{ .Values.postgresql.connection.host }}:{{ .Values.postgresql.connection.port }}/{{ .Values.postgresql.auth.database }}"
-            {{- end }}
-            {{- end }}
-            {{- if and (.Values.postgresql.auth.password) (not .Values.postgresql.auth.existingSecret ) }}
-            - name: OPENPROJECT_DB_PASSWORD
-              value: {{ .Values.postgresql.auth.password }}
-            {{- end }}
-          {{- if .Values.persistence.enabled }}
+          {{- include "openproject.envFrom" . | nindent 10 }}
+          {{- include "openproject.env" . | nindent 10 }}
           volumeMounts:
             {{- if (include "openproject.useTmpVolumes" .) }}
             - mountPath: /tmp

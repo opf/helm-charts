@@ -332,8 +332,14 @@ persistence:
 #
 s3:
   enabled: false
-  accessKeyId:
-  secretAccessKey:
+
+  auth:
+    accessKeyId:
+    existingSecret:
+    secretKeys:
+      accessKeyId: "accessKeyId"
+      secretAccessKey: "secretAccessKey"
+
   region:
   bucketName:
 
@@ -422,11 +428,18 @@ postgresql:
   ## Database auth details.
   #
   auth:
+    ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
+    ## use an existing secret containing the PostgreSQL credentials.
+    ## Specify the name of this existing secret here.
+    #
     existingSecret: ""
-    secretKeys:
-      adminPasswordKey: ""
-      userPasswordKey: ""
-    
+
+    ## In case your secret does not use the default keys in the secret, you can adjust them here.
+    ##
+    ## secretKeys:
+    ##   adminPasswordKey: "postgres-password"
+    ##   userPasswordKey: "password"
+
     ## Database username.
     #
     username: "openproject"
@@ -435,27 +448,16 @@ postgresql:
     #
     database: "openproject"
 
-    ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
-    ## use an existing secret containing the PostgreSQL credentials. Specify the name of this
-    ## existing secret here
-    #
-    existingSecret: ""
-
-    ## In case your secret does not use the default keys in the secret, you can adjust them here
-    #secretKeys:
-    #  adminPasswordKey:
-    #  userPasswordKey:
-
     ## If you are not using a Kubernetes secret to store your postgresql credentials,
     ## you can specify them here if you really must. Please handle with care!
 
     ## Database password.
     #
-    #password: ""
+    password: ""
 
     ## Database root password.
     #
-    #postgresPassword: ""
+    postgresPassword: ""
 
   ## When using the "bundled" postgresql chart, you can configure the storageClass and other settings similar to this
   ## Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml

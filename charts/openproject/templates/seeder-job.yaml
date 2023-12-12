@@ -14,6 +14,7 @@ spec:
     metadata:
       labels:
         {{- include "common.labels.standard" . | nindent 8 }}
+        openproject/process: seeder
       {{- with .Values.seederJob.annotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
@@ -51,9 +52,8 @@ spec:
             '-c',
             'until pg_isready -h $DATABASE_HOST -p $DATABASE_PORT -U {{ .Values.postgresql.auth.username }}; do echo "waiting for database $DATABASE_HOST:$DATABASE_PORT"; sleep 2; done;'
           ]
-          envFrom:
-            - secretRef:
-                name: {{ include "common.names.fullname" . }}
+          {{- include "openproject.envFrom" . | nindent 10 }}
+          {{- include "openproject.env" . | nindent 10 }}
           resources:
             {{- toYaml .Values.initdb.resources | nindent 12 }}
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
@@ -64,9 +64,8 @@ spec:
           args:
             - bash
             - /app/docker/prod/seeder
-          envFrom:
-            - secretRef:
-                name: {{ include "common.names.fullname" . }}
+          {{- include "openproject.envFrom" . | nindent 10 }}
+          {{- include "openproject.env" . | nindent 10 }}
           volumeMounts:
             {{- if (include "openproject.useTmpVolumes" .) }}
             - mountPath: /tmp
