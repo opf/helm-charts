@@ -1,5 +1,18 @@
 # @openproject/helm-charts
 
+## 4.0.0
+
+### Major Changes
+
+- 5f4bce6: Improve secret management.
+
+  Add support for `existingSecret` for `postgresql` authentication.
+  Move `s3.accessKeyId` and `s3.secretAccessKey` to `s3.auth.` and add an `existingSecret` option for S3.
+
+### Patch Changes
+
+- 8623b11: Add artifacthub-repo verification and badge
+
 ## 3.0.2
 
 ### Patch Changes
@@ -12,12 +25,11 @@
 
 - Publish helm charts on GitHub package registry: https://github.com/opf/helm-charts/pkgs/container/helm-charts%2Fopenproject
 
-
 ## 3.0.0
 
 ### Major Changes
 
-- 0a1c9a9: 
+- 0a1c9a9:
   - rename `securityContext` to `containerSecurityContext` in `values.yaml`
   - mount volumes for tmp directories to make containers work in accordance with best practices, that is with read-only file systems
   - use secure defaults for container security policy
