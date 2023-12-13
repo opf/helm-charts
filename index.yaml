@@ -19,7 +19,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: ad2befdf8e56da66d57d0e64cd2fa79fbc07b08d5feb438136d2856e08b646af
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -46,7 +46,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 349390be70d49da1de020b17ad96fa5232b2877fa03cb64165840c9e587195e2
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -73,7 +73,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: a0070f04c5438a6a19f6418b05569f70ed4f998c2ba30831803dbccc9cbcad3e
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -100,7 +100,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: ea805bca8f4252e8b634a595102a47a4cd0004ea9786fff1b48d8a41b1012fe8
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -127,7 +127,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 232d00cb4c1472729f6e647ab098e11fbbe8944afe2fa9356b4e3bc0049aaab7
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -154,7 +154,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: bd6c7a1c424aad3f6965c5f35a64ee0caa28919acf8826edbadbd4cbb0a82b0a
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -181,7 +181,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: edcbccc04a1bda9db41901bd680659d295a3dc2e959854396ded809347aa5e93
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -208,7 +208,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 63c4d45684b4bbc8634b71cffa0f34b75dc5c5834e33f124417bd257b582ff54
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -235,7 +235,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 085ea5bfbbcce546210e9be1a3d22f9253ccaa18ca8041d9ee63d26d55fea2dc
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -262,7 +262,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: b37761958b5425f299a201c90b5a0293313830f66e0abdb9ac1b509549590ac7
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -289,7 +289,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: baa34c3b1e77ae599b72955c8c713aa2ed516255e327f22592c27f6cf7c32c8d
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -316,7 +316,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 21d61b48276a5e6010f2ff5d58611b0a2f4ae331b620b7e84ae32430bc04a2a3
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -343,7 +343,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 0051df1942dc3d514aa1f4dd27a928cdadd96386c125e1109399661914e404b2
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -370,7 +370,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: beea00e1cd278b2c65677b5046058d7b7aebe3206ee05cef646a48f2981e1965
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -397,7 +397,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: b009afd036513e940a1d510f93837ae199830347ffd52cdba24b2884ca2f39f1
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -424,7 +424,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 05b4fc0af3bf50ab93934a4638af5fad48ff13ec6fbd739eaac2f9e4f1c955cc
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -451,7 +451,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 0b0a61e8815aa4abbab9e1694e904662267c941f093ff2f6623336146755a7d1
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -478,7 +478,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 5a9d8d472cb27fe0c21dba6a3961339e751fdbba742d2a7e41e43115b5e758db
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -505,7 +505,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 21926fb109250b89b32fe146697d324761cae9d89e4f276569852dc902b95e80
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -532,7 +532,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: fc85d43af3c684fbb9432edd7ad97cfc9bcdcf3690a7981dec15bcbe1e5263a1
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -559,7 +559,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 8b741f7bd844163a3026c63bb7f10de6d5e3b73f61cc302c7fde386a97c0b916
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -586,7 +586,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: e997fdb3d70dc7568d087f8b150fb5eed264b637bf2ded8b441192cd2b4b5142
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -613,7 +613,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 595e7a43a817a8526fe6428469a5e5fb8fe0a4885cf5eb39299344a44acf0f6f
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -640,7 +640,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 1762e551001a42b729970aeb2cc37e639df221f3ee51432d60bfa501494aa633
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -667,7 +667,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 1553fde4d1f3d23419f706e462e1b08ec9e5b7bb157f017ebf198efbe65eca86
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -694,7 +694,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: b296e145c8f1be773734ab2e88021a7e8300e0e2e41a98cca36a128680bcf605
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     maintainers:
     - name: OpenProject
       url: https://github.com/opf/helm-charts
@@ -721,7 +721,7 @@ entries:
     description: A Helm chart for running OpenProject via Kubernetes
     digest: 760b764e4a578e559031fb3857401af7ceb27ada1871d175850d1ef6e8c411ae
     home: https://www.openproject.org/
-    icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+    icon: https://charts.openproject.org/logo.svg
     name: openproject
     type: application
     urls:
