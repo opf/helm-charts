@@ -2,6 +2,10 @@
 
 This is the chart for OpenProject itself.
 
+## Installation
+
+Please see our [installation guide on our website](https://www.openproject.org/docs/installation-and-operations/installation/helm-chart/).
+
 ## Development
 
 To install or update from this directory run the following command.
