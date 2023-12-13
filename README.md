@@ -1,3 +1,7 @@
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/openproject-helm-charts)](https://artifacthub.io/packages/search?repo=openproject-helm-charts)
+![Latest version](https://img.shields.io/github/v/release/opf/helm-charts)
+![Commit activity](https://img.shields.io/github/commit-activity/m/opf/helm-charts)
+
 # OpenProject Helm Charts
 
 This is a self-contained Helm chart registry for OpenProject based on github pages
