@@ -20,10 +20,7 @@ spec:
         {{- range $key, $val := .Values.podAnnotations }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
-        # annotate pods with env value checksum so changes trigger re-deployments
-        {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace (include "common.names.fullname" .)) | default dict }}
-        {{- $secretData := (get $secretObj "data") | default dict }}
-        checksum/config: {{ values $secretData | sortAlpha | cat | sha256sum }}
+        {{- include "openproject.envChecksums" . | nindent 8 }}
       labels:
         {{- include "common.labels.standard" . | nindent 8 }}
         openproject/process: web
@@ -86,9 +83,8 @@ spec:
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          envFrom:
-            - secretRef:
-                name: {{ include "common.names.fullname" . }}
+          {{- include "openproject.envFrom" . | nindent 10 }}
+          {{- include "openproject.env" . | nindent 10 }}
           command:
             - bash
             - /app/docker/prod/wait-for-db
@@ -97,14 +93,8 @@ spec:
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          envFrom:
-            - secretRef:
-                name: {{ include "common.names.fullname" . }}
-          {{- if .Values.egress.tls.rootCA.fileName }}
-          env:
-            - name: SSL_CERT_FILE
-              value: "/etc/ssl/certs/custom-ca.pem"
-          {{- end }}
+          {{- include "openproject.envFrom" . | nindent 10 }}
+          {{- include "openproject.env" . | nindent 10 }}
           volumeMounts:
             {{- if (include "openproject.useTmpVolumes" .) }}
             - mountPath: /tmp
