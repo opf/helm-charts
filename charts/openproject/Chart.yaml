@@ -3,7 +3,7 @@ apiVersion: v2
 name: openproject
 description: A Helm chart for running OpenProject via Kubernetes
 home: https://www.openproject.org/
-icon: https://www.openproject.org/assets/images/press/openproject-icon-original-color-41055eb6.png
+icon: https://charts.openproject.org/logo.svg
 type: application
 appVersion: '13'
 version: 3.0.2
