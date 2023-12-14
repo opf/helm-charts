@@ -10,7 +10,7 @@
 # NOT apply to ownership claim operations, which are processed immediately.
 #
 repositoryID: openproject-helm-charts
-owners: # (optional, used to claim repository ownership)
+owners:
   - name: oliverguenther
     email: o.guenther@openproject.com
   - name: machisuji
