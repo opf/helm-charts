@@ -9,7 +9,7 @@
 # when the hash of the last commit in the branch you set up changes. This does
 # NOT apply to ownership claim operations, which are processed immediately.
 #
-repositoryID: openproject-helm-charts
+repositoryID: a5a1b498-76a5-4916-a83c-d4efce35745c
 owners:
   - name: oliverguenther
     email: o.guenther@openproject.com
