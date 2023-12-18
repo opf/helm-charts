@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.0.1
+
+### Patch Changes
+
+- 7511d98: Fix whitespace generation in s3 secret
+
 ## 4.0.0
 
 ### Major Changes
