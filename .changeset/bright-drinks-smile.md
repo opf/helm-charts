@@ -1,5 +1,5 @@
 ---
-"@openproject/helm-charts": patch
+"@openproject/helm-charts": minor
 ---
 
 Added OIDC provider displayName parameter
