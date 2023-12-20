@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.1.0
+
+### Minor Changes
+
+- aa7e492: Added OIDC provider displayName parameter
+
 ## 4.0.1
 
 ### Patch Changes
