@@ -22,3 +22,15 @@ dependencies:
 - name: common
   repository: https://charts.bitnami.com/bitnami
   version: "^2.2.2"
+annotations:
+  artifacthub.io/license: GPL-3.0-only
+  artifacthub.io/links: |
+    - name: Homepage
+      url: https://www.openproject.org/
+    - name: OpenProject Community
+      url: https://community.openproject.org
+    - name: support
+      url: https://www.openproject.org/docs/development/report-a-bug/
+  artifacthub.io/signKey: |
+    fingerprint: CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+    url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
