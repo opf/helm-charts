@@ -38,8 +38,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config user.name openprojectci
+          git config user.email operations+openprojectci@openproject.com
 
       - name: Prepare GPG key
         run: |
@@ -62,7 +62,7 @@ jobs:
           title: Release Tracking
           version: npm run changeset:version
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.OPENRPOJECTCI_GH_TOKEN }}
 
       - name: Prepare for publish
         if: steps.changesets.outputs.hasChangesets == 'false'
@@ -75,7 +75,7 @@ jobs:
           config: .github/cr.yaml
           skip_existing: true
         env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"        
+          CR_TOKEN: "${{ secrets.OPENRPOJECTCI_GH_TOKEN }}"        
 
       - name: Login to GitHub Container Registry
         if: steps.changesets.outputs.hasChangesets == 'false'
@@ -83,7 +83,7 @@ jobs:
         with:
           registry: ghcr.io
           username: openprojectci
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.OPENRPOJECTCI_GH_TOKEN }}
 
       - name: Push Charts to GHCR
         if: steps.changesets.outputs.hasChangesets == 'false'
