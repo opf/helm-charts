@@ -62,9 +62,9 @@ envFrom:
   - secretRef:
       name: {{ include "common.names.fullname" . }}-environment
   {{- end }}
-  {{- if .Values.extraEnvVarsSecret }}
+  {{- if .Values.openproject.extraEnvVarsSecret }}
   - secretRef:
-      name: {{ .Values.extraEnvVarsSecret }}
+      name: {{ .Values.openproject.extraEnvVarsSecret }}
   {{- end }}
 {{- end }}
 
