@@ -275,6 +275,7 @@ openproject:
   oidc:
     enabled: false
     provider: "Keycloak"
+    displayName: "Keycloak"
     host: ""
     identifier: ""
     secret: ""
