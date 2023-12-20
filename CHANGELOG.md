@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.1.1
+
+### Patch Changes
+
+- ecd1778: Add artifacthub.io annotations
+
 ## 4.1.0
 
 ### Minor Changes
