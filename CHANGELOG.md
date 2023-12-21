@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.1.2
+
+### Patch Changes
+
+- a5b1573: Fixed extraEnvVarsSecret parameter in \_helpers.tpl
+
 ## 4.1.1
 
 ### Patch Changes
