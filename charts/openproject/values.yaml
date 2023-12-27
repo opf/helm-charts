@@ -314,7 +314,7 @@ persistence:
   accessModes:
     - "ReadWriteMany"
 
-  ## Define custom storage annotations:
+  ## Define custom storage (PVC) annotations:
   ##
   annotations: {}
 
