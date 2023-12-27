@@ -545,6 +545,11 @@ replicaCount: 1
 #
 backgroundReplicaCount: 1
 
+## Whether or not to use ephemeral volumes for /app/tmp and /tmp.
+## Falls back to a sensible default if undefined.
+#
+useTmpVolumes:
+
 ## Configure resource requests and limits.
 ##
 ## http://kubernetes.io/docs/user-guide/compute-resources/
