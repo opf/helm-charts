@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.1.3
+
+### Patch Changes
+
+- 7791166: fix pvc annotations
+
 ## 4.1.2
 
 ### Patch Changes
