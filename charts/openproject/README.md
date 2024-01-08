@@ -43,7 +43,7 @@ The namespace is optional, but we recommend it as it does make it easier to mana
 
 ## Configuration
 
-Configuration of the chart takes place through defined values, and a catch-all entry `environment` to provide all possible variables through ENV that OpenProject supports. To get more information about the possible values, please see [our guide on environment variables](../../configuration/environment/).
+Configuration of the chart takes place through defined values, and a catch-all entry `environment` to provide all possible variables through ENV that OpenProject supports. To get more information about the possible values, please see [our guide on environment variables](https://www.openproject.org/docs/installation-and-operations/configuration/environment/).
 
 
 
@@ -67,7 +67,7 @@ Regardless of the TLS mode of ingress, OpenProject needs to be told whether it's
 
 **Seed locale** (13.0+)
 
-By default, demo data and global names for types, statuses, etc. will be in English. If you wish to set a custom locale, set `openproject.seed_locale=XX`, where XX can be a two-character ISO code. For currently supported values, see the `OPENPROJECT_AVAILABLE__LANGUAGES` default value in the [environment guide](../../configuration/environment/).
+By default, demo data and global names for types, statuses, etc. will be in English. If you wish to set a custom locale, set `openproject.seed_locale=XX`, where XX can be a two-character ISO code. For currently supported values, see the `OPENPROJECT_AVAILABLE__LANGUAGES` default value in the [environment guide](https://www.openproject.org/docs/installation-and-operations/configuration/environment/).
 
 
 
@@ -91,7 +91,7 @@ openproject.admin_user.mail="admin@example.com"
 
 By default and when using filesystem-based attachments, OpenProject requires the Kubernetes cluster to support `ReadWriteMany` (rwx) volumes. This is due to the fact that multiple container instances need access to write to the attachment storage.
 
-To avoid using ReadWriteMany, you will need to configure an S3 compatible object storage instead which is shown in the [advanced configuration guide](../../configuration/#attachments-storage).
+To avoid using ReadWriteMany, you will need to configure an S3 compatible object storage instead which is shown in the [advanced configuration guide](https://www.openproject.org/docs/installation-and-operations/configuration/#attachments-storage).
 
 ```
 persistence:
@@ -118,7 +118,7 @@ For instance:
 helm upgrade --reuse-values --namespace openproject my-openproject --set environment.OPENPROJECT_IMPRESSUM__LINK=https://www.openproject.org/legal/imprint/ --set environment.OPENPROJECT_APP__TITLE='My OpenProject'
 ```
 
-Find out more about the [configuration through environment variables](https://www.openproject.org/docs/installation-and-operations/configuration/environments) section.
+Find out more about the [configuration through environment variables](https://www.openproject.org/docs/installation-and-operations/configuration/environment/) section.
 
 
 
