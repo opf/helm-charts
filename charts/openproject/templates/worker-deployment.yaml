@@ -60,6 +60,16 @@ spec:
                     # or backups
                     # @todo put this into a separate PVC per replica
                     storage: 5Gi
+        - name: app-tmp
+          # we can't use emptyDir due to the sticky bit / world writable issue
+          # see: https://github.com/kubernetes/kubernetes/issues/110835
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: 1Gi                        
         {{- end }}
         {{- if .Values.egress.tls.rootCA.fileName }}
         - name: ca-pemstore
@@ -92,10 +102,7 @@ spec:
             - bash
             - /app/docker/prod/worker
           volumeMounts:
-            {{- if (include "openproject.useTmpVolumes" .) }}
-            - mountPath: /tmp
-              name: tmp
-            {{- end }}
+            {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"

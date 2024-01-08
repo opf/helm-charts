@@ -42,6 +42,40 @@ securityContext:
 {{- end -}}
 {{- end -}}
 
+{{- define "openproject.tmpVolumeMounts" -}}
+{{- if (include "openproject.useTmpVolumes" .) }}
+- mountPath: /tmp
+  name: tmp
+- mountPath: /app/tmp
+  name: app-tmp
+{{- end }}
+{{- end -}}
+
+{{- define "openproject.tmpVolume1G" -}}
+{{- if (include "openproject.useTmpVolumes" .) }}
+- name: tmp
+  # we can't use emptyDir due to the sticky bit issue
+  # see: https://github.com/kubernetes/kubernetes/issues/110835
+  ephemeral:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+- name: app-tmp
+  # we can't use emptyDir due to the sticky bit / world writable issue
+  # see: https://github.com/kubernetes/kubernetes/issues/110835
+  ephemeral:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi       
+{{- end }}
+{{- end -}}
+
 {{- define "openproject.envFrom" -}}
 envFrom:
   - secretRef:
