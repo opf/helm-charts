@@ -335,8 +335,18 @@ s3:
   enabled: false
 
   auth:
+    # Provide the accessKeyId and secret in plain values
+    # We recommend to use the existingSecret option instead
     accessKeyId:
+    secretAccessKey:
+
+    ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
+    ## use an existing secret containing the PostgreSQL credentials.
+    ## Specify the name of this existing secret here.
+    #
     existingSecret:
+
+    ## In case your secret does not use the default keys in the secret, you can adjust them here.
     secretKeys:
       accessKeyId: "accessKeyId"
       secretAccessKey: "secretAccessKey"
