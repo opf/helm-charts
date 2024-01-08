@@ -1,5 +1,24 @@
 # @openproject/helm-charts
 
+## 4.1.4
+
+### Patch Changes
+
+- b3f06d1: Fix templating error when empty s3 existingSecret name is given
+- 87f9dc4: Fix S3 secret lookup
+
+  There were two problems:
+
+  1. The namespace was hardcoded
+  2. The whitespace trimming was breaking the yaml
+
+  Now the lookup will be based on the namespace where the
+  release is being deployed, and the whitespace trimming
+  has been fixed.
+
+- aa80a44: Correct attribute mapping environment name for OIDC
+- e63389c: Allow controlling whether tmp volumes are used or not
+
 ## 4.1.3
 
 ### Patch Changes
