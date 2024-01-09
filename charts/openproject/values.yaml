@@ -365,6 +365,7 @@ s3:
   ## Remove or leave empty to use default AWS S3 endpoint
   #
   endpoint:
+  host:
   pathStyle: false
   signatureVersion: 4
   use_iam_profile: false
