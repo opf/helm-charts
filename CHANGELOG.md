@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.2.0
+
+### Minor Changes
+
+- ab8b83d: Fix tmp volume mounts not being consistent
+
 ## 4.1.4
 
 ### Patch Changes
