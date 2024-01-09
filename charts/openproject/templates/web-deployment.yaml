@@ -46,7 +46,7 @@ spec:
       {{- include "openproject.podSecurityContext" . | indent 6 }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
-        {{- include "openproject.tmpVolume1G" . | indent 8 }}
+        {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
         {{- if .Values.egress.tls.rootCA.fileName }}
         - name: ca-pemstore
           configMap:

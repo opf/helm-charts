@@ -52,7 +52,7 @@ securityContext:
 {{- end }}
 {{- end -}}
 
-{{- define "openproject.tmpVolume1G" -}}
+{{- define "openproject.tmpVolumeSpec" -}}
 {{- if (include "openproject.useTmpVolumes" .) }}
 - name: tmp
   # we can't use emptyDir due to the sticky bit issue
@@ -63,7 +63,7 @@ securityContext:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 1Gi
+            storage: {{ .Values.openproject.tmpVolumesStorage }}
 - name: app-tmp
   # we can't use emptyDir due to the sticky bit / world writable issue
   # see: https://github.com/kubernetes/kubernetes/issues/110835
@@ -73,7 +73,7 @@ securityContext:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 1Gi       
+            storage: {{ .Values.openproject.tmpVolumesStorage }}
 {{- end }}
 {{- end -}}
 
