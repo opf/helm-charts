@@ -37,7 +37,8 @@ securityContext:
 {{- end }}
 
 {{- define "openproject.useTmpVolumes" -}}
-{{- if (default .Values.useTmpVolumes (not .Values.develop)) -}}
+{{- $useTmpVolumes := .Values.openproject.useTmpVolumes | toString | lower }}
+{{- if and (not (eq $useTmpVolumes "false")) (not .Values.develop) -}}
   {{- true -}}
 {{- end -}}
 {{- end -}}
