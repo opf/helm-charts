@@ -36,15 +36,17 @@ securityContext:
 {{- end }}
 {{- end }}
 
+
 {{- define "openproject.useTmpVolumes" -}}
-{{- $useTmpVolumes := .Values.openproject.useTmpVolumes | toString | lower }}
-{{- if and (not (eq $useTmpVolumes "false")) (not .Values.develop) -}}
-  {{- true -}}
+{{- if ne .Values.openproject.useTmpVolumes nil -}}
+  {{- .Values.openproject.useTmpVolumes -}}
+{{- else -}}
+  {{- (not .Values.develop) -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "openproject.tmpVolumeMounts" -}}
-{{- if (include "openproject.useTmpVolumes" .) }}
+{{- if eq (include "openproject.useTmpVolumes" .) "true" }}
 - mountPath: /tmp
   name: tmp
 - mountPath: /app/tmp
@@ -53,7 +55,7 @@ securityContext:
 {{- end -}}
 
 {{- define "openproject.tmpVolumeSpec" -}}
-{{- if (include "openproject.useTmpVolumes" .) }}
+{{- if eq (include "openproject.useTmpVolumes" .) "true" }}
 - name: tmp
   # we can't use emptyDir due to the sticky bit issue
   # see: https://github.com/kubernetes/kubernetes/issues/110835
