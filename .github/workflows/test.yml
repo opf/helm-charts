@@ -1,0 +1,28 @@
+name: Run RSpec tests
+on:
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+
+jobs:
+  run-rspec-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.0
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          # runs 'bundle install' and caches installed gems automatically
+          bundler-cache: true
+
+      - name: Prepare environment
+        run: cd charts/openproject && helm dependency update
+
+      - name: Run tests
+        run: bundle exec rspec

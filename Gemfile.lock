@@ -1,0 +1,76 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (7.1.2)
+      base64
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      connection_pool (>= 2.2.5)
+      drb
+      i18n (>= 1.6, < 2)
+      minitest (>= 5.1)
+      mutex_m
+      tzinfo (~> 2.0)
+    base64 (0.2.0)
+    bigdecimal (3.1.4)
+    concurrent-ruby (1.2.2)
+    connection_pool (2.4.1)
+    debug (1.9.0)
+      irb (~> 1.10)
+      reline (>= 0.3.8)
+    diff-lcs (1.5.0)
+    drb (2.2.0)
+      ruby2_keywords
+    et-orbi (1.2.7)
+      tzinfo
+    fugit (1.9.0)
+      et-orbi (~> 1, >= 1.2.7)
+      raabro (~> 1.4)
+    hash-deep-merge (0.1.1)
+    i18n (1.14.1)
+      concurrent-ruby (~> 1.0)
+    io-console (0.6.0)
+    irb (1.10.1)
+      rdoc
+      reline (>= 0.3.8)
+    minitest (5.20.0)
+    mutex_m (0.2.0)
+    psych (5.1.1.1)
+      stringio
+    raabro (1.4.0)
+    rdoc (6.6.1)
+      psych (>= 4.0.0)
+    reline (0.4.1)
+      io-console (~> 0.5)
+    rspec (3.12.0)
+      rspec-core (~> 3.12.0)
+      rspec-expectations (~> 3.12.0)
+      rspec-mocks (~> 3.12.0)
+    rspec-core (3.12.2)
+      rspec-support (~> 3.12.0)
+    rspec-expectations (3.12.3)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.12.0)
+    rspec-mocks (3.12.6)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.12.0)
+    rspec-support (3.12.1)
+    ruby2_keywords (0.0.5)
+    stringio (3.1.0)
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
+
+PLATFORMS
+  arm64-darwin-22
+  arm64-darwin-23
+  x86_64-linux
+
+DEPENDENCIES
+  activesupport
+  debug
+  fugit
+  hash-deep-merge
+  rspec
+
+BUNDLED WITH
+   2.5.5
