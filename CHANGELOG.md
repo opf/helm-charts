@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.2.1
+
+### Patch Changes
+
+- 8456845: Allow seting existing secret for s3 id and key
+
 ## 4.2.0
 
 ### Minor Changes
