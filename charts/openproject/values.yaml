@@ -294,6 +294,14 @@ openproject:
   #
   postgresStatementTimeout: 120s
 
+  ## Whether or not to use ephemeral volumes for /app/tmp and /tmp.
+  ## Falls back to a sensible default if undefined.
+  #
+  useTmpVolumes:
+
+  ## customize the tmp storage mount sizes
+  tmpVolumesStorage: "5Gi"
+
 ## Whether to allocate persistent volume disk for the data directory.
 ## In case of node failure, the node data directory will still persist.
 ##
@@ -554,11 +562,6 @@ replicaCount: 1
 ## Number of OpenProject background worker process replicas.
 #
 backgroundReplicaCount: 1
-
-## Whether or not to use ephemeral volumes for /app/tmp and /tmp.
-## Falls back to a sensible default if undefined.
-#
-useTmpVolumes:
 
 ## Configure resource requests and limits.
 ##

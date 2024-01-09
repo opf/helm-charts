@@ -26,18 +26,7 @@ spec:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
       volumes:
-        {{- if (include "openproject.useTmpVolumes" .) }}
-        - name: tmp
-          # we can't use emptyDir due to the sticky bit issue
-          # see: https://github.com/kubernetes/kubernetes/issues/110835
-          ephemeral:
-            volumeClaimTemplate:
-              spec:
-                accessModes: ["ReadWriteOnce"]
-                resources:
-                  requests:
-                    storage: 1Gi
-        {{- end }}
+        {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
         {{- if .Values.persistence.enabled }}
         - name: "data"
           persistentVolumeClaim:
@@ -67,10 +56,7 @@ spec:
           {{- include "openproject.envFrom" . | nindent 10 }}
           {{- include "openproject.env" . | nindent 10 }}
           volumeMounts:
-            {{- if (include "openproject.useTmpVolumes" .) }}
-            - mountPath: /tmp
-              name: tmp
-            {{- end }}
+            {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"

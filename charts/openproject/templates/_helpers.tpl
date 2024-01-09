@@ -36,10 +36,47 @@ securityContext:
 {{- end }}
 {{- end }}
 
+
 {{- define "openproject.useTmpVolumes" -}}
-{{- if (default .Values.useTmpVolumes (not .Values.develop)) -}}
-  {{- true -}}
+{{- if ne .Values.openproject.useTmpVolumes nil -}}
+  {{- .Values.openproject.useTmpVolumes -}}
+{{- else -}}
+  {{- (not .Values.develop) -}}
 {{- end -}}
+{{- end -}}
+
+{{- define "openproject.tmpVolumeMounts" -}}
+{{- if eq (include "openproject.useTmpVolumes" .) "true" }}
+- mountPath: /tmp
+  name: tmp
+- mountPath: /app/tmp
+  name: app-tmp
+{{- end }}
+{{- end -}}
+
+{{- define "openproject.tmpVolumeSpec" -}}
+{{- if eq (include "openproject.useTmpVolumes" .) "true" }}
+- name: tmp
+  # we can't use emptyDir due to the sticky bit issue
+  # see: https://github.com/kubernetes/kubernetes/issues/110835
+  ephemeral:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.openproject.tmpVolumesStorage }}
+- name: app-tmp
+  # we can't use emptyDir due to the sticky bit / world writable issue
+  # see: https://github.com/kubernetes/kubernetes/issues/110835
+  ephemeral:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.openproject.tmpVolumesStorage }}
+{{- end }}
 {{- end -}}
 
 {{- define "openproject.envFrom" -}}

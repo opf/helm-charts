@@ -46,21 +46,7 @@ spec:
       {{- include "openproject.podSecurityContext" . | indent 6 }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
-        {{- if (include "openproject.useTmpVolumes" .) }}
-        - name: tmp
-          # we can't use emptyDir due to the sticky bit issue
-          # see: https://github.com/kubernetes/kubernetes/issues/110835
-          ephemeral:
-            volumeClaimTemplate:
-              spec:
-                accessModes: ["ReadWriteOnce"]
-                resources:
-                  requests:
-                    # the worker may need a lot of memory in case of big exports
-                    # or backups
-                    # @todo put this into a separate PVC per replica
-                    storage: 5Gi
-        {{- end }}
+        {{- include "openproject.tmpVolumeSpec" . | indent 8 }}                     
         {{- if .Values.egress.tls.rootCA.fileName }}
         - name: ca-pemstore
           configMap:
@@ -92,10 +78,7 @@ spec:
             - bash
             - /app/docker/prod/worker
           volumeMounts:
-            {{- if (include "openproject.useTmpVolumes" .) }}
-            - mountPath: /tmp
-              name: tmp
-            {{- end }}
+            {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"
