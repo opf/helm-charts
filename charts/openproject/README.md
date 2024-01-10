@@ -225,6 +225,82 @@ To make OpenProject use this CA for outgoing TLS connection, set the following o
   --set egress.tls.rootCA.fileName=rootCA.pem
 ```
 
+## Secrets
+
+There are various sensitive credentials used by the chart.
+While they can be provided directly in the values (e.g. `--set postgresql.auth.password`),
+it is recommended to store them in secrets instead.
+
+You can create a new secret like this:
+
+```
+kubectl -n openproject create secret generic <name>
+```
+
+You can then edit the secret to add the credentials via the following.
+
+```
+kubectl -n openproject edit secret <name>
+```
+
+The newly created secret will look something like this:
+
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  creationTimestamp: "2024-01-10T09:36:09Z"
+  name: <name>
+  namespace: openproject
+  resourceVersion: "1074377"
+  uid: ff6538cd-f8cb-418f-8cee-bd1e20d96d24
+type: Opaque
+```
+
+To add the actual content, you can simply add `stringData:` to the end of it and save it.
+
+The keys which are looked up inside the secret data can be changed from their defaults in the values as well. This is the same in all cases where next to `existingSecret` you can also set `secretKeys`.
+
+In the following sections we give examples for what this may look like using the default keys for the credentials used by OpenProject.
+
+### PostgreSQL
+
+```yaml
+stringData:
+  postgres-password: postgresPassword
+  password: userPassword
+```
+
+If you have an existing secret where the keys are not `postgres-password` and `password`, you can customize the used keys as mentioned above.
+
+For instance:
+
+```bash
+helm upgrade --create-namespace --namespace openproject --install openproject \
+  --set postgresql.auth.existingSecret=mysecret \
+  --set postgresql.auth.secretKeys.adminPasswordKey=adminpw \
+  --set postgresql.auth.secretKeys.userPasswordKey=userpw
+```
+
+This can be customized for the the credentials in the following sections too in the same fashion.
+You can look up the respective options in the [`values.yaml`](./values.yaml) file.
+
+### OIDC (OpenID Connect)
+
+```yaml
+stringData:
+  clientId: 7c6cc104-1d07-4a9f-b3fb-017da8577cec
+  clientSecret: Sf78Q~H14O7F2_EOS4NsLoxu-ayOm42i~MljMb44
+```
+
+### S3
+
+```yaml
+stringData:
+  accessKeyId: AKIAXDF2JNZRBFQIRTKA
+  secretAccessKey: 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
+```
+
 ## OpenShift
 
 For OpenProject to work in OpenShift without further adjustments,
