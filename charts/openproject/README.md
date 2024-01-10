@@ -13,7 +13,7 @@ This is the chart for OpenProject itself. It bootstraps an OpenProject instance,
 
 We sign our chart using the [Helm Provenance and Integrity](https://helm.sh/docs/topics/provenance/) functionality. You can find the used public key here
 
-- https://github.com/opf/helm-charts/blob/main/signing.key 
+- https://github.com/opf/helm-charts/blob/main/signing.key
 - https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
 
 We recommend using the [Helm GnuPG plugin](https://github.com/technosophos/helm-gpg). With it you can manually verify the signature like this:
@@ -157,56 +157,6 @@ Either increase the cluster's resources to have at least 4 CPUs or install the O
 --set resources.limits.cpu=2
 ```
 
-
-
-## OpenShift
-
-For OpenProject to work in OpenShift without further adjustments,
-you need to use the following pod security context.
-
-```
-podSecurityContext:
-  supplementalGroups: [1000]
-  fsGroup: null
-```
-
-By default OpenProject requests `fsGroup: 1000` in the pod security context.
-This is not allowed by default. You have to allow it using
-a custom SCC (Security Context Constraint) in the cluster.
-
-The use of `supplementalGroups` is not necessary if you request the correct UID in the security context.
-
-```
-securityContext:
-  runAsUser: 1000
-  runAsGroup: 1000
-```
-
-But this will not be allowed by default either. So the easiest way is the use of the `podSecurityContext` shown above.
-
-Due to the default restrictions in OpenShift there may also be issues running
-PostgreSQL and memcached. Again, you may have to create an SCC to fix this
-or adjust the policies in the subcharts accordingly.
-
-Assuming no further options for both, simply disabling the security context values to use the default works as well.
-
-```
-postgresql:
-  primary:
-    containerSecurityContext:
-      enabled: false
-    podSecurityContext:
-      enabled: false
-
-memcached:
-  containerSecurityContext:
-    enabled: false
-  podSecurityContext:
-    enabled: false
-```
-
-
-
 ## Development
 
 To install or update from this directory run the following command.
@@ -273,4 +223,50 @@ To make OpenProject use this CA for outgoing TLS connection, set the following o
 ```
   --set egress.tls.rootCA.configMap=ca-pemstore \
   --set egress.tls.rootCA.fileName=rootCA.pem
+```
+
+## OpenShift
+
+For OpenProject to work in OpenShift without further adjustments,
+you need to use the following pod security context.
+
+```
+podSecurityContext:
+  supplementalGroups: [1000]
+  fsGroup: null
+```
+
+By default OpenProject requests `fsGroup: 1000` in the pod security context.
+This is not allowed by default. You have to allow it using
+a custom SCC (Security Context Constraint) in the cluster.
+
+The use of `supplementalGroups` is not necessary if you request the correct UID in the security context.
+
+```
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+```
+
+But this will not be allowed by default either. So the easiest way is the use of the `podSecurityContext` shown above.
+
+Due to the default restrictions in OpenShift there may also be issues running
+PostgreSQL and memcached. Again, you may have to create an SCC to fix this
+or adjust the policies in the subcharts accordingly.
+
+Assuming no further options for both, simply disabling the security context values to use the default works as well.
+
+```
+postgresql:
+  primary:
+    containerSecurityContext:
+      enabled: false
+    podSecurityContext:
+      enabled: false
+
+memcached:
+  containerSecurityContext:
+    enabled: false
+  podSecurityContext:
+    enabled: false
 ```
