@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 4.3.0
+
+### Minor Changes
+
+- 8e9c8e1: Feature: OIDC client id secret and docs
+- 1f2594c: Add existingSecret for OIDC
+
 ## 4.2.1
 
 ### Patch Changes
