@@ -284,8 +284,19 @@ openproject:
     userinfoEndpoint: ""
     endSessionEndpoint: ""
     scope: "[openid]"
+
     # Optional attribute mappings from the id token
     attribute_map: {}
+
+
+    ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
+    ## use an existing secret containing the OIDC compatible access credentials.
+    ## Specify the name of this existing secret here.
+    existingSecret:
+
+    ## In case your secret does not use the default keys in the secret, you can adjust them here.
+    secretKeys:
+      secret: "oidcSecret"
 
   ## Modify PostgreSQL statement timout.
   ## Increase in case you get errors such as "ERROR: canceling statement due to statement timeout".
@@ -349,9 +360,8 @@ s3:
     secretAccessKey:
 
     ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
-    ## use an existing secret containing the PostgreSQL credentials.
+    ## use an existing secret containing the S3 compatible access credentials.
     ## Specify the name of this existing secret here.
-    #
     existingSecret:
 
     ## In case your secret does not use the default keys in the secret, you can adjust them here.
