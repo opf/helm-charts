@@ -304,27 +304,21 @@ stringData:
 ## OpenShift
 
 For OpenProject to work in OpenShift without further adjustments,
-you need to use the following pod security context.
+you need to use the following pod and container security context.
 
 ```
 podSecurityContext:
   supplementalGroups: [1000]
   fsGroup: null
+
+containerSecurityContext:
+  runAsUser: null
+  runAsGroup: null
 ```
 
-By default OpenProject requests `fsGroup: 1000` in the pod security context.
-This is not allowed by default. You have to allow it using
-a custom SCC (Security Context Constraint) in the cluster.
-
-The use of `supplementalGroups` is not necessary if you request the correct UID in the security context.
-
-```
-securityContext:
-  runAsUser: 1000
-  runAsGroup: 1000
-```
-
-But this will not be allowed by default either. So the easiest way is the use of the `podSecurityContext` shown above.
+By default OpenProject requests `fsGroup: 1000` in the pod security context, and also `1000` for both `runAsUser` and `runAsGroup` in the container security context.
+You have to allow this using a custom SCC (Security Context Constraint) in the cluster. In this case you do not have to adjust the security contexts.
+But the easiest way is the use of the security contexts as shown above.
 
 Due to the default restrictions in OpenShift there may also be issues running
 PostgreSQL and memcached. Again, you may have to create an SCC to fix this
