@@ -57,6 +57,8 @@ We try to map the most common options to chart values directly for ease of use. 
 
 By default, the helm chart will target the latest stable major release. You can define a custom [supported docker tag](https://hub.docker.com/r/openproject/community/) using `image.tag`. Override container registry and repository using `image.registry` and `image.repository`, respectively.
 
+Please make sure to use the `-slim` variant of OpenProject, as the all-in-one container is adding unnecessary services and will not work as expected with default options such as operating as a non-root user.
+
 
 
 **HTTPS mode**
