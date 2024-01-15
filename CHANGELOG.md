@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.3.1
+
+### Patch Changes
+
+- c9585aa: Add image PullSecrets to seeder job if configured
+
 ## 4.3.0
 
 ### Minor Changes
