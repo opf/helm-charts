@@ -20,12 +20,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
-      imagePullSecrets:
-        {{- range (coalesce .Values.imagePullSecrets .Values.global.imagePullSecrets) }}
-        - name: "{{ . }}"
-        {{- end }}
-      {{- end }}
+      {{- include "openproject.imagePullSecrets" . | indent 6 }}
       {{- include "openproject.podSecurityContext" . | indent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
