@@ -25,12 +25,7 @@ spec:
         {{- include "common.labels.standard" . | nindent 8 }}
         openproject/process: web
     spec:
-      {{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
-      imagePullSecrets:
-        {{- range (coalesce .Values.imagePullSecrets .Values.global.imagePullSecrets) }}
-        - name: "{{ . }}"
-        {{- end }}
-      {{- end }}
+      {{- include "openproject.imagePullSecrets" . | indent 6 }}
       {{- with .Values.affinity }}
       affinity:
         {{ toYaml . | nindent 8 | trim }}

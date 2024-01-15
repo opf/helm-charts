@@ -6,6 +6,18 @@ Returns the OpenProject image to be used including the respective registry and i
 {{- end -}}
 
 {{/*
+Returns the OpenProject image pull secrets, if any are defined
+*/}}
+{{- define "openproject.imagePullSecrets" -}}
+{{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
+imagePullSecrets:
+  {{- range (coalesce .Values.imagePullSecrets .Values.global.imagePullSecrets) }}
+  - name: "{{ . }}"
+  {{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Yields the configured container security context if enabled.
 
 Allows writing to the container file system in development mode
