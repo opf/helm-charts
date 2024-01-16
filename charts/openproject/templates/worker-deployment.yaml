@@ -9,7 +9,7 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
     openproject/process: worker-{{ $workerName }}
 spec:
-  replicas: {{ coalesce $workerValues.replicas .Values.backgroundReplicaCount }}
+  replicas: {{ if not (kindIs "invalid" $workerValues.replicaCount) }}{{ $workerValues.replicaCount }}{{ else }}{{ .Values.backgroundReplicaCount }}{{ end }}
   strategy:
     {{ coalesce $workerValues.strategy .Values.strategy | toYaml | nindent 4 }}
   selector:
