@@ -133,7 +133,11 @@ env:
   - name: OPENPROJECT_DB_PASSWORD
     value: {{ .Values.postgresql.auth.password }}
   {{- else }}
-  # {{ required "Database password is required. Please set postgresql.auth.existingSecret (recommended) or postgresql.auth.password" "" }}
+  - name: OPENPROJECT_DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
+        key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
   {{- end }}
 {{- end }}
 

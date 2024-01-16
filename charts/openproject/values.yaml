@@ -461,9 +461,14 @@ postgresql:
   ## Database auth details.
   #
   auth:
-    ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
-    ## use an existing secret containing the PostgreSQL credentials.
+    ## To avoid having sensitive credentials in your values.yaml, the preferred way to provide a password
+    ## is to use an existing secret containing the PostgreSQL credentials.
     ## Specify the name of this existing secret here.
+    ##
+    ## If neither an existing secret nor a password are given, a secret is generated automatically.
+    ##
+    ## The postgresql chart will create this secret (the name of which ends with `-postgresql` by default)
+    ## with generated user and admin passwords.
     #
     existingSecret: ""
 
