@@ -465,10 +465,15 @@ postgresql:
     ## is to use an existing secret containing the PostgreSQL credentials.
     ## Specify the name of this existing secret here.
     ##
-    ## If neither an existing secret nor a password are given, a secret is generated automatically.
+    ## If neither an existing secret nor passwords are defined, a secret is generated automatically.
     ##
     ## The postgresql chart will create this secret (the name of which ends with `-postgresql` by default)
     ## with generated user and admin passwords.
+    ## If you want to see the base64 encoded passwords you can output the secret like this:
+    ##
+    ## ```
+    ## kubectl get secret -n <namespace> openproject-postgresql -o yaml | grep password
+    ## ```
     #
     existingSecret: ""
 
