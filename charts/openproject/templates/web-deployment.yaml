@@ -58,7 +58,8 @@ spec:
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           {{- include "openproject.envFrom" . | nindent 10 }}
-          {{- include "openproject.env" . | nindent 10 }}
+          env:
+            {{- include "openproject.env" . | nindent 12 }}
           command:
             - bash
             - /app/docker/prod/wait-for-db
@@ -68,7 +69,8 @@ spec:
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           {{- include "openproject.envFrom" . | nindent 10 }}
-          {{- include "openproject.env" . | nindent 10 }}
+          env:
+            {{- include "openproject.env" . | nindent 12 }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}

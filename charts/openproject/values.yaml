@@ -235,6 +235,21 @@ strategy:
   ## to `RollingUpdate`.
   type: "Recreate"
 
+# Define the workers to run, their queues, replicas, strategy, and resources
+workers:
+  default:
+    queues: ""
+    replicas: 1
+    strategy:
+      type: "Recreate"
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "4Gi"
+        cpu: "4"
+
 ## OpenProject related settings.
 ##
 ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/environment/#supported-environment-variables

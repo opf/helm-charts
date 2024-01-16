@@ -122,27 +122,26 @@ envFrom:
 {{- end }}
 
 {{- define "openproject.env" -}}
-env:
-  {{- if .Values.egress.tls.rootCA.fileName }}
-  - name: SSL_CERT_FILE
-    value: "/etc/ssl/certs/custom-ca.pem"
-  {{- end }}
-  {{- if .Values.postgresql.auth.existingSecret }}
-  - name: OPENPROJECT_DB_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: {{ .Values.postgresql.auth.existingSecret }}
-        key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
-  {{- else if .Values.postgresql.auth.password }}
-  - name: OPENPROJECT_DB_PASSWORD
-    value: {{ .Values.postgresql.auth.password }}
-  {{- else }}
-  - name: OPENPROJECT_DB_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
-        key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
-  {{- end }}
+{{- if .Values.egress.tls.rootCA.fileName }}
+- name: SSL_CERT_FILE
+  value: "/etc/ssl/certs/custom-ca.pem"
+{{- end }}
+{{- if .Values.postgresql.auth.existingSecret }}
+- name: OPENPROJECT_DB_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.postgresql.auth.existingSecret }}
+      key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- else if .Values.postgresql.auth.password }}
+- name: OPENPROJECT_DB_PASSWORD
+  value: {{ .Values.postgresql.auth.password }}
+{{- else }}
+- name: OPENPROJECT_DB_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
+      key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- end }}
 {{- end }}
 
 {{- define "openproject.envChecksums" }}
