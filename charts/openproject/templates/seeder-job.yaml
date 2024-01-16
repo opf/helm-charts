@@ -42,7 +42,8 @@ spec:
             '-c',
             'until pg_isready -h $DATABASE_HOST -p $DATABASE_PORT -U {{ .Values.postgresql.auth.username }}; do echo "waiting for database $DATABASE_HOST:$DATABASE_PORT"; sleep 2; done;'
           ]
-          {{- include "openproject.envFrom" . | nindent 10 }}
+          envFrom:
+            {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
           resources:
@@ -55,7 +56,8 @@ spec:
           args:
             - bash
             - /app/docker/prod/seeder
-          {{- include "openproject.envFrom" . | nindent 10 }}
+          envFrom:
+            {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
           volumeMounts:

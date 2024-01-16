@@ -57,7 +57,8 @@ spec:
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          {{- include "openproject.envFrom" . | nindent 10 }}
+          envFrom:
+            {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
           command:
@@ -68,7 +69,8 @@ spec:
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          {{- include "openproject.envFrom" . | nindent 10 }}
+          envFrom:
+            {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
           volumeMounts:

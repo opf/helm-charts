@@ -92,33 +92,32 @@ securityContext:
 {{- end -}}
 
 {{- define "openproject.envFrom" -}}
-envFrom:
-  - secretRef:
-      name: {{ include "common.names.fullname" . }}-core
-  {{- if .Values.openproject.oidc.enabled }}
-  - secretRef:
-      name: {{ include "common.names.fullname" . }}-oidc
-  {{- end }}
-  {{- if .Values.s3.enabled }}
-  - secretRef:
-      name: {{ include "common.names.fullname" . }}-s3
-  {{- end }}
-  {{- if eq .Values.openproject.cache.store "memcache" }}
-  - secretRef:
-      name: {{ include "common.names.fullname" . }}-memcached
-  {{- end }}
-  {{- if .Values.environment }}
-  - secretRef:
-      name: {{ include "common.names.fullname" . }}-environment
-  {{- end }}
-  {{- if .Values.openproject.extraEnvVarsSecret }}
-  - secretRef:
-      name: {{ .Values.openproject.extraEnvVarsSecret }}
-  {{- end }}
-  {{- if .Values.openproject.oidc.extraOidcSealedSecret }}
-  - secretRef:
-      name: {{ .Values.openproject.oidc.extraOidcSealedSecret }}
-  {{- end }}
+- secretRef:
+    name: {{ include "common.names.fullname" . }}-core
+{{- if .Values.openproject.oidc.enabled }}
+- secretRef:
+    name: {{ include "common.names.fullname" . }}-oidc
+{{- end }}
+{{- if .Values.s3.enabled }}
+- secretRef:
+    name: {{ include "common.names.fullname" . }}-s3
+{{- end }}
+{{- if eq .Values.openproject.cache.store "memcache" }}
+- secretRef:
+    name: {{ include "common.names.fullname" . }}-memcached
+{{- end }}
+{{- if .Values.environment }}
+- secretRef:
+    name: {{ include "common.names.fullname" . }}-environment
+{{- end }}
+{{- if .Values.openproject.extraEnvVarsSecret }}
+- secretRef:
+    name: {{ .Values.openproject.extraEnvVarsSecret }}
+{{- end }}
+{{- if .Values.openproject.oidc.extraOidcSealedSecret }}
+- secretRef:
+    name: {{ .Values.openproject.oidc.extraOidcSealedSecret }}
+{{- end }}
 {{- end }}
 
 {{- define "openproject.env" -}}
