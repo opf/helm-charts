@@ -287,6 +287,18 @@ helm upgrade --create-namespace --namespace openproject --install openproject \
 This can be customized for the the credentials in the following sections too in the same fashion.
 You can look up the respective options in the [`values.yaml`](./values.yaml) file.
 
+#### Default passwords
+
+If you provide neither an existing secret nor passwords directly in the `values.yaml` file,
+the postgres chart will generate a secret automatically.
+
+This secret will contain both the user and admin passwords.
+You can print the base64 encoded passwords as follows.
+
+```
+kubectl get secret -n <namespace> openproject-postgresql -o yaml | grep password
+```
+
 ### OIDC (OpenID Connect)
 
 ```yaml
