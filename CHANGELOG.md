@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.4.0
+
+### Minor Changes
+
+- 08a7935: do not require a postgresql password anymore, allowing for automatically genererated credentials by default
+
 ## 4.3.1
 
 ### Patch Changes
