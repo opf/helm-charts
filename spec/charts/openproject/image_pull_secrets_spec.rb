@@ -5,7 +5,7 @@ describe 'imagePullSecrets configuration' do
   let(:template) { HelmTemplate.new(default_values) }
 
   let(:definitions) {
-    %w[Deployment/optest-openproject-web Deployment/optest-openproject-worker]
+    %w[Deployment/optest-openproject-web Deployment/optest-openproject-worker-default]
   }
 
   context 'when setting global imagePullSecrets' do
