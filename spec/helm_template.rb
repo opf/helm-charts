@@ -161,6 +161,12 @@ class HelmTemplate
       &.find { |env| env['secretRef']['name'] == secret_name }
   end
 
+  def env_named(item, container_name, key, init = false)
+    find_container(item, container_name, init)
+      .dig('env')
+      .detect { |hash| hash['name'] == key}
+  end
+
   def projected_volume_sources(item,volume_name)
     find_volume(item,volume_name)
       &.dig('projected','sources')

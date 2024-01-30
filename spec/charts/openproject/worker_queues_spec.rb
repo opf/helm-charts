@@ -4,36 +4,57 @@ require 'spec_helper'
 describe 'imagePullSecrets configuration' do
   let(:template) { HelmTemplate.new(default_values) }
 
-  let(:definitions) {
-    %w[Deployment/optest-openproject-web Deployment/optest-openproject-worker-default]
-  }
-
-  context 'when setting global imagePullSecrets' do
+  context 'when setting custom workers' do
     let(:default_values) do
       HelmTemplate.with_defaults(<<~YAML
-        global:
-          imagePullSecrets:
-            - mysecret
-      YAML
+        workers:
+          default:
+            queues: ""
+            replicaCount: 1
+            strategy:
+              type: "Recreate"
+          multitenancy:
+            queues: "multitenancy"
+            replicaCount: 1
+            strategy:
+              type: "Recreate"
+          bim:
+            queues: "bim,ifc_conversion"
+            replicaCount: 0
+            strategy:
+              type: "Recreate"
+              YAML
       )
     end
 
-    it 'Populates annotations for all deployments', :aggregate_failures do
-      definitions.each do |name|
-        expect(template.template_spec(name)['imagePullSecrets']).to eq([{ 'name' => 'mysecret' }])
-      end
+    it 'Creates the different worker deployments', :aggregate_failures do
+      expect(template.keys).to include 'Deployment/optest-openproject-worker-default'
+      expect(template.dig('Deployment/optest-openproject-worker-default', 'spec', 'replicas'))
+        .to eq(1)
+      expect(template.env('Deployment/optest-openproject-worker-default', 'openproject', 'QUEUE'))
+        .to be_nil
+
+      expect(template.keys).to include 'Deployment/optest-openproject-worker-multitenancy'
+      expect(template.dig('Deployment/optest-openproject-worker-multitenancy', 'spec', 'replicas'))
+        .to eq(1)
+      expect(template.env_named('Deployment/optest-openproject-worker-multitenancy', 'openproject', 'QUEUE')['value'])
+        .to eq('multitenancy')
+
+      expect(template.keys).to include 'Deployment/optest-openproject-worker-bim'
+      expect(template.dig('Deployment/optest-openproject-worker-bim', 'spec', 'replicas'))
+        .to eq(0)
+      expect(template.env_named('Deployment/optest-openproject-worker-bim', 'openproject', 'QUEUE')['value'])
+        .to eq('bim,ifc_conversion')
     end
   end
 
-  context 'when setting no imagePullSecrets' do
+  context 'when setting no workers' do
     let(:default_values) do
       {}
     end
 
-    it 'Populates annotations for all deployments', :aggregate_failures do
-      definitions.each do |name|
-        expect(template.template_spec(name)['imagePullSecrets']).to be_nil
-      end
+    it 'Creates the default worker', :aggregate_failures do
+      expect(template.keys).to include 'Deployment/optest-openproject-worker-default'
     end
   end
 end
