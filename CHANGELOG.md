@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 4.5.0
+
+### Minor Changes
+
+- b224135: Allow sealed secrets for OIDC secrets
+
 ## 4.4.0
 
 ### Minor Changes
