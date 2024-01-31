@@ -301,6 +301,13 @@ openproject:
       identifier: "clientId"
       secret: "clientSecret"
 
+    # Allows usage of sealed-secret for `identifier` and `secret` values.
+    # Special use case for use in setups where heml template `lookup` function is not available.
+    # Ref: https://github.com/argoproj/argo-cd/issues/5202
+    #
+    # extraOidcSealedSecret:
+    #
+
   ## Modify PostgreSQL statement timout.
   ## Increase in case you get errors such as "ERROR: canceling statement due to statement timeout".
   ##
