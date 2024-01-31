@@ -115,6 +115,10 @@ envFrom:
   - secretRef:
       name: {{ .Values.openproject.extraEnvVarsSecret }}
   {{- end }}
+  {{- if .Values.openproject.oidc.extraOidcSealedSecret }}
+  - secretRef:
+      name: {{ .Values.openproject.oidc.extraOidcSealedSecret }}
+  {{- end }}
 {{- end }}
 
 {{- define "openproject.env" -}}
