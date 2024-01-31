@@ -307,6 +307,16 @@ stringData:
   clientSecret: Sf78Q~H14O7F2_EOS4NsLoxu-ayOm42i~MljMb44
 ```
 
+
+
+**Sealed secrets**
+
+```bash
+kubectl create secret generic openproject-oidc-secret-sealed --from-literal=OPENPROJECT_OPENID__CONNECT_PROVIDERHERE_IDENTIFIER=xxxxx --from-literal=OPENPROJECT_OPENID__CONNECT_PROVIDERHERE_SECRET=xxxxx --dry-run=client -o yaml | kubeseal ...
+```
+
+Set `openproject.oidc.extraOidcSealedSecret="openproject-oidc-secret-sealed"` in your values.
+
 ### S3
 
 ```yaml
