@@ -76,7 +76,13 @@ class HelmTemplate
   end
 
   def template_spec(item)
-    @mapped.dig(item, 'spec', 'template', 'spec')
+    case item
+    when Regexp
+      key = keys.find { |k| k.match?(item) }
+      @mapped.dig(key, 'spec', 'template', 'spec')
+    else
+      @mapped.dig(item, 'spec', 'template', 'spec')
+    end
   end
 
   def find_volume(item, volume_name)
@@ -130,7 +136,8 @@ class HelmTemplate
   def find_container(item, container_name, init = false)
     containers = init ? 'initContainers' : 'containers'
 
-    dig(item, 'spec', 'template', 'spec', containers)
+    template_spec(item)
+      &.dig(containers)
       &.find { |container| container['name'] == container_name }
   end
 
@@ -142,6 +149,16 @@ class HelmTemplate
   def env(item, container_name, init = false)
     find_container(item, container_name, init)
       &.dig('env')
+  end
+
+  def env_from(item, container_name, init = false)
+    find_container(item, container_name, init)
+      &.dig('envFrom')
+  end
+
+  def secret_ref(item, container_name, secret_name, init = false)
+    env_from(item, container_name, init)
+      &.find { |env| env['secretRef']['name'] == secret_name }
   end
 
   def projected_volume_sources(item,volume_name)
