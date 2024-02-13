@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 5.0.0
+
+### Major Changes
+
+- b645553: Allow for multiple worker types, and defining replicas, strategy, resources
+
 ## 4.5.0
 
 ### Minor Changes
