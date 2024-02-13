@@ -42,8 +42,10 @@ spec:
             '-c',
             'until pg_isready -h $DATABASE_HOST -p $DATABASE_PORT -U {{ .Values.postgresql.auth.username }}; do echo "waiting for database $DATABASE_HOST:$DATABASE_PORT"; sleep 2; done;'
           ]
-          {{- include "openproject.envFrom" . | nindent 10 }}
-          {{- include "openproject.env" . | nindent 10 }}
+          envFrom:
+            {{- include "openproject.envFrom" . | nindent 12 }}
+          env:
+            {{- include "openproject.env" . | nindent 12 }}
           resources:
             {{- toYaml .Values.initdb.resources | nindent 12 }}
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
@@ -54,8 +56,10 @@ spec:
           args:
             - bash
             - /app/docker/prod/seeder
-          {{- include "openproject.envFrom" . | nindent 10 }}
-          {{- include "openproject.env" . | nindent 10 }}
+          envFrom:
+            {{- include "openproject.envFrom" . | nindent 12 }}
+          env:
+            {{- include "openproject.env" . | nindent 12 }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}

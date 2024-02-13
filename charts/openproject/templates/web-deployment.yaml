@@ -57,8 +57,10 @@ spec:
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          {{- include "openproject.envFrom" . | nindent 10 }}
-          {{- include "openproject.env" . | nindent 10 }}
+          envFrom:
+            {{- include "openproject.envFrom" . | nindent 12 }}
+          env:
+            {{- include "openproject.env" . | nindent 12 }}
           command:
             - bash
             - /app/docker/prod/wait-for-db
@@ -67,8 +69,13 @@ spec:
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
-          {{- include "openproject.envFrom" . | nindent 10 }}
-          {{- include "openproject.env" . | nindent 10 }}
+          envFrom:
+            {{- include "openproject.envFrom" . | nindent 12 }}
+          env:
+            {{- include "openproject.env" . | nindent 12 }}
+          command:
+            - bash
+            - /app/docker/prod/web
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}
@@ -92,6 +99,10 @@ spec:
             httpGet:
               path: /health_checks/default
               port: 8080
+              httpHeaders:
+                # required otherwise health check will return 404 because health check is done using the Pod IP, which may cause issues with downstream variants
+                - name: Host
+                  value: localhost
             initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
             periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
@@ -103,6 +114,10 @@ spec:
             httpGet:
               path: /health_checks/default
               port: 8080
+              httpHeaders:
+                # required otherwise health check will return 404 because health check is done using the Pod IP, which may cause issues with downstream variants
+                - name: Host
+                  value: localhost
             initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
             timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
             periodSeconds: {{ .Values.probes.readiness.periodSeconds }}

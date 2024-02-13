@@ -7,7 +7,7 @@ describe 'oidc configuration' do
   let(:definitions) {
     {
       'Deployment/optest-openproject-web' => 'openproject',
-      'Deployment/optest-openproject-worker' => 'openproject',
+      'Deployment/optest-openproject-worker-default' => 'openproject',
       /optest-openproject-seeder/ => 'seeder'
     }
   }
