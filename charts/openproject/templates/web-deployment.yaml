@@ -97,7 +97,7 @@ spec:
           {{- if .Values.probes.liveness.enabled }}
           livenessProbe:
             httpGet:
-              path: /health_checks/default
+              path: "{{ .Values.openproject.railsRelativeUrlRoot | default "" }}/health_checks/default"
               port: 8080
               httpHeaders:
                 # required otherwise health check will return 404 because health check is done using the Pod IP, which may cause issues with downstream variants
@@ -112,7 +112,7 @@ spec:
           {{- if .Values.probes.readiness.enabled }}
           readinessProbe:
             httpGet:
-              path: /health_checks/default
+              path: "{{ .Values.openproject.railsRelativeUrlRoot | default "" }}/health_checks/default"
               port: 8080
               httpHeaders:
                 # required otherwise health check will return 404 because health check is done using the Pod IP, which may cause issues with downstream variants
