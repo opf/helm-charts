@@ -279,6 +279,13 @@ openproject:
   #
   seed_locale: "en"
 
+  ##
+  # Let OpenProject run in a subdirectory,
+  # e.g., https://exameple.com/openproject
+  # specify with leading slash, but without trailing slash
+  # e.g., /openproject
+  railsRelativeUrlRoot:
+
   ## Define admin user details
   # only applicable on first installation
   # Note: Only applicable for versions >= 13.0
