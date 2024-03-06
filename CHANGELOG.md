@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 5.1.0
+
+### Minor Changes
+
+- 102c403: Add relative URL root configuration to health checks
+
 ## 5.0.0
 
 ### Major Changes
