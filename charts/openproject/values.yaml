@@ -21,7 +21,6 @@ global:
   #
   imagePullSecrets: []
 
-
 ## Affinity for pod assignment.
 ##
 ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
@@ -255,7 +254,6 @@ workers:
 ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/environment/#supported-environment-variables
 #
 openproject:
-
   ## Enable https in backend response.
   #
   https: true
@@ -290,10 +288,10 @@ openproject:
   # only applicable on first installation
   # Note: Only applicable for versions >= 13.0
   admin_user:
-    password: 'admin'
-    password_reset: 'true'
-    name: 'OpenProject Admin'
-    mail: 'admin@example.net'
+    password: "admin"
+    password_reset: "true"
+    name: "OpenProject Admin"
+    mail: "admin@example.net"
 
   ## Define OpenID Connect providers
   oidc:
@@ -311,7 +309,6 @@ openproject:
 
     # Optional attribute mappings from the id token
     attribute_map: {}
-
 
     ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
     ## use an existing secret containing the OIDC compatible access credentials.
@@ -409,7 +406,9 @@ s3:
   host:
   pathStyle: false
   signatureVersion: 4
-  use_iam_profile: false
+  useIamProfile: false
+  # Some providers do not properly support signature v4 streaming (e.g. Scaleway)
+  enableSignatureV4Streaming: true
 
   ## If enabled, upload files directly to S3 from the browser instead of going through OpenProject.
   ## May not be supported by providers other than AWS S3 itself.
