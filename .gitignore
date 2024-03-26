@@ -3,3 +3,6 @@ charts/openproject/RELEASE-NOTES.md
 Chart.lock
 node_modules/
 .cr-gpg/
+/demo/.kube
+/demo/config/*.yaml
+!/demo/config/*.example.yaml
