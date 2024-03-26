@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 5.1.1
+
+### Patch Changes
+
+- 4ab3601: Allow to disable object storage signature v4 streaming
+
 ## 5.1.0
 
 ### Minor Changes
