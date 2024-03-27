@@ -404,6 +404,7 @@ s3:
   #
   endpoint:
   host:
+  port:
   pathStyle: false
   signatureVersion: 4
   useIamProfile: false
