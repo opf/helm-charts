@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 5.1.3
+
+### Patch Changes
+
+- 35aba8b: fix(secret_s3): add quote around port
+
 ## 5.1.2
 
 ### Patch Changes
