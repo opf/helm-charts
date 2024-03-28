@@ -23,7 +23,7 @@ describe 's3 configuration' do
               "OPENPROJECT_ATTACHMENTS__STORAGE" => "fog",
               "OPENPROJECT_FOG_CREDENTIALS_PROVIDER" => "AWS",
               "OPENPROJECT_FOG_CREDENTIALS_HOST" => "bla.example.com",
-              "OPENPROJECT_FOG_CREDENTIALS_PORT" => 9000,
+              "OPENPROJECT_FOG_CREDENTIALS_PORT" => "9000",
               "OPENPROJECT_FOG_CREDENTIALS_PATH__STYLE" => "false",
               "OPENPROJECT_FOG_CREDENTIALS_AWS__SIGNATURE__VERSION" => "4",
               "OPENPROJECT_FOG_CREDENTIALS_USE__IAM__PROFILE" => "false",
