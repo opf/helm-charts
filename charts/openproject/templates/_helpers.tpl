@@ -73,21 +73,47 @@ securityContext:
   # see: https://github.com/kubernetes/kubernetes/issues/110835
   ephemeral:
     volumeClaimTemplate:
+      metadata:
+        creationTimestamp: null
+        {{- if .Values.openproject.tmpVolumesAnnotations }}
+        annotations:
+          {{ .Values.openproject.tmpVolumesAnnotations | toYaml }}
+        {{- end }}
+        {{- if .Values.openproject.tmpVolumesLabels }}
+        labels:
+          {{ .Values.openproject.tmpVolumesLabels | toYaml }}
+        {{- end }}
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: {{ .Values.openproject.tmpVolumesStorage }}
+        {{- if .Values.openproject.tmpVolumesStorageClass }}
+        storageClassName: {{ .Values.openproject.tmpVolumesStorageClass }}
+        {{- end }}
 - name: app-tmp
   # we can't use emptyDir due to the sticky bit / world writable issue
   # see: https://github.com/kubernetes/kubernetes/issues/110835
   ephemeral:
     volumeClaimTemplate:
+      metadata:
+        creationTimestamp: null
+        {{- if .Values.openproject.tmpVolumesAnnotations }}
+        annotations:
+          {{ .Values.openproject.tmpVolumesAnnotations | toYaml }}
+        {{- end }}
+        {{- if .Values.openproject.tmpVolumesLabels }}
+        labels:
+          {{ .Values.openproject.tmpVolumesLabels | toYaml }}
+        {{- end }}
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: {{ .Values.openproject.tmpVolumesStorage }}
+        {{- if .Values.openproject.tmpVolumesStorageClass }}
+        storageClassName: {{ .Values.openproject.tmpVolumesStorageClass }}
+        {{- end }}
 {{- end }}
 {{- end -}}
 
