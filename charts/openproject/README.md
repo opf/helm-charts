@@ -102,10 +102,9 @@ persistence:
 s3:
   enabled: true
   accessKeyId:
-  # etc.
+  # host: 
+  # port:
 ```
-
-
 
 
 

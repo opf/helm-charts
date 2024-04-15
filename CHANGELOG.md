@@ -1,5 +1,17 @@
 # @openproject/helm-charts
 
+## 5.1.3
+
+### Patch Changes
+
+- 35aba8b: fix(secret_s3): add quote around port
+
+## 5.1.2
+
+### Patch Changes
+
+- 68cbf0c: Allow port to be changed in s3 config
+
 ## 5.1.1
 
 ### Patch Changes
