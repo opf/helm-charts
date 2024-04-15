@@ -1,0 +1,34 @@
+openproject:
+  https: true
+
+service:
+  enabled: true
+
+ingress:
+  enabled: true
+  host: <MY.DOMAIN.COM>
+  ingressClassName: nginx
+  annotations:
+    cert-manager.io/issuer: "letsencrypt"
+    nginx.ingress.kubernetes.io/proxy-body-size: 200m
+  tls:
+    enabled: true
+    secretName: "openproject-tls"
+
+persistence:
+  enabled: false
+
+# S3-compatible object storage
+s3:
+  enabled: true
+  auth:
+    accessKeyId: <ACCESS_KEY_ID>
+    secretAccessKey: <SECRET_ACCESS_KEY>
+  region: <REGION>
+  bucketName: <BUCKET_NAME>
+  endpoint: <ENDPOINT>
+  host: <HOST>
+  pathStyle: false
+  signatureVersion: 4
+  enableSignatureV4Streaming: false
+  directUploads: true
