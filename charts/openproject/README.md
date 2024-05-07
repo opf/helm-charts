@@ -30,7 +30,7 @@ helm gpg verify openproject-*.tgz
 
 Below is a demo video on how to install OpenProject using the helm chart, including configuration for Let's Encrypt TLS certificate with cert-manager and ingress-nginx:
 
-![Helm Chart Demo Video](https://github.com/opf/helm-charts/assets/6114/84fed1bd-85b0-43a2-a943-c3db4dc44b80)
+[![Helm Chart Demo Video](https://github.com/opf/helm-charts/assets/6114/84fed1bd-85b0-43a2-a943-c3db4dc44b80)](https://openproject-docs.s3.eu-central-1.amazonaws.com/videos/openproject-installation-kubernetes-helm-charts.mp4)
 
 Accompanying README instructions for the demo video: [opf/helm-charts/demo](https://github.com/opf/helm-charts/tree/main/demo)
 
