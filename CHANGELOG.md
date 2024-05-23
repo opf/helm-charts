@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 5.1.4
+
+### Patch Changes
+
+- 15014b4: update OpenProject version to 14
+
 ## 5.1.3
 
 ### Patch Changes

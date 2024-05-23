@@ -26,20 +26,30 @@ helm gpg verify openproject-*.tgz
 
 ## Installation
 
+### Demo video
+
+Below is a demo video on how to install OpenProject using the helm chart, including configuration for Let's Encrypt TLS certificate with cert-manager and ingress-nginx:
+
+[![Helm Chart Demo Video](https://github.com/opf/helm-charts/assets/6114/84fed1bd-85b0-43a2-a943-c3db4dc44b80)](https://openproject-docs.s3.eu-central-1.amazonaws.com/videos/openproject-installation-kubernetes-helm-charts.mp4)
+
+Accompanying README instructions for the demo video: [opf/helm-charts/demo](https://github.com/opf/helm-charts/tree/main/demo)
+
 ### Quick start
+
+Add the OpenProject Helm repository:
 
 ```shell
 helm repo add openproject https://charts.openproject.org
-helm upgrade --create-namespace --namespace openproject --install my-openproject openproject/openproject
+helm repo update
 ```
 
-You can also install the chart with the release name `my-openproject` in its own namespace like this:
+Install the OpenProject chart in a dedicated `openproject` namespace:
 
 ```shell
-helm upgrade --create-namespace --namespace openproject --install my-openproject openproject/openproject
+helm upgrade --create-namespace --namespace openproject --install openproject openproject/openproject
 ```
 
-The namespace is optional, but we recommend it as it does make it easier to manage the resources created for OpenProject.
+The namespace is optional, but we highly recommend it as it does make it easier to manage the resources created for OpenProject.
 
 ## Configuration
 
