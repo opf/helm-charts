@@ -15,9 +15,9 @@ class HelmTemplate
   end
 
   def debug(values, chart, release_name, extra_args = '')
-    @values  = values
+    @values = values
     result = Open3.capture3("helm template --debug #{release_name} . #{extra_args} -f -",
-                            chdir: File.join(__dir__,  '..', 'charts', chart),
+                            chdir: File.join(__dir__, '..', 'charts', chart),
                             stdin_data: YAML.dump(values))
     @stdout, @stderr, @exit_code = result
     # handle common failures when helm or chart not setup properly
@@ -26,13 +26,23 @@ class HelmTemplate
     end
 
     # load the complete output's YAML documents into an array
-    yaml = YAML.load_stream(@stdout)
-    # filter out any empty YAML documents (nil)
-    yaml.select!{ |x| !x.nil? }
-    # create an indexed Hash keyed on Kind/metdata.name
-    @mapped = yaml.to_h  { |doc|
-      [ "#{doc['kind']}/#{doc['metadata']['name']}" , doc ]
-    }
+    begin
+      yaml = YAML.load_stream(@stdout)
+      # filter out any empty YAML documents (nil)
+      yaml.select! { |x| !x.nil? }
+      # create an indexed Hash keyed on Kind/metdata.name
+    @mapped = yaml.to_h { |doc|
+        ["#{doc['kind']}/#{doc['metadata']['name']}", doc]
+      }
+    rescue => e
+      warn "Failed to parse Helm template output: #{e.message}"
+      warn @stdout
+      raise e
+    end
+  end
+
+  def plain
+    @stdout
   end
 
   def [](arg)
@@ -52,37 +62,45 @@ class HelmTemplate
   end
 
   def volumes(item)
-    @mapped.dig(item,'spec','template','spec','volumes')
+    template_spec(item)
+      .dig('volumes')
   end
 
   def labels(item)
-    @mapped.dig(item,'metadata','labels')
+    @mapped.dig(mapped_key(item), 'metadata', 'labels')
   end
 
   def template_labels(item)
     # only one of the following should return results
-    @mapped.dig(item, 'spec', 'template', 'metadata', 'labels') ||
-      @mapped.dig(item, 'spec', 'jobTemplate', 'spec', 'template', 'metadata', 'labels')
+    @mapped.dig(mapped_key(item), 'spec', 'template', 'metadata', 'labels') ||
+      @mapped.dig(mapped_key(item), 'spec', 'jobTemplate', 'spec', 'template', 'metadata', 'labels')
   end
 
   def annotations(item)
-    @mapped.dig(item, 'metadata', 'annotations')
+    @mapped.dig(mapped_key(item), 'metadata', 'annotations')
   end
 
   def template_annotations(item)
     # only one of the following should return results
-    @mapped.dig(item, 'spec', 'template', 'metadata', 'annotations') ||
-      @mapped.dig(item, 'spec', 'jobTemplate', 'spec', 'template', 'metadata', 'annotations')
+    @mapped.dig(mapped_key(item), 'spec', 'template', 'metadata', 'annotations') ||
+      @mapped.dig(mapped_key(item), 'spec', 'jobTemplate', 'spec', 'template', 'metadata', 'annotations')
+  end
+
+  def mapped_key(item)
+    case item
+    when Regexp
+       keys.find { |k| k.match?(item) }
+    else
+      item
+    end
+  end
+
+  def spec(item)
+    @mapped.dig(mapped_key(item), 'spec')
   end
 
   def template_spec(item)
-    case item
-    when Regexp
-      key = keys.find { |k| k.match?(item) }
-      @mapped.dig(key, 'spec', 'template', 'spec')
-    else
-      @mapped.dig(item, 'spec', 'template', 'spec')
-    end
+    spec(item).dig('template', 'spec')
   end
 
   def find_volume(item, volume_name)
@@ -93,7 +111,7 @@ class HelmTemplate
 
   def get_projected_secret(item, mount, secret)
     # locate first instance of projected secret by name
-    secrets = find_volume(item,mount)
+    secrets = find_volume(item, mount)
     secrets['projected']['sources'].keep_if do |s|
       s['secret']['name'] == secret if s.has_key?('secret')
     end
@@ -104,12 +122,12 @@ class HelmTemplate
   end
 
   def find_projected_secret(item, mount, secret)
-    secret = get_projected_secret(item,mount,secret)
+    secret = get_projected_secret(item, mount, secret)
     !secret.nil?
   end
 
   def find_projected_secret_key(item, mount, secret, key)
-    secret = get_projected_secret(item,mount,secret)
+    secret = get_projected_secret(item, mount, secret)
 
     result = nil
 
@@ -164,16 +182,16 @@ class HelmTemplate
   def env_named(item, container_name, key, init = false)
     find_container(item, container_name, init)
       .dig('env')
-      .detect { |hash| hash['name'] == key}
+      .detect { |hash| hash['name'] == key }
   end
 
-  def projected_volume_sources(item,volume_name)
-    find_volume(item,volume_name)
-      &.dig('projected','sources')
+  def projected_volume_sources(item, volume_name)
+    find_volume(item, volume_name)
+      &.dig('projected', 'sources')
   end
 
   def resources_by_kind(kind)
-    @mapped.select{ |_, hash| hash['kind'] == kind }
+    @mapped.select { |_, hash| hash['kind'] == kind }
   end
 
   def exit_code

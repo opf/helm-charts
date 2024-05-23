@@ -27,6 +27,17 @@ global:
 #
 affinity: {}
 
+## Cleanup settings.
+#
+cleanup:
+  # Keep Pods/Job logs after successful run.
+  #
+  deletePodsOnSuccess: true
+
+  # Keep Pods/Job logs for the following time.
+  #
+  deletePodsOnSuccessTimeout: 6000
+
 ## Define additional environment variables.
 ##
 ## You can get a list of all environment variables when executing:
@@ -36,6 +47,13 @@ affinity: {}
 ##   OPENPROJECT_ATTACHMENT__MAX__SIZE: 5120
 #
 environment: {}
+
+# Optionally specify an extra list of additional volumes.
+extraVolumes: []
+
+# Optionally specify an extra list of additional volumeMounts.
+extraVolumeMounts: []
+
 
 ## Provide a name to substitute for the full names of resources.
 #
@@ -153,7 +171,7 @@ image:
 
   ## Define repository string.
   #
-  repository: "openproject/community"
+  repository: "openproject/openproject"
 
   ## Define a imagePullPolicy.
   ##
@@ -173,7 +191,7 @@ image:
   ## For the helm chart, use the `-slim` variants as the all-in-one container is not compatible
   ## with some of the options (non-root execution, password splitting, etc.) and is inefficient for using in helm
   ## due to embedded a number of services.
-  tag: "13-slim"
+  tag: "14-slim"
 
   ## Define image sha256 - mutual exclusive with image tag.
   ## The sha256 has a higher precedence than
@@ -258,7 +276,7 @@ openproject:
   #
   https: true
 
-  ## Define the host, defaults to value of "ingress.host".
+  ## Define the host, defaults to value of "ingress.host" when ingress is enabled.
   #
   host:
 
@@ -384,6 +402,9 @@ persistence:
 
   ## Define the class of PV.
   storageClassName:
+
+  ## Define the class of PV for the tmpVolumes.
+  tmpStorageClassName:
 
 ## Whether to use an S3-compatible object storage to store OpenProject attachments.
 ## If this is enabled, files will NOT be stored in the mounted volume configured in `persistence` above.
@@ -662,6 +683,12 @@ service:
   ## Ref.: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   #
   type: "ClusterIP"
+
+  ## Specify the external IP address for the LoadBalancer service. If your cloud provider supports
+  ## specifying a static IP for the load balancer, you can set it here.
+  ## Example:
+  ## loadBalancerIP: "172.16.0.1"
+  loadBalancerIP: ""
 
   ## Define the ports of Service.
   ## You can set the port value to an arbitrary value, it will map the container port by name.

@@ -1,5 +1,43 @@
 # @openproject/helm-charts
 
+## 6.0.0
+
+### Major Changes
+
+- 9bd1ec5: - Breaking change: Use revision, not current date in seeder job name
+  - Allow keeping seeder jobs around after their execution
+  - Configurable TTL for seeder job
+
+### Patch Changes
+
+- 21a2319: Allow users to set the openproject host name without using the ingress
+
+## 5.4.0
+
+### Minor Changes
+
+- 6be6b9c: - allow setting `tmpStorageClassName` for /tmp and /app/tmp volumes
+- a0fd7c3: Allow tolerations on seeder job
+
+## 5.3.0
+
+### Minor Changes
+
+- ebc09c0: Allow definition of extraVolumes and extraVolumeMounts
+- ebc09c0: Add extraVolumes and extraVolumeMounts option
+
+## 5.2.0
+
+### Minor Changes
+
+- 83279c9: make sure removed secret values are actually removed
+
+## 5.1.4
+
+### Patch Changes
+
+- 15014b4: update OpenProject version to 14
+
 ## 5.1.3
 
 ### Patch Changes

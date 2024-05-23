@@ -52,6 +52,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
         {{- end }}
+        {{- include "openproject.extraVolumes" . | indent 8 }}
       initContainers:
         - name: wait-for-db
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
@@ -88,6 +89,7 @@ spec:
               subPath: {{ .Values.egress.tls.rootCA.fileName }}
               readOnly: false
             {{- end }}
+            {{- include "openproject.extraVolumeMounts" . | indent 12 }}
           ports:
             {{- range $key, $value := .Values.service.ports }}
             - name: {{ $key }}

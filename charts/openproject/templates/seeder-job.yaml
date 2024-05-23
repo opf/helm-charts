@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "common.names.fullname" . }}-seeder-{{ now | date "20060102150405" }}
+  name: {{ include "common.names.fullname" . }}-seeder-{{ .Release.Revision }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
   {{- with .Values.seederJob.annotations }}
@@ -9,7 +9,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  ttlSecondsAfterFinished: 6000
+  {{- if .Values.cleanup.deletePodsOnSuccess }}
+  ttlSecondsAfterFinished: {{ .Values.cleanup.deletePodsOnSuccessTimeout }}
+  {{- end }}
   template:
     metadata:
       labels:
@@ -22,6 +24,10 @@ spec:
     spec:
       {{- include "openproject.imagePullSecrets" . | indent 6 }}
       {{- include "openproject.podSecurityContext" . | indent 6 }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{ toYaml . | nindent 8 | trim }}
@@ -33,6 +39,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
         {{- end }}
+        {{- include "openproject.extraVolumes" . | indent 8 }}
       initContainers:
         - name: check-db-ready
           image: "{{ .Values.initdb.image.registry }}/{{ .Values.initdb.image.repository }}:{{ .Values.initdb.image.tag }}"
@@ -66,5 +73,6 @@ spec:
             - name: "data"
               mountPath: "/var/openproject/assets"
             {{- end }}
+            {{- include "openproject.extraVolumeMounts" . | indent 12 }}
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
       restartPolicy: OnFailure
