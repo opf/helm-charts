@@ -650,6 +650,12 @@ service:
   #
   type: "ClusterIP"
 
+  ## Specify the external IP address for the LoadBalancer service. If your cloud provider supports
+  ## specifying a static IP for the load balancer, you can set it here.
+  ## Example:
+  ## loadBalancerIP: "172.16.0.1"
+  loadBalancerIP: ""
+
   ## Define the ports of Service.
   ## You can set the port value to an arbitrary value, it will map the container port by name.
   ##

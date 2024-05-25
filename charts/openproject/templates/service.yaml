@@ -8,6 +8,9 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
+  {{- if eq .Values.service.type "LoadBalancer" }}
+  loadBalancerIP: {{ .Values.service.loadBalancerIP | quote }}
+  {{- end }}
   {{- if .Values.service.sessionAffinity.enabled }}
   sessionAffinity: "ClientIP"
   sessionAffinityConfig:
