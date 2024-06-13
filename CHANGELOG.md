@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 5.2.0
+
+### Minor Changes
+
+- 83279c9: make sure removed secret values are actually removed
+
 ## 5.1.4
 
 ### Patch Changes
