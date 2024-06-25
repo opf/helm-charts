@@ -37,6 +37,13 @@ affinity: {}
 #
 environment: {}
 
+# Optionally specify an extra list of additional volumes.
+extraVolumes: []
+
+# Optionally specify an extra list of additional volumeMounts.
+extraVolumeMounts: []
+
+
 ## Provide a name to substitute for the full names of resources.
 #
 fullnameOverride: ""

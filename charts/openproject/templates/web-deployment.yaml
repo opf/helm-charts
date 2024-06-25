@@ -52,6 +52,9 @@ spec:
           persistentVolumeClaim:
             claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
         {{- end }}
+        {{- if .Values.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes  "context" .) | nindent 8 }}
+        {{- end }}
       initContainers:
         - name: wait-for-db
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
@@ -87,6 +90,9 @@ spec:
               mountPath: /etc/ssl/certs/custom-ca.pem
               subPath: {{ .Values.egress.tls.rootCA.fileName }}
               readOnly: false
+            {{- end }}
+            {{- if .Values.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" .) | nindent 12 }}
             {{- end }}
           ports:
             {{- range $key, $value := .Values.service.ports }}
