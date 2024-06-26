@@ -54,9 +54,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "common.names.fullname" . }}
         {{- end }}
-        {{- if .Values.extraVolumes }}
-        {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumes  "context" .) | nindent 8 }}
-        {{- end }}
+        {{- include "openproject.extraVolumes" . | indent 8 }}
       initContainers:
         - name: wait-for-db
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
@@ -95,9 +93,7 @@ spec:
               subPath: {{ .Values.egress.tls.rootCA.fileName }}
               readOnly: false
             {{- end }}
-            {{- if .Values.extraVolumeMounts }}
-            {{- include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" .) | nindent 12 }}
-            {{- end }}
+            {{- include "openproject.extraVolumeMounts" . | indent 12 }}
           resources:
             {{- coalesce $workerValues.resources .Values.resources | toYaml | nindent 12 }}
 {{- end }}
