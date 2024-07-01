@@ -33,6 +33,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
         {{- end }}
+        {{- include "openproject.extraVolumes" . | indent 8 }}
       initContainers:
         - name: check-db-ready
           image: "{{ .Values.initdb.image.registry }}/{{ .Values.initdb.image.repository }}:{{ .Values.initdb.image.tag }}"
@@ -66,5 +67,6 @@ spec:
             - name: "data"
               mountPath: "/var/openproject/assets"
             {{- end }}
+            {{- include "openproject.extraVolumeMounts" . | indent 12 }}
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
       restartPolicy: OnFailure

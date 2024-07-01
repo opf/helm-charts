@@ -43,7 +43,7 @@ spec:
       {{- include "openproject.podSecurityContext" . | indent 6 }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
-        {{- include "openproject.tmpVolumeSpec" . | indent 8 }}                     
+        {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
         {{- if .Values.egress.tls.rootCA.fileName }}
         - name: ca-pemstore
           configMap:
@@ -54,6 +54,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "common.names.fullname" . }}
         {{- end }}
+        {{- include "openproject.extraVolumes" . | indent 8 }}
       initContainers:
         - name: wait-for-db
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
@@ -92,6 +93,7 @@ spec:
               subPath: {{ .Values.egress.tls.rootCA.fileName }}
               readOnly: false
             {{- end }}
+            {{- include "openproject.extraVolumeMounts" . | indent 12 }}
           resources:
             {{- coalesce $workerValues.resources .Values.resources | toYaml | nindent 12 }}
 {{- end }}

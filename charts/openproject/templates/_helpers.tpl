@@ -18,6 +18,24 @@ imagePullSecrets:
 {{- end -}}
 
 {{/*
+Returns extra volume definitons when defined as values.extraVolumes
+*/}}
+{{- define "openproject.extraVolumes" -}}
+{{- if .Values.extraVolumes }}
+{{ include "common.tplvalues.render" (dict "value" .Values.extraVolumes  "context" .) }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Returns extra volume mounts definitons when defined as values.extraVolumeMounts
+*/}}
+{{- define "openproject.extraVolumeMounts" -}}
+{{- if .Values.extraVolumeMounts }}
+{{ include "common.tplvalues.render" (dict "value" .Values.extraVolumeMounts "context" .) }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Yields the configured container security context if enabled.
 
 Allows writing to the container file system in development mode
