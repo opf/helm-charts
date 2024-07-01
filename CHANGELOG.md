@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 5.3.0
+
+### Minor Changes
+
+- ebc09c0: Allow definition of extraVolumes and extraVolumeMounts
+- ebc09c0: Add extraVolumes and extraVolumeMounts option
+
 ## 5.2.0
 
 ### Minor Changes
