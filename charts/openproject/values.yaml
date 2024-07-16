@@ -345,6 +345,9 @@ openproject:
   #
   useTmpVolumes:
 
+  ## customize the tmp storage mount storage class
+  tmpVolumesStorageClassName:
+
   ## customize the tmp storage mount sizes
   tmpVolumesStorage: "5Gi"
 
