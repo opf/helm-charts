@@ -92,6 +92,9 @@ securityContext:
   ephemeral:
     volumeClaimTemplate:
       spec:
+        {{- if .Values.tmpVolumesStorageClassName }}
+        storageClassName: {{ .Values.tmpVolumesStorageClassName }}
+        {{- end }}
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
@@ -102,6 +105,9 @@ securityContext:
   ephemeral:
     volumeClaimTemplate:
       spec:
+        {{- if .Values.tmpVolumesStorageClassName }}
+        storageClassName: {{ .Values.tmpVolumesStorageClassName }}
+        {{- end }}
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
