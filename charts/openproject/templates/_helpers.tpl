@@ -92,8 +92,8 @@ securityContext:
   ephemeral:
     volumeClaimTemplate:
       spec:
-        {{- if .Values.tmpVolumesStorageClassName }}
-        storageClassName: {{ .Values.tmpVolumesStorageClassName }}
+        {{- if .Values.openproject.tmpVolumesStorageClassName }}
+        storageClassName: {{ .Values.openproject.tmpVolumesStorageClassName }}
         {{- end }}
         accessModes: ["ReadWriteOnce"]
         resources:
@@ -105,8 +105,8 @@ securityContext:
   ephemeral:
     volumeClaimTemplate:
       spec:
-        {{- if .Values.tmpVolumesStorageClassName }}
-        storageClassName: {{ .Values.tmpVolumesStorageClassName }}
+        {{- if .Values.openproject.tmpVolumesStorageClassName }}
+        storageClassName: {{ .Values.openproject.tmpVolumesStorageClassName }}
         {{- end }}
         accessModes: ["ReadWriteOnce"]
         resources:
