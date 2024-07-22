@@ -1,5 +1,17 @@
 # @openproject/helm-charts
 
+## 6.0.0
+
+### Major Changes
+
+- 9bd1ec5: - Breaking change: Use revision, not current date in seeder job name
+  - Allow keeping seeder jobs around after their execution
+  - Configurable TTL for seeder job
+
+### Patch Changes
+
+- 21a2319: Allow users to set the openproject host name without using the ingress
+
 ## 5.4.0
 
 ### Minor Changes
