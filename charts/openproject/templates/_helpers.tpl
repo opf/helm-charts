@@ -103,15 +103,12 @@ securityContext:
         {{- end }}
       spec:
         accessModes: ["ReadWriteOnce"]
-        {{- if or .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
-        storageClassName: {{ coalesce .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
+        {{- if or .Values.openproject.tmpVolumesStorageClassName .Values.persistence.storageClassName }}
+        storageClassName: {{ coalesce .Values.openproject.tmpVolumesStorageClassName .Values.persistence.storageClassName }}
         {{- end }}
         resources:
           requests:
             storage: {{ .Values.openproject.tmpVolumesStorage }}
-        {{- if .Values.openproject.tmpVolumesStorageClass }}
-        storageClassName: {{ .Values.openproject.tmpVolumesStorageClass }}
-        {{- end }}
 - name: app-tmp
   # we can't use emptyDir due to the sticky bit / world writable issue
   # see: https://github.com/kubernetes/kubernetes/issues/110835
@@ -129,15 +126,12 @@ securityContext:
         {{- end }}
       spec:
         accessModes: ["ReadWriteOnce"]
-        {{- if or .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
-        storageClassName: {{ coalesce .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
+        {{- if or .Values.openproject.tmpVolumesStorageClassName .Values.persistence.storageClassName }}
+        storageClassName: {{ coalesce .Values.openproject.tmpVolumesStorageClassName .Values.persistence.storageClassName }}
         {{- end }}
         resources:
           requests:
             storage: {{ .Values.openproject.tmpVolumesStorage }}
-        {{- if .Values.openproject.tmpVolumesStorageClass }}
-        storageClassName: {{ .Values.openproject.tmpVolumesStorageClass }}
-        {{- end }}
 {{- end }}
 {{- end -}}
 
