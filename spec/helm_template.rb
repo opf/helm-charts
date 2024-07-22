@@ -95,8 +95,12 @@ class HelmTemplate
     end
   end
 
+  def spec(item)
+    @mapped.dig(mapped_key(item), 'spec')
+  end
+
   def template_spec(item)
-    @mapped.dig(mapped_key(item), 'spec', 'template', 'spec')
+    spec(item).dig('template', 'spec')
   end
 
   def find_volume(item, volume_name)

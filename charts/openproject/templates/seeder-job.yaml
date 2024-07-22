@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "common.names.fullname" . }}-seeder-{{ now | date "20060102150405" }}
+  name: {{ include "common.names.fullname" . }}-seeder-{{ .Release.Revision }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
   {{- with .Values.seederJob.annotations }}
@@ -9,7 +9,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  ttlSecondsAfterFinished: 6000
+  {{- if .Values.cleanup.deletePodsOnSuccess }}
+  ttlSecondsAfterFinished: {{ .Values.cleanup.deletePodsOnSuccessTimeout }}
+  {{- end }}
   template:
     metadata:
       labels:
