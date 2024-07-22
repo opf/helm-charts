@@ -93,6 +93,9 @@ securityContext:
     volumeClaimTemplate:
       spec:
         accessModes: ["ReadWriteOnce"]
+        {{- if or .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
+        storageClassName: {{ coalesce .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
+        {{- end }}
         resources:
           requests:
             storage: {{ .Values.openproject.tmpVolumesStorage }}
@@ -103,6 +106,9 @@ securityContext:
     volumeClaimTemplate:
       spec:
         accessModes: ["ReadWriteOnce"]
+        {{- if or .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
+        storageClassName: {{ coalesce .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
+        {{- end }}
         resources:
           requests:
             storage: {{ .Values.openproject.tmpVolumesStorage }}

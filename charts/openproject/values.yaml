@@ -379,6 +379,9 @@ persistence:
   ## Define the class of PV.
   storageClassName:
 
+  ## Define the class of PV for the tmpVolumes.
+  tmpStorageClassName:
+
 ## Whether to use an S3-compatible object storage to store OpenProject attachments.
 ## If this is enabled, files will NOT be stored in the mounted volume configured in `persistence` above.
 ## The volume will not be used at all, so it `persistence.enabled` should be set to `false` in this case.
