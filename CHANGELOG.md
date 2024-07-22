@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 5.4.0
+
+### Minor Changes
+
+- 6be6b9c: - allow setting `tmpStorageClassName` for /tmp and /app/tmp volumes
+- a0fd7c3: Allow tolerations on seeder job
+
 ## 5.3.0
 
 ### Minor Changes
