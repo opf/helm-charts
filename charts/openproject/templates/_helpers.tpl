@@ -91,10 +91,20 @@ securityContext:
   # see: https://github.com/kubernetes/kubernetes/issues/110835
   ephemeral:
     volumeClaimTemplate:
+      metadata:
+        creationTimestamp: null
+        {{- if .Values.openproject.tmpVolumesAnnotations }}
+        annotations:
+          {{ .Values.openproject.tmpVolumesAnnotations | toYaml }}
+        {{- end }}
+        {{- if .Values.openproject.tmpVolumesLabels }}
+        labels:
+          {{ .Values.openproject.tmpVolumesLabels | toYaml }}
+        {{- end }}
       spec:
         accessModes: ["ReadWriteOnce"]
-        {{- if or .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
-        storageClassName: {{ coalesce .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
+        {{- if or .Values.openproject.tmpVolumesStorageClassName .Values.persistence.storageClassName }}
+        storageClassName: {{ coalesce .Values.openproject.tmpVolumesStorageClassName .Values.persistence.storageClassName }}
         {{- end }}
         resources:
           requests:
@@ -104,10 +114,20 @@ securityContext:
   # see: https://github.com/kubernetes/kubernetes/issues/110835
   ephemeral:
     volumeClaimTemplate:
+      metadata:
+        creationTimestamp: null
+        {{- if .Values.openproject.tmpVolumesAnnotations }}
+        annotations:
+          {{ .Values.openproject.tmpVolumesAnnotations | toYaml }}
+        {{- end }}
+        {{- if .Values.openproject.tmpVolumesLabels }}
+        labels:
+          {{ .Values.openproject.tmpVolumesLabels | toYaml }}
+        {{- end }}
       spec:
         accessModes: ["ReadWriteOnce"]
-        {{- if or .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
-        storageClassName: {{ coalesce .Values.persistence.tmpStorageClassName .Values.persistence.storageClassName }}
+        {{- if or .Values.openproject.tmpVolumesStorageClassName .Values.persistence.storageClassName }}
+        storageClassName: {{ coalesce .Values.openproject.tmpVolumesStorageClassName .Values.persistence.storageClassName }}
         {{- end }}
         resources:
           requests:

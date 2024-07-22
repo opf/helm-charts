@@ -356,8 +356,21 @@ openproject:
   #
   useTmpVolumes:
 
-  ## customize the tmp storage mount sizes
+  ## Define the tmp storage sizes
+  #
   tmpVolumesStorage: "5Gi"
+
+  ## Define the class of the tmp storage
+  #
+  tmpVolumesStorageClassName:
+
+  ## Define custom annotations of tmp storage
+  #
+  tmpVolumesAnnotations: {}
+
+  ## Define custom labels of tmp storage
+  #
+  tmpVolumesLabels: {}
 
 ## Whether to allocate persistent volume disk for the data directory.
 ## In case of node failure, the node data directory will still persist.
@@ -389,9 +402,6 @@ persistence:
 
   ## Define the class of PV.
   storageClassName:
-
-  ## Define the class of PV for the tmpVolumes.
-  tmpStorageClassName:
 
 ## Whether to use an S3-compatible object storage to store OpenProject attachments.
 ## If this is enabled, files will NOT be stored in the mounted volume configured in `persistence` above.
