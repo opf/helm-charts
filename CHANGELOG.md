@@ -1,5 +1,17 @@
 # @openproject/helm-charts
 
+## 7.0.0
+
+### Major Changes
+
+- 7bb899a: - Rename persistance.tmpStorageClassName to openproject.tmpVolumesStorageClassName for consistency with other options
+  - Allow setting annotations for /tmp and /app/tmp volumes
+  - Allow setting labels for /tmp and /app/tmp volumes
+
+### Minor Changes
+
+- 16db2be: Allow specified ipaddress for loadBalancerIP
+
 ## 6.0.0
 
 ### Major Changes
