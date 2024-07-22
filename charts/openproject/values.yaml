@@ -276,7 +276,7 @@ openproject:
   #
   https: true
 
-  ## Define the host, defaults to value of "ingress.host".
+  ## Define the host, defaults to value of "ingress.host" when ingress is enabled.
   #
   host:
 
