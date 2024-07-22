@@ -63,7 +63,7 @@ We try to map the most common options to chart values directly for ease of use. 
 
 
 
-**OpenProject image and version**
+#### OpenProject image and version
 
 By default, the helm chart will target the latest stable major release. You can define a custom [supported docker tag](https://hub.docker.com/r/openproject/community/) using `image.tag`. Override container registry and repository using `image.registry` and `image.repository`, respectively.
 
@@ -71,19 +71,24 @@ Please make sure to use the `-slim` variant of OpenProject, as the all-in-one co
 
 
 
-**HTTPS mode**
+#### HTTPS mode
 
-Regardless of the TLS mode of ingress, OpenProject needs to be told whether it's expected to run and return HTTPS responses (or generate correct links in mails, background jobs, etc.). If you're not running https, then set `openproject.https=false`.
+Regardless of the TLS mode of ingress, OpenProject needs to be told whether it's expected to run and return HTTPS responses (or generate correct links in mails, background jobs, etc.).
+This will likely be true, even if OpenProject is not responsible for terminating TLS connections inside the deployment. It will cause OpenProject to output secure cookies, as well as other protection measures.
 
 
+> [!CAUTION]
+> If you're not terminating https anywhere in your stack, then set `openproject.https=false`. This is not recommended for production systems
 
-**Seed locale** (13.0+)
+
+#### Seed locale
+
 
 By default, demo data and global names for types, statuses, etc. will be in English. If you wish to set a custom locale, set `openproject.seed_locale=XX`, where XX can be a two-character ISO code. For currently supported values, see the `OPENPROJECT_AVAILABLE__LANGUAGES` default value in the [environment guide](https://www.openproject.org/docs/installation-and-operations/configuration/environment/).
 
 
 
-**Admin user** (13.0+)
+#### Admin user
 
 By default, OpenProject generates an admin user with password `admin` which is required to change after first interactive login.
 If you're operating an automated deployment with fresh databases for testing, this default approach might not be desirable.
@@ -97,7 +102,16 @@ openproject.admin_user.name="Firstname Lastname"
 openproject.admin_user.mail="admin@example.com"
 ```
 
+### TMP volume mounts
 
+OpenProject needs some tmp volumes to be mounted in `/app/tmp`  and `/tmp`, if `global.containerSecurityContext.readOnlyRootFilesystem` is set to true.
+This is due to the application server storing a non-configurable PID file and some temporary caches or files being put there.
+
+This setting is true by default (to be precise, it follows its configured value or falls back to `develop !=true`)
+
+To explicity disable this, use `openproject.useTmpVolumes=false`. This will fail if `readOnlyRootFilesystem=true`.
+
+These volumes do not contain any critical information and can be excluded from backups using the labels/annotations values.
 
 ### ReadWriteMany volumes
 
