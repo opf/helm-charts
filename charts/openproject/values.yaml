@@ -681,6 +681,10 @@ service:
   #
   type: "ClusterIP"
 
+  ## Define custom service annotations
+  #
+  annotations: {}
+
   ## Specify the external IP address for the LoadBalancer service. If your cloud provider supports
   ## specifying a static IP for the load balancer, you can set it here.
   ## Example:
