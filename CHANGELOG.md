@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 7.1.0
+
+### Minor Changes
+
+- cc06e6f: add resource request and limit for seederJob container
+
 ## 7.0.0
 
 ### Major Changes
