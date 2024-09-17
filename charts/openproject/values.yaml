@@ -733,6 +733,11 @@ seederJob:
   ## Define custom seeder job annotations.
   #
   annotations: {}
+  resources:
+    limits:
+      memory: "512Mi"
+    requests:
+      memory: "512Mi"
 
 ## Tolerations for pod assignment.
 ##

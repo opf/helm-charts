@@ -67,6 +67,8 @@ spec:
             {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.seederJob.resources | nindent 12 }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}
