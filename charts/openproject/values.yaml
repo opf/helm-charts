@@ -257,6 +257,10 @@ workers:
   default:
     queues: ""
     replicas: 1
+    # Enable monitoring probe for background workers
+    probes:
+      enabled: true
+      port: 7001
     strategy:
       type: "Recreate"
     resources:

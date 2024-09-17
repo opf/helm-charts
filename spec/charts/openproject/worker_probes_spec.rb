@@ -1,60 +1,80 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe 'imagePullSecrets configuration' do
+describe 'worker probes configuration' do
   let(:template) { HelmTemplate.new(default_values) }
+  let(:worker) { 'Deployment/optest-openproject-worker-default' }
 
-  context 'when setting custom workers' do
+  context 'when disabling probes' do
     let(:default_values) do
       HelmTemplate.with_defaults(<<~YAML
         workers:
           default:
             queues: ""
-            replicaCount: 1
-            strategy:
-              type: "Recreate"
-          multitenancy:
-            queues: "multitenancy"
-            replicaCount: 1
-            strategy:
-              type: "Recreate"
-          bim:
-            queues: "bim,ifc_conversion"
-            replicaCount: 0
-            strategy:
-              type: "Recreate"
-              YAML
+            replicas: 1
+            probes:
+              enabled: false
+              port: 7001
+      YAML
       )
     end
 
-    it 'Creates the different worker deployments', :aggregate_failures do
-      expect(template.keys).to include 'Deployment/optest-openproject-worker-default'
-      expect(template.dig('Deployment/optest-openproject-worker-default', 'spec', 'replicas'))
-        .to eq(1)
-      expect(template.env('Deployment/optest-openproject-worker-default', 'openproject', 'QUEUE'))
-        .to be_nil
+    it 'does not define worker probes', :aggregate_failures do
+      expect(template.keys).to include worker
 
-      expect(template.keys).to include 'Deployment/optest-openproject-worker-multitenancy'
-      expect(template.dig('Deployment/optest-openproject-worker-multitenancy', 'spec', 'replicas'))
-        .to eq(1)
-      expect(template.env_named('Deployment/optest-openproject-worker-multitenancy', 'openproject', 'QUEUE')['value'])
-        .to eq('multitenancy')
+      spec = template.find_container(worker, 'openproject')
+      expect(spec['livenessProbe']).to be_nil
+      expect(spec['readinessProbe']).to be_nil
 
-      expect(template.keys).to include 'Deployment/optest-openproject-worker-bim'
-      expect(template.dig('Deployment/optest-openproject-worker-bim', 'spec', 'replicas'))
-        .to eq(0)
-      expect(template.env_named('Deployment/optest-openproject-worker-bim', 'openproject', 'QUEUE')['value'])
-        .to eq('bim,ifc_conversion')
+      env = template.env_named(worker, 'openproject', 'GOOD_JOB_PROBE_PORT')
+      expect(env).to be_nil
     end
   end
 
-  context 'when setting no workers' do
+  context 'when setting custom port' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        workers:
+          default:
+            queues: ""
+            replicas: 1
+            probes:
+              enabled: true
+              port: 9999
+      YAML
+      )
+    end
+
+    it 'does define the probe', :aggregate_failures do
+      expect(template.keys).to include worker
+      spec = template.find_container(worker, 'openproject')
+      expect(spec['livenessProbe']).to be_a(Hash)
+      expect(spec['readinessProbe']).to be_a(Hash)
+      expect(spec['readinessProbe']['httpGet']['port']).to eq 9999
+      expect(spec['livenessProbe']['httpGet']['port']).to eq 9999
+
+      env = template.env_named(worker, 'openproject', 'GOOD_JOB_PROBE_PORT')
+      expect(env).to be_a(Hash)
+      expect(env['value']).to eq '9999'
+    end
+  end
+
+  context 'with default configuration' do
     let(:default_values) do
       {}
     end
 
-    it 'Creates the default worker', :aggregate_failures do
-      expect(template.keys).to include 'Deployment/optest-openproject-worker-default'
+    it 'uses the default probes', :aggregate_failures do
+      expect(template.keys).to include worker
+      spec = template.find_container(worker, 'openproject')
+      expect(spec['livenessProbe']).to be_a(Hash)
+      expect(spec['readinessProbe']).to be_a(Hash)
+      expect(spec['readinessProbe']['httpGet']['port']).to eq 7001
+      expect(spec['livenessProbe']['httpGet']['port']).to eq 7001
+
+      env = template.env_named(worker, 'openproject', 'GOOD_JOB_PROBE_PORT')
+      expect(env).to be_a(Hash)
+      expect(env['value']).to eq '7001'
     end
   end
 end
