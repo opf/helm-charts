@@ -65,6 +65,8 @@ spec:
           command:
             - bash
             - /app/docker/prod/wait-for-db
+          resources:
+            {{- toYaml .Values.initdb.resources | nindent 12 }}
       containers:
         - name: "openproject"
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
