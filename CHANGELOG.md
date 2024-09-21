@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 7.2.0
+
+### Minor Changes
+
+- 3ff3f95: add resource limit for init-container
+
 ## 7.1.0
 
 ### Minor Changes
