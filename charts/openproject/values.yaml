@@ -63,7 +63,7 @@ fullnameOverride: ""
 # Override the cluster domain name used in templating
 clusterDomain: "cluster.local"
 
-## Define settings for wait-for-db init-container
+## Define settings for check-db-ready init-container
 #
 initdb:
   image:
@@ -97,6 +97,16 @@ initdb:
       memory: "200Mi"
     requests:
       memory: "200Mi"
+
+## Define settings for wait-for-db init-container
+# These containers need access to the Rails stack and wait for the database to be ready
+# (i.e., the seeder and migration job to have completed)
+appInit:
+  resources:
+    limits:
+      memory: "512Mi"
+    requests:
+      memory: "512Mi"
 
 ## Define and create Kubernetes Service.
 ##
