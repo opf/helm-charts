@@ -1,5 +1,16 @@
 # @openproject/helm-charts
 
+## 8.0.0
+
+### Major Changes
+
+- b460db3: Rename initdb -> dbInit to be consistent
+
+### Minor Changes
+
+- b460db3: Fix resource limits/requests for worker and web deployment
+- 0fa8a05: add resource limit for init-container - for worker-deployment
+
 ## 7.2.0
 
 ### Minor Changes
