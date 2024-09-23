@@ -65,7 +65,7 @@ clusterDomain: "cluster.local"
 
 ## Define settings for check-db-ready init-container
 #
-initdb:
+dbInit:
   image:
     ## Define docker registry address.
     #

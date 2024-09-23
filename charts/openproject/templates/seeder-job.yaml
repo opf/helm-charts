@@ -42,8 +42,8 @@ spec:
         {{- include "openproject.extraVolumes" . | indent 8 }}
       initContainers:
         - name: check-db-ready
-          image: "{{ .Values.initdb.image.registry }}/{{ .Values.initdb.image.repository }}:{{ .Values.initdb.image.tag }}"
-          imagePullPolicy: {{ .Values.initdb.image.imagePullPolicy }}
+          image: "{{ .Values.dbInit.image.registry }}/{{ .Values.dbInit.image.repository }}:{{ .Values.dbInit.image.tag }}"
+          imagePullPolicy: {{ .Values.dbInit.image.imagePullPolicy }}
           command: [
             'sh',
             '-c',
@@ -54,7 +54,7 @@ spec:
           env:
             {{- include "openproject.env" . | nindent 12 }}
           resources:
-            {{- toYaml .Values.initdb.resources | nindent 12 }}
+            {{- toYaml .Values.dbInit.resources | nindent 12 }}
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
       containers:
         - name: seeder
