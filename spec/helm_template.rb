@@ -10,13 +10,19 @@ class HelmTemplate
     yaml.is_a?(Hash) ? yaml : YAML.safe_load(yaml)
   end
 
-  def initialize(values, chart = 'openproject', release_name = 'optest', extra_args = '')
-    debug(values, chart, release_name, extra_args)
+  def initialize(values, chart = 'openproject')
+    debug(values, chart, '14-stable')
   end
 
-  def debug(values, chart, release_name, extra_args = '')
+  def debug(values, chart, image_tag)
     @values = values
-    result = Open3.capture3("helm template --debug #{release_name} . #{extra_args} -f -",
+
+    # Set the default image tag
+    if image_tag
+      @values["image"] ||= { "tag" => image_tag }
+    end
+
+    result = Open3.capture3("helm template --debug optest . -f -",
                             chdir: File.join(__dir__, '..', 'charts', chart),
                             stdin_data: YAML.dump(values))
     @stdout, @stderr, @exit_code = result

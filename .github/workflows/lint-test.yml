@@ -37,15 +37,28 @@ jobs:
 
       - name: Run chart-testing (lint) WITHOUT version check
         if: github.event.pull_request.title != 'Release Tracking'
-        run: ct lint --target-branch ${{ github.event.repository.default_branch }} --check-version-increment=false
+        run: |
+          ct lint \
+            --target-branch ${{ github.event.repository.default_branch }} \
+            --check-version-increment=false \
+            --helm-lint-extra-args "--set image.tag=14.5.1"
 
       - name: Run chart-testing (lint) WITH version check
         if: github.event.pull_request.title == 'Release Tracking'
-        run: ct lint --target-branch ${{ github.event.repository.default_branch }} --check-version-increment=true
+        run: |
+          ct lint \
+            --target-branch ${{ github.event.repository.default_branch }} |
+            --check-version-increment=true \
+            --helm-lint-extra-args "--set image.tag=14.5.1"
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.5.0
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --target-branch ${{ github.event.repository.default_branch }} --chart-repos bitnami=https://charts.bitnami.com/bitnami --helm-extra-set-args "--set environment.OPENPROJECT_HTTPS=false --set persistence.accessModes=[ReadWriteOnce]" --helm-extra-args "--timeout 600s"
+        run: |
+          ct install \
+            --target-branch ${{ github.event.repository.default_branch }} \
+            --chart-repos bitnami=https://charts.bitnami.com/bitnami \
+            --helm-extra-set-args "--set image.tag=14.5.1 --set environment.OPENPROJECT_HTTPS=false --set persistence.accessModes=[ReadWriteOnce]" \
+            --helm-extra-args "--timeout 600s"

@@ -46,7 +46,9 @@ helm repo update
 Install the OpenProject chart in a dedicated `openproject` namespace:
 
 ```shell
-helm upgrade --create-namespace --namespace openproject --install openproject openproject/openproject
+helm upgrade --create-namespace --namespace openproject \
+  --install openproject openproject/openproject \
+  --set image.tag=14.5.1
 ```
 
 The namespace is optional, but we highly recommend it as it does make it easier to manage the resources created for OpenProject.
@@ -130,6 +132,14 @@ s3:
   # port:
 ```
 
+### Updating the release
+
+In case you update the release of OpenProject on the same version of the helm chart, you can use the `helm upgrade` command to update the release.
+
+```shell
+helm upgrade --reuse-values --namespace openproject my-openproject --set image.tag=14.6.0
+```
+Find out more about the [configuration through environment variables](https://www.openproject.org/docs/installation-and-operations/configuration/environment/) section.
 
 
 ### Updating the configuration

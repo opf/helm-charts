@@ -22,7 +22,7 @@ We publish newer versions of this chart to the GitHub package registry: https://
 
 We sign our chart using the [Helm Provenance and Integrity](https://helm.sh/docs/topics/provenance/) functionality. You can find the used public key here
 
--  https://github.com/opf/helm-charts/blob/main/signing.key 
+- https://github.com/opf/helm-charts/blob/main/signing.key 
 - https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
 
 # Contribution
