@@ -48,7 +48,7 @@ Install the OpenProject chart in a dedicated `openproject` namespace:
 ```shell
 helm upgrade --create-namespace --namespace openproject \
   --install openproject openproject/openproject \
-  --set image.tag=14.5.1
+  --set image.tag=14.5.1-slim
 ```
 
 The namespace is optional, but we highly recommend it as it does make it easier to manage the resources created for OpenProject.
@@ -78,12 +78,12 @@ To set it in the values yaml, set th `image.tag` value to the desired version.
 ```yaml
 image:
    # ... other options
-  tag: 14.5.1
+  tag: 14.5.1-slim
 ```
 
 **During installation**
 
-You can also pass this in the helm command using `--set image.tag=14.5.1`
+You can also pass this in the helm command using `--set image.tag=14.5.1-slim`
 
 Please see our [release notes](https://www.openproject.org/docs/release-notes/) or the [Docker Hub registry for openproject/openproject](https://hub.docker.com/r/openproject/openproject/tags) for available releases.
 
