@@ -1,4 +1,4 @@
-{{- $image_tag := .Values.image.tag | required ".Values.image.tag is required. Please use the -slim variant from OpenProject and fix it to a full release version X.Y.Z" -}}
+{{- $image_tag := .Values.image.tag | required ".Values.image.tag is required. Please use the -slim variant from OpenProject and fix it to a full release version (X.Y.Z). See https://hub.docker.com/r/openproject/openproject/tags for available versions" -}}
 
 ---
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}

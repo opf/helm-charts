@@ -67,11 +67,29 @@ We try to map the most common options to chart values directly for ease of use. 
 
 #### OpenProject image and version
 
-By default, the helm chart will target the latest stable major release. You can define a custom [supported docker tag](https://hub.docker.com/r/openproject/community/) using `image.tag`. Override container registry and repository using `image.registry` and `image.repository`, respectively.
+The helm chart does not set a default version of OpenProject, since the releases of the helm charts are decoupled from the core releases. 
+
+You always needs to set an image tag to a specific version of OpenProject before installing.
+
+**In the values.yaml**
+
+To set it in the values yaml, set th `image.tag` value to the desired version.
+
+```yaml
+image:
+   # ... other options
+  tag: 14.5.1
+```
+
+**During installation**
+
+You can also pass this in the helm command using `--set image.tag=14.5.1`
+
+Please see our [release notes](https://www.openproject.org/docs/release-notes/) or the [Docker Hub registry for openproject/openproject](https://hub.docker.com/r/openproject/openproject/tags) for available releases.
 
 Please make sure to use the `-slim` variant of OpenProject, as the all-in-one container is adding unnecessary services and will not work as expected with default options such as operating as a non-root user.
 
-
+You can also define a custom [supported docker tag](https://hub.docker.com/r/openproject/community/) using `image.tag`. Override container registry and repository using `image.registry` and `image.repository`, respectively.
 
 #### HTTPS mode
 
