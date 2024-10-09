@@ -18,9 +18,10 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
         with:
+          token: ${{ secrets.OPENRPOJECTCI_GH_TOKEN }}
           fetch-depth: 0
 
-      - name: Setup Node.js 
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20.10.0
@@ -31,7 +32,7 @@ jobs:
           ruby-version: '3.2'
 
       - name: Install Helm
-        uses: azure/setup-helm@v3          
+        uses: azure/setup-helm@v3
 
       - name: Install Dependencies
         run: npm install
@@ -53,7 +54,7 @@ jobs:
           echo "CR_KEYRING=$keyring" >> "$GITHUB_ENV"
         env:
           GPG_OPERATIONS_BASE64: "${{ secrets.GPG_OPERATIONS_BASE64 }}"
-          GPG_OPERATIONS_PASSPHRASE: "${{ secrets.GPG_OPERATIONS_PASSPHRASE }}"        
+          GPG_OPERATIONS_PASSPHRASE: "${{ secrets.GPG_OPERATIONS_PASSPHRASE }}"
 
       - name: Create Release Pull Request
         id: changesets
@@ -75,7 +76,7 @@ jobs:
           config: .github/cr.yaml
           skip_existing: true
         env:
-          CR_TOKEN: "${{ secrets.OPENRPOJECTCI_GH_TOKEN }}"        
+          CR_TOKEN: "${{ secrets.OPENRPOJECTCI_GH_TOKEN }}"
 
       - name: Login to GitHub Container Registry
         if: steps.changesets.outputs.hasChangesets == 'false'
