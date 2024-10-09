@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   release:
+    if: github.repository == 'opf/helm-charts'
     name: Update the Helm chart for a core release
     runs-on: ubuntu-latest
     steps:
@@ -23,6 +24,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          token: ${{ secrets.OPENRPOJECTCI_GH_TOKEN }}
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -42,4 +44,6 @@ jobs:
           git add .changeset/*.md
           git add charts/openproject/Chart.yaml
           git commit -m "Update helm chart for core release ${{ inputs.tag }}"
-          git push
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.OPENRPOJECTCI_GH_TOKEN }}
