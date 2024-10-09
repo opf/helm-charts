@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'yaml'
+
+def version_bump(v1, v2)
+  if v1.segments[0] < v2.segments[0]
+    :major
+  elsif v1.segments[1] < v2.segments[1]
+    :minor
+  elsif v1.segments[2] < v2.segments[2]
+    :patch
+  end
+end
+
+
+next_version = Gem::Version.new(ARGV.pop)
+
+# Find current version
+chart_file = File.expand_path('../charts/openproject/Chart.yaml', __dir__)
+chart = YAML.load_file(chart_file)
+current_version = Gem::Version.new(chart.fetch('appVersion'))
+
+if next_version == current_version
+  echo "Version #{next_version} is already the current version"
+  exit 1
+end
+
+# Get the bump type (major, minor, patch)
+bump_type = version_bump(current_version, next_version)
+raise ArgumentError.new("Failed to find version bump") if bump_type.nil?
+
+puts "Bumping version from #{current_version} to #{next_version} (#{bump_type})"
+
+changeset_name = "#{next_version.to_s.gsub('.', '-')}_#{bump_type}.md"
+File.open(File.expand_path("../.changeset/#{changeset_name}", __dir__), 'w') do |f|
+  f.write <<~CHANGE
+    ---
+    "@openproject/helm-charts": #{bump_type}
+    ---
+
+    Upgrade OpenProject core version to #{next_version} (#{bump_type} update)
+  CHANGE
+end
