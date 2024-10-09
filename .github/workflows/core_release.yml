@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   release:
-    name: Changeset and Release
+    name: Update the Helm chart for a core release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
