@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 8.1.0
+
+### Minor Changes
+
+- 1646954: Bump OpenProject version to 14.6.0
+
 ## 8.0.0
 
 ### Major Changes
