@@ -30,7 +30,24 @@ end
 bump_type = version_bump(current_version, next_version)
 raise ArgumentError.new("Failed to find version bump") if bump_type.nil?
 
-puts "Bumping version from #{current_version} to #{next_version} (#{bump_type})"
+puts "➡ Bumping appVersion from #{current_version} to #{next_version} (#{bump_type})"
+chart['appVersion'] = next_version.to_s
+File.open(chart_file, 'w') do |f|
+  f.write chart.to_yaml
+end
+
+puts "➡ Bumping image tag from #{current_version} to #{next_version} (#{bump_type})"
+values_file = File.expand_path('../charts/openproject/values.yaml', __dir__)
+values_str = File.read values_file
+
+unless values_str.include?(%(tag: "#{current_version}-slim"))
+  raise ArgumentError.new("Failed to find image tag #{current_version}-slim in charts/openproject/values.yaml")
+end
+
+values_str.gsub!(%(tag: "#{current_version}-slim"), %(tag: "#{next_version}-slim"))
+File.open(values_file, 'w') do |f|
+  f.write values_str
+end
 
 changeset_name = "#{next_version.to_s.gsub('.', '-')}_#{bump_type}.md"
 File.open(File.expand_path("../.changeset/#{changeset_name}", __dir__), 'w') do |f|
