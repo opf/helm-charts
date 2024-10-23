@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 8.3.0
+
+### Minor Changes
+
+- 9a71b28: Allow unsetting the host name env
+
 ## 8.2.0
 
 ### Minor Changes
