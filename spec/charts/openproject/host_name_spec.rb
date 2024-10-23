@@ -46,4 +46,22 @@ describe 'host name configuration' do
         .not_to include("OPENPROJECT_HOST__NAME")
     end
   end
+
+  context 'when setting host name and disabling ingress' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        ingress:
+          enabled: false
+        openproject:
+          host: foo.example.com
+      YAML
+      )
+    end
+
+    it 'the host is not output', :aggregate_failures do
+      expect(subject)
+        .to include("OPENPROJECT_HOST__NAME" => "foo.example.com")
+
+    end
+  end
 end
