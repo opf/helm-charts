@@ -1,5 +1,23 @@
 # @openproject/helm-charts
 
+## 8.2.0
+
+### Minor Changes
+
+- b82aaf4: Allow setting options for the deployment strategy:
+
+  You can now provide custom options to the strategy, for example:
+
+  **values.yaml**:
+
+  ```yaml
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 30%
+      maxUnavailable: 30%
+  ```
+
 ## 8.1.3
 
 ### Patch Changes
