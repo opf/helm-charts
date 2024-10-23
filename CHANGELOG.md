@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 8.1.3
+
+### Patch Changes
+
+- 284e340: Fix background queue name not being picked up
+
 ## 8.1.2
 
 ### Patch Changes
