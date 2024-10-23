@@ -261,6 +261,10 @@ strategy:
   ## Should your cluster support WriteMany volumes, you can change this
   ## to `RollingUpdate`.
   type: "Recreate"
+  # type: RollingUpdate
+  #   rollingUpdate:
+  #     maxSurge: 30%
+  #     maxUnavailable: 30%
 
 # Define the workers to run, their queues, replicas, strategy, and resources
 workers:
