@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 8.3.1
+
+### Patch Changes
+
+- a636fc2: Fix indent when outputting host without ingress
+- b3d31ef: apply secret reset fix from other envs in core where it was missing
+
 ## 8.3.0
 
 ### Minor Changes
