@@ -31,19 +31,19 @@ describe 'imagePullSecrets configuration' do
       expect(template.keys).to include 'Deployment/optest-openproject-worker-default'
       expect(template.dig('Deployment/optest-openproject-worker-default', 'spec', 'replicas'))
         .to eq(1)
-      expect(template.env('Deployment/optest-openproject-worker-default', 'openproject', 'QUEUE'))
+      expect(template.env('Deployment/optest-openproject-worker-default', 'openproject', 'GOOD_JOB_QUEUES'))
         .to be_nil
 
       expect(template.keys).to include 'Deployment/optest-openproject-worker-multitenancy'
       expect(template.dig('Deployment/optest-openproject-worker-multitenancy', 'spec', 'replicas'))
         .to eq(1)
-      expect(template.env_named('Deployment/optest-openproject-worker-multitenancy', 'openproject', 'QUEUE')['value'])
+      expect(template.env_named('Deployment/optest-openproject-worker-multitenancy', 'openproject', 'GOOD_JOB_QUEUES')['value'])
         .to eq('multitenancy')
 
       expect(template.keys).to include 'Deployment/optest-openproject-worker-bim'
       expect(template.dig('Deployment/optest-openproject-worker-bim', 'spec', 'replicas'))
         .to eq(0)
-      expect(template.env_named('Deployment/optest-openproject-worker-bim', 'openproject', 'QUEUE')['value'])
+      expect(template.env_named('Deployment/optest-openproject-worker-bim', 'openproject', 'GOOD_JOB_QUEUES')['value'])
         .to eq('bim,ifc_conversion')
     end
   end
