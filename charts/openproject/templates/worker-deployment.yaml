@@ -81,7 +81,7 @@ spec:
             - /app/docker/prod/worker
           env:
             {{- include "openproject.env" . | nindent 12 }}
-            - name: "GOOD_JOB_QUEUES"
+            - name: "OPENPROJECT_GOOD_JOB_QUEUES"
               value: "{{ $workerValues.queues }}"
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
