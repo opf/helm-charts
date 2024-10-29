@@ -22,7 +22,7 @@ chart = YAML.load_file(chart_file)
 current_version = Gem::Version.new(chart.fetch('appVersion'))
 
 if next_version == current_version
-  echo "Version #{next_version} is already the current version"
+  puts "Version #{next_version} is already the current version"
   exit 1
 end
 
