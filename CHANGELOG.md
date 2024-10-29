@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 8.3.2
+
+### Patch Changes
+
+- 470b8ed: Bump version to 14.6.3
+
 ## 8.3.1
 
 ### Patch Changes
