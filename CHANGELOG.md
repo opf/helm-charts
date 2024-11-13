@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.0.0
+
+### Major Changes
+
+- 57d032f: Upgrade OpenProject to 15.0
+
 ## 8.3.2
 
 ### Patch Changes
