@@ -7,7 +7,6 @@ on:
       tag:
         description: "Core tag"
         required: true
-        default: dev
         type: string
 
 permissions:
@@ -16,7 +15,7 @@ permissions:
 
 jobs:
   release:
-    if: github.repository == 'opf/helm-charts'
+    if: github.repository == 'opf/helm-charts' && inputs.tag != '' && inputs.tag != 'dev'
     name: Update the Helm chart for a core release
     runs-on: ubuntu-latest
     steps:
