@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.2.0
+
+### Minor Changes
+
+- 50a9eee: Allow setting admin user seeder as locked
+
 ## 9.1.0
 
 ### Minor Changes
