@@ -266,6 +266,18 @@ strategy:
   #     maxSurge: 30%
   #     maxUnavailable: 30%
 
+## Cron job running the incoming email [1] task.
+##
+## Ref: https://www.openproject.org/docs/installation-and-operations/configuration/incoming-emails/
+cron:
+  enabled: false
+  ## See documentation referenced above for all variables.
+  environment:
+    IMAP_HOST:
+    IMAP_USERNAME:
+    IMAP_PASSWORD:
+    IMAP_PORT: 993
+
 # Define the workers to run, their queues, replicas, strategy, and resources
 workers:
   default:
