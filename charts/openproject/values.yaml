@@ -318,12 +318,15 @@ openproject:
 
   ## Define admin user details
   # only applicable on first installation
-  # Note: Only applicable for versions >= 13.0
+  # c.f. https://www.openproject.org/docs/installation-and-operations/configuration/#initial-admin-user-creation
   admin_user:
     password: "admin"
     password_reset: "true"
     name: "OpenProject Admin"
     mail: "admin@example.net"
+    # Uncomment if you want to lock the user after creation
+    # Relevant for automated deployments that seed LDAP or SSO
+    # locked: true
 
   ## Define OpenID Connect providers
   oidc:
