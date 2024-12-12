@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.3.0
+
+### Minor Changes
+
+- a5f14c9: Add support for the cron-based service for incoming email check via IMAP
+
 ## 9.2.0
 
 ### Minor Changes
