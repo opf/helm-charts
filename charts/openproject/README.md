@@ -126,7 +126,7 @@ persistence:
 s3:
   enabled: true
   accessKeyId:
-  # host: 
+  # host:
   # port:
 ```
 
@@ -283,6 +283,9 @@ type: Opaque
 ```
 
 To add the actual content, you can simply add `stringData:` to the end of it and save it.
+Alternatively you can create the secret in one line as well via the `--from-literal` option.
+
+**Secret keys**
 
 The keys which are looked up inside the secret data can be changed from their defaults in the values as well. This is the same in all cases where next to `existingSecret` you can also set `secretKeys`.
 
@@ -296,6 +299,15 @@ stringData:
   password: userPassword
 ```
 
+Here an example how to do the same using the `--from-literal` option.
+We won't give these examples for the other sections below but it works just the same.
+
+```bash
+kubectl -n openproject create secret generic db-credentials \
+  --from-literal=postgres-password=postgresPassword \
+  --from-literal=password=userPassword
+```
+
 If you have an existing secret where the keys are not `postgres-password` and `password`, you can customize the used keys as mentioned above.
 
 For instance:
@@ -307,7 +319,7 @@ helm upgrade --create-namespace --namespace openproject --install openproject \
   --set postgresql.auth.secretKeys.userPasswordKey=userpw
 ```
 
-This can be customized for the the credentials in the following sections too in the same fashion.
+This can also be customized for the the credentials in the following sections in the same fashion.
 You can look up the respective options in the [`values.yaml`](./values.yaml) file.
 
 #### Default passwords
@@ -346,6 +358,14 @@ Set `openproject.oidc.extraOidcSealedSecret="openproject-oidc-secret-sealed"` in
 stringData:
   accessKeyId: AKIAXDF2JNZRBFQIRTKA
   secretAccessKey: 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
+```
+
+### Incoming E-Mails cron job (IMAP)
+
+```yaml
+stringData:
+  imapUsername: inbox@mailprovider.com
+  imapPassword: t*$SFdD*RfahVTnoDr&Caw96FJuU
 ```
 
 ## OpenShift
