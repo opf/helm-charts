@@ -278,6 +278,15 @@ cron:
     IMAP_PASSWORD:
     IMAP_PORT: 993
 
+  ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
+  ## use an existing secret containing the IMAP credentials.
+  ## Specify the name of this existing secret here.
+  existingSecret:
+  ## In case your secret does not use the default keys in the secret, you can adjust them here.
+  secretKeys:
+    imapUsername: imapUsername
+    imapPassword: imapPassword
+
 # Define the workers to run, their queues, replicas, strategy, and resources
 workers:
   default:
