@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.4.0
+
+### Minor Changes
+
+- 5d31b44: Bump version to 15.1.0
+
 ## 9.3.0
 
 ### Minor Changes
