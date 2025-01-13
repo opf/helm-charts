@@ -41,7 +41,7 @@ jobs:
       - name: Commit release
         run: |
           git add .changeset/*.md
-          git add charts/openproject/Chart.yaml
+          git add charts/openproject/*.yaml
           git commit -m "Update helm chart for core release ${{ inputs.tag }}"
           git push origin main
         env:
