@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.4.1
+
+### Patch Changes
+
+- 56f9c4f: Upgrade OpenProject core version to 15.1.1 (patch update)
+
 ## 9.4.0
 
 ### Minor Changes
