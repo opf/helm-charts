@@ -599,11 +599,72 @@ postgresql:
     #
     postgresPassword: ""
 
-  ## When using the "bundled" postgresql chart, you can configure the storageClass and other settings similar to this
-  ## Ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
-  #
-  # global:
-  #  storageClass: my-storage-class-name
+  ##
+  # Additional connection options
+  # See https://www.postgresql.org/docs/current/libpq-connect.html for additional details
+  options:
+    # Define a pool size for the Rails connection pool
+    # https://guides.rubyonrails.org/configuring.html#database-pooling
+    pool:
+
+    # Specifies the authentication method that the client requires from the server.
+    requireAuth:
+
+    # This option controls the client's use of channel binding.
+    channelBinding:
+
+    # Maximum time to wait while connecting, in seconds.
+    connectTimeout:
+
+    # This sets the client_encoding configuration parameter for this connection.
+    clientEncoding:
+
+    # Controls whether client-side TCP keepalives are used.
+    keepalives:
+
+    # Controls the number of seconds of inactivity after which TCP should send a keepalive message to the server.
+    keepalivesIdle:
+
+    # Controls the number of seconds after which a TCP keepalive message that is not acknowledged by the server
+    # should be retransmitted.
+    keepalivesInterval:
+
+    # Controls the number of TCP keepalives that can be lost before the client's connection to the server is
+    # considered dead
+    keepalivesCount:
+
+    # This option determines whether the connection should use the replication protocol instead of the normal
+    # protocol.
+    replication:
+
+    # This option determines whether or with what priority a secure GSS TCP/IP connection will be negotiated with the
+    # server.
+    gssencmode:
+
+    # This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the
+    # server.
+    sslmode:
+
+    # If set to 1, data sent over SSL connections will be compressed.
+    sslcompression:
+
+    # This parameter specifies the file name of the client SSL certificate
+    sslcert:
+
+    # This parameter specifies the location for the secret key used for the client certificate.
+    sslkey:
+
+    # This parameter specifies the password for the secret key specified in sslkey
+    sslpassword:
+
+    # This parameter specifies the name of a file containing SSL certificate authority (CA) certificate(s)
+    sslrootcert:
+
+    # This parameter specifies the file name of the SSL server certificate revocation list (CRL).
+    sslcrl:
+
+    # This parameter specifies the minimum SSL/TLS protocol version to allow for the connection
+    sslMinProtocolVersion:
 
 ## Configure liveness and readiness probes.
 ##
