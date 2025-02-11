@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 9.6.0
+
+### Minor Changes
+
+- 7679fee: Define more options for postgresql connection
+- 846b5a7: also provide writable tmp volumes for db init check
+
 ## 9.5.1
 
 ### Patch Changes
