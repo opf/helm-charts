@@ -55,6 +55,8 @@ spec:
             {{- include "openproject.env" . | nindent 12 }}
           resources:
             {{- toYaml .Values.dbInit.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
       containers:
         - name: seeder
