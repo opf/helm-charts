@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.7.0
+
+### Minor Changes
+
+- bdf058a: Upgrade OpenProject core version to 15.3.0 (minor update)
+
 ## 9.6.0
 
 ### Minor Changes
