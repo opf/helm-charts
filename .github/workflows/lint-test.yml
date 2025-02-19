@@ -55,6 +55,6 @@ jobs:
             --helm-extra-set-args "\
               --set environment.OPENPROJECT_HTTPS=false \
               --set persistence.accessModes=[ReadWriteOnce] \
-              --set use_tmp_volumes=false
+              --set useTmpVolumes=false
             " \
             --helm-extra-args "--timeout 600s"
