@@ -48,4 +48,14 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --target-branch ${{ github.event.repository.default_branch }} --chart-repos bitnami=https://charts.bitnami.com/bitnami --helm-extra-set-args "--set environment.OPENPROJECT_HTTPS=false --set persistence.accessModes=[ReadWriteOnce]" --helm-extra-args "--timeout 600s"
+        run: |
+          ct install \
+            --target-branch ${{ github.event.repository.default_branch }} \
+            --chart-repos bitnami=https://charts.bitnami.com/bitnami \
+            --helm-extra-set-args "\
+              --set environment.OPENPROJECT_HTTPS=false \
+              --set persistence.accessModes=[ReadWriteOnce] \
+              --set openproject.useTmpVolumes=false \
+              --set containerSecurityContext.readOnlyRootFilesystem=false \
+            " \
+            --helm-extra-args "--timeout 600s"
