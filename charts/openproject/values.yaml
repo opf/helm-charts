@@ -345,6 +345,12 @@ openproject:
     password_reset: "true"
     name: "OpenProject Admin"
     mail: "admin@example.net"
+
+    secret: ""
+
+    ## In case your secret does not use the default key in the secret, you can adjust it here
+    secretKeys:
+      password: ""
     # Uncomment if you want to lock the user after creation
     # Relevant for automated deployments that seed LDAP or SSO
     # locked: true
