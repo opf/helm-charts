@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.8.0
+
+### Minor Changes
+
+- 1f9a03f: Allow passing existing secret for admin user
+
 ## 9.7.2
 
 ### Patch Changes
