@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 9.8.0
+
+### Minor Changes
+
+- cf9bf22: Upgrade OpenProject core version to 15.4.0 (minor update)
+- 1f9a03f: Allow passing existing secret for admin user
+
 ## 9.7.2
 
 ### Patch Changes
