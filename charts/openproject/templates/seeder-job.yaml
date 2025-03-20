@@ -60,7 +60,7 @@ spec:
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
       containers:
         - name: seeder
-          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
+          image: {{ include "openproject.image" . }}
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           args:
             - bash
