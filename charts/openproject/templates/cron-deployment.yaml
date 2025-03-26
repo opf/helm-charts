@@ -70,6 +70,8 @@ spec:
             - /app/docker/prod/wait-for-db
           resources:
             {{- toYaml .Values.appInit.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
       containers:
         - name: "cron"
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
