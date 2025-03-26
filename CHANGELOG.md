@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.8.3
+
+### Patch Changes
+
+- febc01f: fix: Provide writable tmp volumes for db init check in cronjob
+
 ## 9.8.2
 
 ### Patch Changes
