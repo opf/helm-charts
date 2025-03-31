@@ -85,6 +85,10 @@ spec:
             {{- include "openproject.env" . | nindent 12 }}
             - name: "OPENPROJECT_GOOD_JOB_QUEUES"
               value: "{{ $workerValues.queues }}"
+            {{- if $workerValues.probes.enabled }}
+            - name: "GOOD_JOB_PROBE_PORT"
+              value: "{{ $workerValues.probes.port }}"
+            {{- end }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}
@@ -98,6 +102,28 @@ spec:
               readOnly: false
             {{- end }}
             {{- include "openproject.extraVolumeMounts" . | indent 12 }}
+          {{- if and .Values.probes.liveness.enabled $workerValues.probes.enabled }}
+          livenessProbe:
+            httpGet:
+              path: "/status/connected"
+              port: {{ $workerValues.probes.port }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+            successThreshold: {{ .Values.probes.liveness.successThreshold }}
+          {{- end }}
+          {{- if and .Values.probes.readiness.enabled $workerValues.probes.enabled }}
+          readinessProbe:
+            httpGet:
+              path: "/status"
+              port: {{ $workerValues.probes.port }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+            successThreshold: {{ .Values.probes.readiness.successThreshold }}
+          {{- end }}
           resources:
             {{- coalesce $workerValues.resources .Values.resources | toYaml | nindent 12 }}
 {{- end }}
