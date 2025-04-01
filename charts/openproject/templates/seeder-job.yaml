@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: {{ include "common.names.fullname" . }}-seeder-{{ .Release.Revision }}
   labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
   {{- with .Values.seederJob.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -15,7 +15,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "common.labels.standard" . | nindent 8 }}
+        {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 8 }}
         openproject/process: seeder
       {{- with .Values.seederJob.annotations }}
       annotations:
