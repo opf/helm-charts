@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-cron
   labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     openproject/process: cron
 spec:
   replicas: {{ if .Values.cron.enabled }}{{- 1 }}{{ else }}{{- 0 }}{{ end }}

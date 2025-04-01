@@ -20,6 +20,8 @@ global:
   ##   - myRegistryKeySecretName
   #
   imagePullSecrets: []
+## Add labels to all the deployed resources
+commonLabels: {}
 
 ## Affinity for pod assignment.
 ##
@@ -236,6 +238,9 @@ memcached:
       readOnlyRootFilesystem: true
       runAsNonRoot: true
 
+  ## @param commonLabels Add labels to all the deployed resources
+  ##
+  commonLabels: {}
   ## When "bundled" is set to false, you need to define the memcached connection details.
   #
   connection:
@@ -600,6 +605,10 @@ postgresql:
         type: "RuntimeDefault"
       readOnlyRootFilesystem: true
       runAsNonRoot: true
+
+  ## @param commonLabels Add labels to all the deployed resources
+  ##
+  commonLabels: {}
 
   ## When "bundled" is set to false, you need to define the database connection details.
   #

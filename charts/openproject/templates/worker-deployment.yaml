@@ -6,7 +6,7 @@ kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-worker-{{ $workerName }}
   labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     openproject/process: worker-{{ $workerName }}
 spec:
   replicas: {{( kindIs "invalid" $workerValues.replicaCount) | ternary .Values.backgroundReplicaCount $workerValues.replicaCount }}
@@ -24,7 +24,7 @@ spec:
         {{- end }}
         {{- include "openproject.envChecksums" . | nindent 8 }}
       labels:
-        {{- include "common.labels.standard" . | nindent 8 }}
+        {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 8 }}
         openproject/process: worker-{{ $workerName }}
     spec:
       {{- include "openproject.imagePullSecrets" . | indent 6 }}
