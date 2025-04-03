@@ -5,6 +5,7 @@ apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-worker-{{ $workerName }}
+  namespace: {{ include "common.names.namespace" $ }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
     openproject/process: worker-{{ $workerName }}
