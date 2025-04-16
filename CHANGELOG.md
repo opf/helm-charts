@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.10.0
+
+### Minor Changes
+
+- 1d4ce2e: Add maxThreads parameter to worker deployments.
+
 ## 9.9.0
 
 ### Minor Changes
