@@ -287,11 +287,14 @@ cron:
     imapUsername: imapUsername
     imapPassword: imapPassword
 
-# Define the workers to run, their queues, replicas, strategy, and resources
+# Define the workers to run, their queues, max threads, replicas, strategy, and resources
 workers:
   default:
     queues: ""
-    replicas: 1
+    # Set a maxThreads value to override the default of 20
+    # It needs to be an integer greater than 0.
+    maxThreads:
+    replicaCount: 1
     strategy:
       type: "Recreate"
     resources:

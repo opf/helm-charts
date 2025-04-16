@@ -85,6 +85,10 @@ spec:
             {{- include "openproject.env" . | nindent 12 }}
             - name: "OPENPROJECT_GOOD_JOB_QUEUES"
               value: "{{ $workerValues.queues }}"
+            {{- if not (empty $workerValues.maxThreads) }}
+            - name: "OPENPROJECT_GOOD_JOB_MAX_THREADS"
+              value: "{{ $workerValues.maxThreads }}"
+            {{- end }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}
