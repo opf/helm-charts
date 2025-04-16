@@ -10,10 +10,11 @@ describe 'imagePullSecrets configuration' do
         workers:
           default:
             queues: ""
-            replicaCount: 1
+            replicaCount: 2
             strategy:
               type: "Recreate"
           multitenancy:
+            maxThreads: 4
             queues: "multitenancy"
             replicaCount: 1
             strategy:
@@ -30,8 +31,10 @@ describe 'imagePullSecrets configuration' do
     it 'Creates the different worker deployments', :aggregate_failures do
       expect(template.keys).to include 'Deployment/optest-openproject-worker-default'
       expect(template.dig('Deployment/optest-openproject-worker-default', 'spec', 'replicas'))
-        .to eq(1)
-      expect(template.env('Deployment/optest-openproject-worker-default', 'openproject', 'OPENPROJECT_GOOD_JOB_QUEUES'))
+        .to eq(2)
+      expect(template.env_named('Deployment/optest-openproject-worker-default', 'openproject', 'OPENPROJECT_GOOD_JOB_QUEUES')['value'])
+        .to eq("")
+      expect(template.env_named('Deployment/optest-openproject-worker-default', 'openproject', 'OPENPROJECT_GOOD_JOB_MAX_THREADS'))
         .to be_nil
 
       expect(template.keys).to include 'Deployment/optest-openproject-worker-multitenancy'
@@ -39,10 +42,14 @@ describe 'imagePullSecrets configuration' do
         .to eq(1)
       expect(template.env_named('Deployment/optest-openproject-worker-multitenancy', 'openproject', 'OPENPROJECT_GOOD_JOB_QUEUES')['value'])
         .to eq('multitenancy')
+      expect(template.env_named('Deployment/optest-openproject-worker-multitenancy', 'openproject', 'OPENPROJECT_GOOD_JOB_MAX_THREADS')['value'])
+        .to eq('4')
 
       expect(template.keys).to include 'Deployment/optest-openproject-worker-bim'
       expect(template.dig('Deployment/optest-openproject-worker-bim', 'spec', 'replicas'))
         .to eq(0)
+      expect(template.env_named('Deployment/optest-openproject-worker-bim', 'openproject', 'OPENPROJECT_GOOD_JOB_MAX_THREADS'))
+        .to be_nil
       expect(template.env_named('Deployment/optest-openproject-worker-bim', 'openproject', 'OPENPROJECT_GOOD_JOB_QUEUES')['value'])
         .to eq('bim,ifc_conversion')
     end
