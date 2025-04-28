@@ -41,6 +41,7 @@ spec:
         {{- end }}
         {{- include "openproject.extraVolumes" . | indent 8 }}
       initContainers:
+        {{- include "openproject.tmpVolumeInitContainer" . | indent 8 }}
         - name: check-db-ready
           image: "{{ .Values.dbInit.image.registry }}/{{ .Values.dbInit.image.repository }}:{{ .Values.dbInit.image.tag }}"
           imagePullPolicy: {{ .Values.dbInit.image.imagePullPolicy }}

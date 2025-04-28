@@ -135,6 +135,19 @@ securityContext:
 {{- end }}
 {{- end -}}
 
+{{- define "openproject.tmpVolumeInitContainer" -}}
+{{- if eq (include "openproject.useTmpVolumes" .) "true" }}
+- name: fix-tmp-perms
+  image: busybox
+  command: ["sh", "-c", "chmod 1777 /tmp && chmod 1777 /app/tmp"]
+  volumeMounts:
+    {{- include "openproject.tmpVolumeMounts" . | indent 4 }}
+  securityContext:
+    runAsNonRoot: false
+    readOnlyRootFilesystem: false
+{{- end }}
+{{- end -}}
+
 {{- define "openproject.envFrom" -}}
 - secretRef:
     name: {{ include "common.names.fullname" . }}-core

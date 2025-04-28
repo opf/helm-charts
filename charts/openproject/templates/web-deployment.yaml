@@ -54,6 +54,7 @@ spec:
         {{- end }}
         {{- include "openproject.extraVolumes" . | indent 8 }}
       initContainers:
+        {{- include "openproject.tmpVolumeInitContainer" . | indent 8 }}
         - name: wait-for-db
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
