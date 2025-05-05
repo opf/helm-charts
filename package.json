@@ -2,7 +2,7 @@
     "name": "@openproject/helm-charts",
     "private": true,
     "author": "OpenProject GmbH",
-    "version": "9.10.0",
+    "version": "9.10.1",
     "license": "",
     "scripts": {
         "changeset:version": "./node_modules/.bin/changeset version && script/version"
