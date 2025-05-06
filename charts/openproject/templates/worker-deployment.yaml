@@ -88,6 +88,8 @@ spec:
             {{- if not (empty $workerValues.maxThreads) }}
             - name: "OPENPROJECT_GOOD_JOB_MAX_THREADS"
               value: "{{ $workerValues.maxThreads }}"
+            - name: "RAILS_MAX_THREADS"
+              value: "{{ add $workerValues.maxThreads 3 }}" # worker threads + NOTIFY listener + 2 cron threads
             {{- end }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
