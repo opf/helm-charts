@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 9.10.2
+
+### Patch Changes
+
+- 4e03ef9: adjust db connection pool size to fit gj workers
+
 ## 9.10.1
 
 ### Patch Changes
