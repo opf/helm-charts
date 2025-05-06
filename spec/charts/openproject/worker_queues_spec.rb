@@ -44,6 +44,8 @@ describe 'imagePullSecrets configuration' do
         .to eq('multitenancy')
       expect(template.env_named('Deployment/optest-openproject-worker-multitenancy', 'openproject', 'OPENPROJECT_GOOD_JOB_MAX_THREADS')['value'])
         .to eq('4')
+      expect(template.env_named('Deployment/optest-openproject-worker-multitenancy', 'openproject', 'RAILS_MAX_THREADS')['value'])
+        .to eq('7')
 
       expect(template.keys).to include 'Deployment/optest-openproject-worker-bim'
       expect(template.dig('Deployment/optest-openproject-worker-bim', 'spec', 'replicas'))
