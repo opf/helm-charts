@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 10.0.1
+
+### Patch Changes
+
+- 0a3cc55: no longer use helper that was removed in most recent version of bitnami common
+
 ## 10.0.0
 
 ### Major Changes
