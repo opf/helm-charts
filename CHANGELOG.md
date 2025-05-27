@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 10.0.2
+
+### Patch Changes
+
+- da4f9d2: No longer override image entrypoint
+
 ## 10.0.1
 
 ### Patch Changes
