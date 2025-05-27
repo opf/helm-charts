@@ -65,7 +65,7 @@ spec:
                 name: {{ include "common.names.fullname" . }}-cron-environment
           env:
             {{- include "openproject.env" . | nindent 12 }}
-          command:
+          args:
             - bash
             - /app/docker/prod/wait-for-db
           resources:
@@ -81,7 +81,7 @@ spec:
             {{- include "openproject.envFrom" . | nindent 12 }}
             - secretRef:
                 name: {{ include "common.names.fullname" . }}-cron-environment
-          command:
+          args:
             - bash
             - /app/docker/prod/cron
           env:

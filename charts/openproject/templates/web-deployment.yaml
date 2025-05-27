@@ -62,8 +62,7 @@ spec:
             {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
-          command:
-            - bash
+          args:
             - /app/docker/prod/wait-for-db
           resources:
             {{- toYaml .Values.appInit.resources | nindent 12 }}
@@ -78,8 +77,7 @@ spec:
             {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
-          command:
-            - bash
+          args:
             - /app/docker/prod/web
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
