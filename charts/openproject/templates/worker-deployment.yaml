@@ -65,6 +65,7 @@ spec:
           env:
             {{- include "openproject.env" . | nindent 12 }}
           args:
+            - bash
             - /app/docker/prod/wait-for-db
           resources:
             {{- toYaml .Values.appInit.resources | nindent 12 }}
@@ -78,6 +79,7 @@ spec:
           envFrom:
             {{- include "openproject.envFrom" . | nindent 12 }}
           args:
+            - bash
             - /app/docker/prod/worker
           env:
             {{- include "openproject.env" . | nindent 12 }}
