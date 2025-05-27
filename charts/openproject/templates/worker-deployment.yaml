@@ -64,8 +64,7 @@ spec:
             {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
-          command:
-            - bash
+          args:
             - /app/docker/prod/wait-for-db
           resources:
             {{- toYaml .Values.appInit.resources | nindent 12 }}
@@ -78,8 +77,7 @@ spec:
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           envFrom:
             {{- include "openproject.envFrom" . | nindent 12 }}
-          command:
-            - bash
+          args:
             - /app/docker/prod/worker
           env:
             {{- include "openproject.env" . | nindent 12 }}

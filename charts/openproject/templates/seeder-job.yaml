@@ -63,7 +63,6 @@ spec:
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
           imagePullPolicy: {{ .Values.image.imagePullPolicy }}
           args:
-            - bash
             - /app/docker/prod/seeder
           envFrom:
             {{- include "openproject.envFrom" . | nindent 12 }}
