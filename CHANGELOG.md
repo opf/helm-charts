@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 10.0.3
+
+### Patch Changes
+
+- 6e200a0: Upgrade OpenProject core version to 16.0.1 (patch update)
+
 ## 10.0.2
 
 ### Patch Changes
