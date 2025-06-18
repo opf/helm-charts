@@ -468,12 +468,13 @@ s3:
     ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
     ## use an existing secret containing the S3 compatible access credentials.
     ## Specify the name of this existing secret here.
-    existingSecret:
 
-    ## In case your secret does not use the default keys in the secret, you can adjust them here.
-    secretKeys:
-      accessKeyId: "accessKeyId"
-      secretAccessKey: "secretAccessKey"
+    # if using an existing secret, use the following keys for your access key and secret.
+    # OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID
+    # OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY
+
+    # note there are double underscores on these keys
+    existingSecret:
 
   region:
   bucketName:
