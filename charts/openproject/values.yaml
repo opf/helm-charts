@@ -34,9 +34,9 @@ cleanup:
   #
   deletePodsOnSuccess: true
 
-  # Keep Pods/Job logs for the following time.
+  # Keep Pods/Job logs for the following time in seconds.
   #
-  deletePodsOnSuccessTimeout: 6000
+  deletePodsOnSuccessTimeout: 86400
 
 ## Define additional environment variables.
 ##
