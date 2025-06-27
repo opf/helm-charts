@@ -146,6 +146,10 @@ securityContext:
 - secretRef:
     name: {{ include "common.names.fullname" . }}-s3
 {{- end }}
+{{- if .Values.s3.auth.existingSecret }}
+- secretRef:
+    name: {{ .Values.s3.auth.existingSecret }}
+{{- end }}
 {{- if eq .Values.openproject.cache.store "memcache" }}
 - secretRef:
     name: {{ include "common.names.fullname" . }}-memcached
