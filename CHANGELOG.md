@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 10.1.2
+
+### Patch Changes
+
+- 32aed21: Respect existingClaim in worker deployment
+- 366816a: fixing bug in the s3 existing secret logic
+
 ## 10.1.1
 
 ### Patch Changes
