@@ -51,7 +51,7 @@ describe 'seeder cleanup configuration' do
 
     it 'Populates defaults for all deployments', :aggregate_failures do
       definitions.each do |name|
-        expect(template.spec(name)['ttlSecondsAfterFinished']).to eq(6000)
+        expect(template.spec(name)['ttlSecondsAfterFinished']).to eq(86400)
       end
     end
   end
