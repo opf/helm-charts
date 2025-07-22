@@ -76,7 +76,7 @@ dbInit:
     repository: "postgres"
 
     # Postgres version to use
-    tag: 13
+    tag: 16
 
     ## Define a imagePullPolicy.
     ##
