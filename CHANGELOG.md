@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 10.3.0
+
+### Minor Changes
+
+- b15d008: Use PostgreSQL 16 for db init
+
 ## 10.2.0
 
 ### Minor Changes
