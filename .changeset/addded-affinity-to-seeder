@@ -1,0 +1,5 @@
+---
+"@openproject/helm-charts": patch
+---
+
+Added missing affinity options to seeder job
