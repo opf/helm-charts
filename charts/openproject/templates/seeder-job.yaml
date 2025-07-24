@@ -26,7 +26,8 @@ spec:
       {{- include "openproject.podSecurityContext" . | indent 6 }}
       {{- with .Values.affinity }}
       affinity:
-        {{ toYaml . | nindent 8 | trim }}
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
         {{ toYaml . | nindent 8 | trim }}
