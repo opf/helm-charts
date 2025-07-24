@@ -24,6 +24,9 @@ spec:
     spec:
       {{- include "openproject.imagePullSecrets" . | indent 6 }}
       {{- include "openproject.podSecurityContext" . | indent 6 }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | nindent 8 | trim }}
       {{- with .Values.tolerations }}
       tolerations:
         {{ toYaml . | nindent 8 | trim }}
