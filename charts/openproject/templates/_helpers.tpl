@@ -146,10 +146,6 @@ securityContext:
 - secretRef:
     name: {{ include "common.names.fullname" . }}-s3
 {{- end }}
-{{- if .Values.s3.auth.existingSecret }}
-- secretRef:
-    name: {{ .Values.s3.auth.existingSecret }}
-{{- end }}
 {{- if eq .Values.openproject.cache.store "memcache" }}
 - secretRef:
     name: {{ include "common.names.fullname" . }}-memcached
@@ -204,6 +200,18 @@ securityContext:
 - name: OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET
   value: {{ .Values.hocuspocus.auth.password }}
 {{- end }}
+{{- end }}
+{{- if .Values.s3.auth.existingSecret}}
+- name: OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.s3.auth.existingSecret }}
+      key: {{ .Values.s3.auth.secretKeys.accessKeyId }}
+- name: OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.s3.auth.existingSecret }}
+      key: {{ .Values.s3.auth.secretKeys.secretAccessKey }}
 {{- end }}
 {{- end }}
 
