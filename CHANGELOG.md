@@ -1,5 +1,15 @@
 # @openproject/helm-charts
 
+## 10.3.0
+
+### Minor Changes
+
+- b15d008: Use PostgreSQL 16 for db init
+
+### Patch Changes
+
+- 5c4c21c: Upgrade OpenProject core version to 16.2.1 (patch update)
+
 ## 10.2.0
 
 ### Minor Changes
