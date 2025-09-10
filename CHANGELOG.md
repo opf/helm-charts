@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 10.5.0
+
+### Minor Changes
+
+- 8168368: Upgrade OpenProject core version to 16.4.0 (minor update)
+- e4fe7b0: Added affinity to seeder job
+
 ## 10.4.2
 
 ### Patch Changes

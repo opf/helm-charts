@@ -6,7 +6,7 @@ home: https://www.openproject.org/
 icon: https://charts.openproject.org/logo.svg
 type: application
 appVersion: 16.4.0
-version: 10.4.2
+version: 10.5.0
 maintainers:
 - name: OpenProject
   url: https://github.com/opf/helm-charts
