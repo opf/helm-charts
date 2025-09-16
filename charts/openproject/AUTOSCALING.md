@@ -23,7 +23,7 @@ helm repo update
 helm install keda kedacore/keda \
   --namespace keda \
   --create-namespace \
-  --version 2.12.0
+  --version 2.17.2
 ```
 
 Verify KEDA installation:

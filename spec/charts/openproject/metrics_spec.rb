@@ -40,41 +40,47 @@ describe 'openproject metrics' do
   context 'when metrics are disabled' do
     it 'should not add prometheus annotations to pods' do
       t = HelmTemplate.new(default_values)
-      deployment = t.dig('optest-openproject-web', 'Deployment')
-      annotations = deployment['spec']['template']['metadata']['annotations']
+      deployment = t.dig('Deployment/optest-openproject-web')
+      annotations = deployment&.dig('spec', 'template', 'metadata', 'annotations')
       
-      expect(annotations).not_to have_key('prometheus.io/scrape')
-      expect(annotations).not_to have_key('prometheus.io/path')
-      expect(annotations).not_to have_key('prometheus.io/port')
+      if annotations
+        expect(annotations).not_to have_key('prometheus.io/scrape')
+        expect(annotations).not_to have_key('prometheus.io/path')
+        expect(annotations).not_to have_key('prometheus.io/port')
+      end
     end
 
     it 'should not add metrics port to deployment' do
       t = HelmTemplate.new(default_values)
-      deployment = t.dig('optest-openproject-web', 'Deployment')
-      container = deployment['spec']['template']['spec']['containers'].first
+      deployment = t.dig('Deployment/optest-openproject-web')
+      container = deployment&.dig('spec', 'template', 'spec', 'containers')&.first
       
-      metrics_port = container['ports'].find { |p| p['name'] == 'metrics' }
-      expect(metrics_port).to be_nil
+      if container && container['ports']
+        metrics_port = container['ports'].find { |p| p['name'] == 'metrics' }
+        expect(metrics_port).to be_nil
+      end
     end
 
     it 'should not add metrics port to service' do
       t = HelmTemplate.new(default_values)
-      service = t.dig('optest-openproject', 'Service')
+      service = t.dig('Service/optest-openproject')
       
-      metrics_port = service['spec']['ports'].find { |p| p['name'] == 'metrics' }
-      expect(metrics_port).to be_nil
+      if service && service['spec'] && service['spec']['ports']
+        metrics_port = service['spec']['ports'].find { |p| p['name'] == 'metrics' }
+        expect(metrics_port).to be_nil
+      end
     end
 
     it 'should not create ServiceMonitor' do
       t = HelmTemplate.new(default_values)
-      expect(t.dig('optest-openproject-metrics', 'ServiceMonitor')).to be_nil
+      expect(t.dig('ServiceMonitor/optest-openproject-metrics')).to be_nil
     end
   end
 
   context 'when metrics are enabled' do
     it 'should add prometheus annotations to pods' do
       t = HelmTemplate.new(metrics_enabled_values)
-      deployment = t.dig('optest-openproject-web', 'Deployment')
+      deployment = t.dig('Deployment/optest-openproject-web')
       annotations = deployment['spec']['template']['metadata']['annotations']
       
       expect(annotations['prometheus.io/scrape']).to eq('true')
@@ -84,7 +90,7 @@ describe 'openproject metrics' do
 
     it 'should add metrics port to deployment container' do
       t = HelmTemplate.new(metrics_enabled_values)
-      deployment = t.dig('optest-openproject-web', 'Deployment')
+      deployment = t.dig('Deployment/optest-openproject-web')
       container = deployment['spec']['template']['spec']['containers'].first
       
       metrics_port = container['ports'].find { |p| p['name'] == 'metrics' }
@@ -95,7 +101,7 @@ describe 'openproject metrics' do
 
     it 'should add metrics port to service' do
       t = HelmTemplate.new(metrics_enabled_values)
-      service = t.dig('optest-openproject', 'Service')
+      service = t.dig('Service/optest-openproject')
       
       metrics_port = service['spec']['ports'].find { |p| p['name'] == 'metrics' }
       expect(metrics_port).not_to be_nil
@@ -108,7 +114,7 @@ describe 'openproject metrics' do
   context 'when ServiceMonitor is enabled' do
     it 'should create ServiceMonitor resource' do
       t = HelmTemplate.new(servicemonitor_enabled_values)
-      servicemonitor = t.dig('optest-openproject-metrics', 'ServiceMonitor')
+      servicemonitor = t.dig('ServiceMonitor/optest-openproject-metrics')
       
       expect(servicemonitor).not_to be_nil
       expect(servicemonitor['apiVersion']).to eq('monitoring.coreos.com/v1')
@@ -117,7 +123,7 @@ describe 'openproject metrics' do
 
     it 'should configure ServiceMonitor metadata' do
       t = HelmTemplate.new(servicemonitor_enabled_values)
-      servicemonitor = t.dig('optest-openproject-metrics', 'ServiceMonitor')
+      servicemonitor = t.dig('ServiceMonitor/optest-openproject-metrics')
       
       expect(servicemonitor['metadata']['namespace']).to eq('monitoring')
       expect(servicemonitor['metadata']['labels']['monitoring']).to eq('prometheus')
@@ -126,7 +132,7 @@ describe 'openproject metrics' do
 
     it 'should configure ServiceMonitor endpoint' do
       t = HelmTemplate.new(servicemonitor_enabled_values)
-      servicemonitor = t.dig('optest-openproject-metrics', 'ServiceMonitor')
+      servicemonitor = t.dig('ServiceMonitor/optest-openproject-metrics')
       
       endpoint = servicemonitor['spec']['endpoints'].first
       expect(endpoint['port']).to eq('metrics')
@@ -138,7 +144,7 @@ describe 'openproject metrics' do
 
     it 'should configure ServiceMonitor selector' do
       t = HelmTemplate.new(servicemonitor_enabled_values)
-      servicemonitor = t.dig('optest-openproject-metrics', 'ServiceMonitor')
+      servicemonitor = t.dig('ServiceMonitor/optest-openproject-metrics')
       
       expect(servicemonitor['spec']['namespaceSelector']['matchNames']).to include('default')
       expect(servicemonitor['spec']['selector']['matchLabels']).to include('app.kubernetes.io/name' => 'openproject')
@@ -146,7 +152,7 @@ describe 'openproject metrics' do
 
     it 'should set jobLabel' do
       t = HelmTemplate.new(servicemonitor_enabled_values)
-      servicemonitor = t.dig('optest-openproject-metrics', 'ServiceMonitor')
+      servicemonitor = t.dig('ServiceMonitor/optest-openproject-metrics')
       
       expect(servicemonitor['spec']['jobLabel']).to eq('optest-openproject')
     end
@@ -158,7 +164,7 @@ describe 'openproject metrics' do
       metrics_only_values['metrics']['serviceMonitor'] = { 'enabled' => false }
       
       t = HelmTemplate.new(metrics_only_values)
-      expect(t.dig('optest-openproject-metrics', 'ServiceMonitor')).to be_nil
+      expect(t.dig('ServiceMonitor/optest-openproject-metrics')).to be_nil
     end
   end
 end

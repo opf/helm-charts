@@ -3,5 +3,5 @@
 # Install OpenProject in development mode, that is without https and allowing writes
 # to the container file system.
 
-helm dependency update
+# You might need to run `helm dependency update` first
 helm upgrade --create-namespace --namespace openproject --install openproject --set develop=true "$@" .
