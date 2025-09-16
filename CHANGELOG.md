@@ -1,5 +1,15 @@
 # @openproject/helm-charts
 
+## 10.6.0
+
+### Minor Changes
+
+- 2b8d656: Allow nodeSelector to be separate for web and workers
+
+### Patch Changes
+
+- 7dba750: Upgrade OpenProject core version to 16.4.1 (patch update)
+
 ## 10.5.0
 
 ### Minor Changes
