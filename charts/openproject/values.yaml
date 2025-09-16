@@ -783,10 +783,12 @@ keda:
   maxReplicaCount: 10
 
   ## Fallback configuration when metrics are unavailable
+  ## NOTE: Fallback requires at least one trigger (other than cpu/memory) with AverageValue type
+  ## Leave commented unless using custom metrics with AverageValue
   #
-  fallback:
-    failureThreshold: 3
-    replicas: 2
+  # fallback:
+  #   failureThreshold: 3
+  #   replicas: 2
 
   ## Advanced scaling behavior
   #

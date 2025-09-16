@@ -47,6 +47,10 @@ helm install prometheus prometheus-community/prometheus \
   --set prometheus-pushgateway.enabled=false \
   --set kube-state-metrics.enabled=false \
   --set server.persistentVolume.enabled=false
+
+# To reach the prometheus server:
+POD_NAME=$(kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=prometheus" -o jsonpath="{.items[0].metadata.name}")
+kubectl --namespace monitoring port-forward $POD_NAME 9090
 ```
 
 **Option B: Full Prometheus Stack (Production)**
@@ -355,14 +359,24 @@ keda:
 
 ### Fallback Configuration
 
-Handle metric server outages:
+Handle metric server outages (advanced use case):
 
 ```yaml
 keda:
+  # Fallback requires at least one non-CPU/memory trigger with AverageValue type
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus:9090
+        query: avg(openproject_requests_in_flight)
+        threshold: "30"
+        # This trigger uses AverageValue by default, enabling fallback
   fallback:
     failureThreshold: 3
     replicas: 3  # Fallback to 3 replicas if metrics unavailable
 ```
+
+**⚠️ Important**: KEDA's admission webhook requires at least one trigger (other than cpu/memory) that uses `AverageValue` target type when fallback is enabled.
 
 ## Production Considerations
 
@@ -394,5 +408,6 @@ KEDA creates its own HPA internally, so you cannot run both simultaneously on th
 | Not scaling down to minimum | Active triggers above threshold | Check trigger conditions and thresholds |
 | Authentication errors | Wrong credentials | Verify `authenticationRef` secret |
 | Memory issues in KEDA | High metric cardinality | Optimize Prometheus queries, add query limits |
+| Admission webhook error (fallback) | Fallback enabled without AverageValue trigger | Remove fallback or add Prometheus trigger with AverageValue |
 
 For more information, see the [official KEDA documentation](https://keda.sh/docs/).

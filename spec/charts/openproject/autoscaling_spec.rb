@@ -62,10 +62,6 @@ describe 'openproject KEDA autoscaling' do
         'enabled' => true,
         'minReplicaCount' => 3,
         'maxReplicaCount' => 15,
-        'fallback' => {
-          'failureThreshold' => 3,
-          'replicas' => 2
-        },
         'advanced' => {
           'restoreToOriginalReplicaCount' => true,
           'horizontalPodAutoscalerConfig' => {
@@ -216,14 +212,12 @@ describe 'openproject KEDA autoscaling' do
   end
 
   context 'when advanced KEDA configuration is provided' do
-    it 'should configure fallback behavior' do
+    it 'should not configure fallback by default (requires AverageValue triggers)' do
       t = HelmTemplate.new(advanced_keda_values)
       scaledobject = t.dig('ScaledObject/optest-openproject-web-scaler')
       
       fallback = scaledobject['spec']['fallback']
-      expect(fallback).not_to be_nil
-      expect(fallback['failureThreshold']).to eq(3)
-      expect(fallback['replicas']).to eq(2)
+      expect(fallback).to be_nil
     end
 
     it 'should configure advanced HPA behavior' do

@@ -16,9 +16,9 @@ spec:
   cooldownPeriod: {{ .Values.keda.cooldownPeriod | default 300 }}
   minReplicaCount: {{ .Values.keda.minReplicaCount | default 1 }}
   maxReplicaCount: {{ .Values.keda.maxReplicaCount | default 10 }}
-  {{- with .Values.keda.fallback }}
+  {{- if .Values.keda.fallback }}
   fallback:
-    {{- toYaml . | nindent 4 }}
+    {{- toYaml .Values.keda.fallback | nindent 4 }}
   {{- end }}
   {{- with .Values.keda.advanced }}
   advanced:

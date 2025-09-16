@@ -3,11 +3,15 @@ keda:
   minReplicaCount: 1
   maxReplicaCount: 10
   triggers:
+    # Use EITHER CPU or memory, not both (to avoid double scaling)
     - type: cpu
       metadata:
         type: Utilization
         value: "70"
-    - type: memory  
-      metadata:
-        type: Utilization
-        value: "80"
+
+appInit:
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "1Gi"
