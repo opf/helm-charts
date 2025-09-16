@@ -252,6 +252,22 @@ nameOverride: ""
 #
 nodeSelector: {}
 
+## Node labels for web pod assignment.
+## If not specified, falls back to the global nodeSelector above.
+##
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+#
+web:
+  nodeSelector: {}
+
+## Node labels for worker pod assignment.
+## If not specified, falls back to the global nodeSelector above.
+##
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+#
+worker:
+  nodeSelector: {}
+
 ## Deployment strategy
 ##
 ## Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy

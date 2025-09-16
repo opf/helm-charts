@@ -34,7 +34,7 @@ spec:
       tolerations:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
-      {{- with .Values.nodeSelector }}
+      {{- with (coalesce .Values.web.nodeSelector .Values.nodeSelector) }}
       nodeSelector:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
