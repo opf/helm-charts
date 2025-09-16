@@ -755,6 +755,159 @@ replicaCount: 1
 #
 backgroundReplicaCount: 1
 
+## KEDA Autoscaling configuration
+##
+## Enable KEDA-based autoscaling for the web deployment
+## When enabled, replicaCount is ignored and KEDA manages replica count
+## Requires KEDA to be installed in the cluster
+#
+keda:
+  ## Whether to enable KEDA autoscaling
+  #
+  enabled: false
+
+  ## How often KEDA checks metrics (seconds)
+  #
+  pollingInterval: 30
+
+  ## How long to wait after last trigger before scaling down (seconds)
+  #
+  cooldownPeriod: 300
+
+  ## Minimum number of replicas
+  #
+  minReplicaCount: 1
+
+  ## Maximum number of replicas
+  #
+  maxReplicaCount: 10
+
+  ## Fallback configuration when metrics are unavailable
+  #
+  fallback:
+    failureThreshold: 3
+    replicas: 2
+
+  ## Advanced scaling behavior
+  #
+  advanced:
+    restoreToOriginalReplicaCount: true
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+          - type: Pods
+            value: 1
+            periodSeconds: 60
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          policies:
+          - type: Pods
+            value: 2
+            periodSeconds: 60
+
+  ## KEDA triggers configuration
+  ## Each trigger defines a metric source and threshold for scaling
+  ## WARNING: Multiple resource triggers (CPU + Memory) will cause combined scaling
+  ## Use either CPU OR Memory, not both, unless you want aggressive scaling
+  #
+  triggers:
+    ## Example: Scale based on CPU utilization
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "70"
+
+    ## Example: Scale based on memory utilization (disable CPU trigger above if using this)
+    # - type: memory
+    #   metadata:
+    #     type: Utilization
+    #     value: "80"
+
+    ## Example: Scale based on Prometheus metrics
+    ## Uncomment and configure for custom metrics
+    #
+    # - type: prometheus
+    #   metadata:
+    #     serverAddress: http://prometheus-server.monitoring.svc.cluster.local:80
+    #     metricName: openproject_requests_in_flight
+    #     query: |
+    #       avg(
+    #         sum by (pod) (
+    #           openproject_requests_in_flight{pod=~".*-web-.*"}
+    #         )
+    #       )
+    #     threshold: "30"
+    #   authenticationRef:
+    #     name: prometheus-auth
+    #     kind: SecretAuth
+
+    ## Example: Scale based on external queue depth
+    #
+    # - type: prometheus
+    #   metadata:
+    #     serverAddress: http://prometheus-server.monitoring.svc.cluster.local:80
+    #     metricName: openproject_queue_size
+    #     query: sum(openproject_background_jobs_queue_size)
+    #     threshold: "50"
+
+    ## Example: Scheduled scaling (scale up during business hours)
+    #
+    # - type: cron
+    #   metadata:
+    #     timezone: UTC
+    #     start: "0 8 * * 1-5"   # 8 AM weekdays
+    #     end: "0 18 * * 1-5"    # 6 PM weekdays
+    #     desiredReplicas: "5"
+
+## Metrics configuration for Prometheus scraping
+#
+metrics:
+  ## Whether to enable metrics scraping
+  #
+  enabled: false
+
+  ## Metrics endpoint path
+  #
+  path: "/api/metrics"
+
+  ## Metrics port (added to service)
+  #
+  port: 8080
+
+  ## ServiceMonitor configuration for Prometheus Operator
+  #
+  serviceMonitor:
+    ## Whether to create ServiceMonitor resource
+    #
+    enabled: false
+
+    ## ServiceMonitor namespace
+    ## If not set, uses the same namespace as the chart
+    #
+    namespace: ""
+
+    ## ServiceMonitor labels
+    #
+    labels: {}
+
+    ## ServiceMonitor annotations
+    #
+    annotations: {}
+
+    ## Scrape interval
+    #
+    interval: "30s"
+
+    ## Scrape timeout
+    #
+    scrapeTimeout: "10s"
+
+    ## Honor labels from the scraped metrics
+    #
+    honorLabels: false
+
 ## Configure resource requests and limits.
 ##
 ## http://kubernetes.io/docs/user-guide/compute-resources/

@@ -7,7 +7,9 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
     openproject/process: web
 spec:
+  {{- if not .Values.keda.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   strategy:
     {{ .Values.strategy | toYaml | nindent 4 }}
   selector:
@@ -19,6 +21,11 @@ spec:
       annotations:
         {{- range $key, $val := .Values.podAnnotations }}
         {{ $key }}: {{ $val | quote }}
+        {{- end }}
+        {{- if .Values.metrics.enabled }}
+        prometheus.io/scrape: "true"
+        prometheus.io/path: {{ .Values.metrics.path | quote }}
+        prometheus.io/port: {{ .Values.metrics.port | quote }}
         {{- end }}
         {{- include "openproject.envChecksums" . | nindent 8 }}
       labels:
@@ -97,6 +104,11 @@ spec:
             - name: {{ $key }}
               containerPort: {{ $value.containerPort }}
               protocol: {{ $value.protocol }}
+            {{- end }}
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
+              protocol: TCP
             {{- end }}
           {{- if .Values.probes.liveness.enabled }}
           livenessProbe:
