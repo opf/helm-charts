@@ -169,6 +169,10 @@ securityContext:
 {{- end }}
 
 {{- define "openproject.env" -}}
+{{- if .Values.metrics.enabled }}
+- name: OPENPROJECT_METRICS_ENABLED
+  value: "true"
+{{- end }}
 {{- if .Values.egress.tls.rootCA.fileName }}
 - name: SSL_CERT_FILE
   value: "/etc/ssl/certs/custom-ca.pem"
