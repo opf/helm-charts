@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 11.0.0
+
+### Major Changes
+
+- ad301ad: Support HorizontalPodAutoscaling
+
 ## 10.7.0
 
 ### Minor Changes
