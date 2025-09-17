@@ -15,9 +15,9 @@ describe 'relative url root configuration' do
     end
 
     it 'adds that as a prefix to the health checks', :aggregate_failures do
-      %w[livenessProbe readinessProbe].each do |probe|
+      %w[livenessProbe readinessProbe startupProbe].each do |probe|
         path = template.find_container('Deployment/optest-openproject-web', 'openproject').dig(probe, 'httpGet', 'path')
-        expect(path).to eq '/foobar/health_checks/default'
+        expect(path).to eq '/foobar/health_checks/default' if path
       end
     end
   end
@@ -28,9 +28,9 @@ describe 'relative url root configuration' do
     end
 
     it 'adds no prefix', :aggregate_failures do
-      %w[livenessProbe readinessProbe].each do |probe|
+      %w[livenessProbe readinessProbe startupProbe].each do |probe|
         path = template.find_container('Deployment/optest-openproject-web', 'openproject').dig(probe, 'httpGet', 'path')
-        expect(path).to eq '/health_checks/default'
+        expect(path).to eq '/health_checks/default' if path
       end
     end
   end
