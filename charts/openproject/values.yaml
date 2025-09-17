@@ -305,6 +305,48 @@ workers:
         memory: "4Gi"
         cpu: "4"
 
+## WebSocket backend for use with real time collaboration features.
+hocuspocus:
+  enabled: false
+  ingress:
+    ingressClassName:
+    annotations: {}
+    host: "openproject.example.com"
+    path: /hocuspocus
+    pathType: "Prefix"
+    tls:
+      enabled: true
+      secretName: ""
+
+  auth:
+    existingSecret:
+    secretKey: secret
+
+  foobar: "Setting.collaborative_editing_hocuspocus_secret"
+  baz: "collaborative_editing_hocuspocus_url"
+
+  image:
+    registry: "docker.io"
+    repository: "openproject/hocuspocus"
+    imagePullPolicy: "Always"
+    tag: "latest"
+
+  strategy:
+      type: "Recreate"
+
+  podAnnotations:
+
+  service:
+    port: 1234
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "2"
+
 ## OpenProject related settings.
 ##
 ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/environment/#supported-environment-variables
