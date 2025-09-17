@@ -1,0 +1,35 @@
+# Example configuration for topologySpreadConstraints with Karpenter
+# This example shows how to configure topology spread constraints for use with Karpenter
+
+# Global topology spread constraints applied to all deployments
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: karpenter.sh/capacity-type
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+  - maxSkew: 2
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+
+# Web-specific topology spread constraints
+web:
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: karpenter.sh/capacity-type
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          openproject/process: web
+
+# Worker-specific topology spread constraints
+worker:
+  topologySpreadConstraints:
+    - maxSkew: 2
+      topologyKey: karpenter.sh/capacity-type
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          openproject/process: worker-default

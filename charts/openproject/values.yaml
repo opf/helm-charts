@@ -252,6 +252,12 @@ nameOverride: ""
 #
 nodeSelector: {}
 
+## Topology spread constraints for pod assignment.
+##
+## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+#
+topologySpreadConstraints: []
+
 ## Node labels for web pod assignment.
 ## If not specified, falls back to the global nodeSelector above.
 ##
@@ -259,6 +265,12 @@ nodeSelector: {}
 #
 web:
   nodeSelector: {}
+  ## Topology spread constraints for web pod assignment.
+  ## If not specified, falls back to the global topologySpreadConstraints above.
+  ##
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  #
+  topologySpreadConstraints: []
 
 ## Node labels for worker pod assignment.
 ## If not specified, falls back to the global nodeSelector above.
@@ -267,6 +279,12 @@ web:
 #
 worker:
   nodeSelector: {}
+  ## Topology spread constraints for worker pod assignment.
+  ## If not specified, falls back to the global topologySpreadConstraints above.
+  ##
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  #
+  topologySpreadConstraints: []
 
 ## Deployment strategy
 ##
