@@ -904,10 +904,10 @@ autoscaling:
       #
       policies:
       - type: Pods
-        value: 2
+        value: 1
         periodSeconds: 60
       - type: Percent
-        value: 50
+        value: 10
         periodSeconds: 60
 
       ## Select the policy that allows the highest number of pods to be added
