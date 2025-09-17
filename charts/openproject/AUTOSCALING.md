@@ -1,44 +1,64 @@
-# OpenProject KEDA Autoscaling
+# OpenProject HPA Autoscaling
 
-This guide explains how to set up autoscaling for OpenProject using KEDA (Kubernetes Event Driven Autoscaler).
+This guide explains how to set up autoscaling for OpenProject using Kubernetes Horizontal Pod Autoscaler (HPA).
 
 ## Overview
 
-KEDA provides event-driven autoscaling for Kubernetes workloads, allowing OpenProject to scale based on:
+HPA provides automatic scaling for Kubernetes workloads, allowing OpenProject to scale based on:
 - **CPU/Memory metrics** (built-in, no external dependencies)
-- **Prometheus metrics** (requests in flight, queue depth, custom metrics)
-- **External systems** (Redis queues, RabbitMQ, databases)
-- **Scheduled scaling** (cron-based scaling for predictable load patterns)
+- **Custom metrics from Prometheus** (requires Prometheus Adapter)
+
+HPA is a native Kubernetes feature that automatically scales deployments based on observed metrics.
 
 ## Prerequisites
 
-### 1. Install KEDA
+### 1. Kubernetes Metrics Server
+
+The metrics server must be installed for resource-based scaling (CPU/Memory):
 
 ```bash
-# Add KEDA Helm repository
-helm repo add kedacore https://kedacore.github.io/charts
+# Check if metrics server is installed
+kubectl get deployment metrics-server -n kube-system
+
+# If not installed, install it using Helm:
+helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
 helm repo update
 
-# Install KEDA in its own namespace
-helm install keda kedacore/keda \
-  --namespace keda \
-  --create-namespace \
-  --version 2.17.2
+# For development environments (minikube, kind, etc.):
+helm install metrics-server metrics-server/metrics-server \
+  --namespace kube-system \
+  --set args="{--cert-dir=/tmp,--secure-port=4443,--kubelet-preferred-address-types=InternalIP\,ExternalIP\,Hostname,--kubelet-use-node-status-port,--metric-resolution=15s,--kubelet-insecure-tls}"
+
+# For production environments (remove --kubelet-insecure-tls):
+# helm install metrics-server metrics-server/metrics-server \
+#   --namespace kube-system \
+#   --set args="{--cert-dir=/tmp,--secure-port=4443,--kubelet-preferred-address-types=InternalIP\,ExternalIP\,Hostname,--kubelet-use-node-status-port,--metric-resolution=15s}"
+
+# Verify installation
+kubectl top nodes
+kubectl top pods -n kube-system
 ```
 
-Verify KEDA installation:
-```bash
-kubectl get pods -n keda
-kubectl get crd | grep keda
-```
+### 2. Prometheus (For Custom Metrics)
 
-### 2. Install Prometheus (For Custom Metrics)
+**Option A: Prometheus Operator (Recommended for ServiceMonitor support)**
 
-**Option A: Minimal Prometheus (Recommended for testing)**
+The Prometheus Operator provides the ServiceMonitor CRD required for automatic service discovery:
+
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
 
-# Install lightweight Prometheus
+# Install Prometheus Operator with full stack
+helm install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace \
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false
+```
+
+**Option B: Minimal Prometheus (Basic metrics collection)**
+```bash
+# Install lightweight Prometheus (no ServiceMonitor support)
 helm install prometheus prometheus-community/prometheus \
   --namespace monitoring \
   --create-namespace \
@@ -47,36 +67,57 @@ helm install prometheus prometheus-community/prometheus \
   --set prometheus-pushgateway.enabled=false \
   --set kube-state-metrics.enabled=false \
   --set server.persistentVolume.enabled=false
-
-# To reach the prometheus server:
-POD_NAME=$(kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=prometheus" -o jsonpath="{.items[0].metadata.name}")
-kubectl --namespace monitoring port-forward $POD_NAME 9090
 ```
 
-**Option B: Full Prometheus Stack (Production)**
+**Option C: Install Prometheus Operator CRDs only**
+
+If you need ServiceMonitor support but want minimal installation:
+
 ```bash
-# Install complete monitoring stack
-helm install prometheus prometheus-community/kube-prometheus-stack \
+# Install only the CRDs
+kubectl apply -f https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.85.0/bundle.yaml
+
+# Then install minimal Prometheus
+helm install prometheus prometheus-community/prometheus \
   --namespace monitoring \
-  --create-namespace
+  --create-namespace \
+  --set alertmanager.enabled=false \
+  --set prometheus-node-exporter.enabled=false \
+  --set prometheus-pushgateway.enabled=false \
+  --set kube-state-metrics.enabled=false \
+  --set server.persistentVolume.enabled=false
 ```
 
-**Option C: Use Existing Prometheus**
-If you already have Prometheus, just note its service URL for configuration.
+**Verify Prometheus Operator installation:**
+```bash
+# Check if ServiceMonitor CRD is available
+kubectl get crd servicemonitors.monitoring.coreos.com
 
-### 3. Configure Prometheus to Scrape OpenProject
+# Check if Prometheus Operator is running
+kubectl get pods -n monitoring | grep prometheus-operator
+```
 
-Ensure your Prometheus configuration includes OpenProject pod scraping:
-```yaml
-# For pod annotations-based discovery (automatic with default configs)
-scrape_configs:
-- job_name: 'kubernetes-pods'
-  kubernetes_sd_configs:
-  - role: pod
-  relabel_configs:
-  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-    action: keep
-    regex: true
+### 3. Prometheus Adapter (Required for Custom Metrics)
+
+The Prometheus Adapter makes Prometheus metrics available to HPA via the Custom Metrics API.
+
+```bash
+# Install Prometheus Adapter
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm upgrade prometheus-adapter prometheus-community/prometheus-adapter \
+  --namespace monitoring \
+  --values examples/prometheus-adapter-values.yaml
+```
+
+**Verify Prometheus Adapter installation:**
+```bash
+# Check if custom metrics API is available
+kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1
+
+# Check for our specific metric (after OpenProject is running with metrics enabled)
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/openproject/pods/*/puma_request_backlog_avg_1min"
 ```
 
 ## Configuration
@@ -87,159 +128,180 @@ Enable basic autoscaling using CPU and memory metrics:
 
 ```yaml
 # values.yaml
-keda:
+autoscaling:
   enabled: true
-  minReplicaCount: 1
-  maxReplicaCount: 10
-  triggers:
-    - type: cpu
-      metadata:
-        type: Utilization
-        value: "70"
-    - type: memory  
-      metadata:
-        type: Utilization
-        value: "80"
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  # targetMemoryUtilizationPercentage: 80  # Uncomment to enable memory scaling
+
+# Enable custom metrics collection
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true  # Requires Prometheus Operator CRDs
+```
+
+### Advanced Custom Metrics Scaling
+
+Scale based on OpenProject-specific metrics using the `puma_request_backlog` gauge:
+
+```yaml
+# values.yaml
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 20
+
+  # Resource-based scaling (fallback)
+  targetCPUUtilizationPercentage: 70
+
+  # Custom metrics scaling
+  customMetrics:
+    # Scale when request backlog exceeds 2 requests over 1 minute average
+    - type: Pods
+      pods:
+        metric:
+          name: puma_request_backlog_avg_1min
+        target:
+          type: AverageValue
+          averageValue: "2"  # Scale up when backlog > 2 requests
+
+  # Advanced scaling behavior
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Wait 5 minutes before scaling down
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 60  # Wait 1 minute before scaling up
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      selectPolicy: Max
 
 # Enable metrics collection
 metrics:
   enabled: true
-```
-
-### Advanced Prometheus-based Scaling
-
-Scale based on OpenProject-specific metrics:
-
-```yaml
-# values.yaml
-keda:
-  enabled: true
-  pollingInterval: 30
-  cooldownPeriod: 300
-  minReplicaCount: 2
-  maxReplicaCount: 20
-  
-  triggers:
-    # Scale based on requests in flight
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus-server.monitoring.svc.cluster.local:80
-        metricName: openproject_requests_in_flight
-        query: |
-          avg(
-            sum by (pod) (
-              openproject_requests_in_flight{pod=~".*openproject.*web.*"}
-            )
-          )
-        threshold: "30"  # Target 30 avg requests per pod
-    
-    # Scale based on background job queue depth
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus-server.monitoring.svc.cluster.local:80
-        metricName: openproject_queue_depth
-        query: sum(openproject_background_jobs_queue_size)
-        threshold: "50"  # Scale up when queue > 50 jobs
-        
-    # Fallback to CPU if custom metrics fail
-    - type: cpu
-      metadata:
-        type: Utilization
-        value: "70"
-
-metrics:
-  enabled: true
-  path: "/api/metrics"
-  port: 8080
+  path: "/metrics"
+  port: 9394
   serviceMonitor:
     enabled: true  # For Prometheus Operator
 ```
 
-### Scheduled Scaling
-
-Scale up during business hours to handle expected load:
+### Multiple Custom Metrics Example
 
 ```yaml
-keda:
+autoscaling:
   enabled: true
-  triggers:
-    # Business hours scaling (UTC)
-    - type: cron
-      metadata:
-        timezone: UTC
-        start: "0 8 * * 1-5"     # 8 AM weekdays
-        end: "0 18 * * 1-5"      # 6 PM weekdays  
-        desiredReplicas: "5"
-    
-    # Weekend minimal scaling
-    - type: cron
-      metadata:
-        timezone: UTC
-        start: "0 9 * * 6-0"     # 9 AM weekends
-        end: "0 17 * * 6-0"      # 5 PM weekends
-        desiredReplicas: "2"
-        
-    # Night time minimal scaling
-    - type: cron
-      metadata:
-        timezone: UTC
-        start: "0 22 * * *"      # 10 PM daily
-        end: "0 6 * * *"         # 6 AM daily
-        desiredReplicas: "1"
+  minReplicas: 2
+  maxReplicas: 20
+
+  customMetrics:
+    # Scale based on request backlog
+    - type: Pods
+      pods:
+        metric:
+          name: puma_request_backlog_avg_1min
+        target:
+          type: AverageValue
+          averageValue: "2"  # Scale when avg backlog across pods > 2 requests
+
+    # Scale based on response time (if available)
+    - type: Pods
+      pods:
+        metric:
+          name: puma_busy_threads_avg_1min
+        target:
+          type: AverageValue
+          averageValue: "2" # Scale when avg busy threads across pods > 2
 ```
 
-## Deployment
+## Load Testing to Trigger Autoscaling
 
-### 1. Update your values.yaml
+To test the HPA scaling behavior, you need to generate enough load to increase the `puma_request_backlog` above the threshold (2 requests).
 
-Choose your configuration approach and update values:
+For a simple test without installing additional tools:
 
-```bash
-# Copy example configuration
-cp values.yaml my-values.yaml
-
-# Edit configuration
-vim my-values.yaml
+```yaml
+# loadtest-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openproject-loadtest
+  namespace: openproject
+spec:
+  parallelism: 30
+  completions: 500
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: curl
+        image: curlimages/curl:latest
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            for i in $(seq 1 10000); do
+              curl -s http://openproject:8080/health_checks/all
+            done
 ```
 
-### 2. Deploy OpenProject with KEDA
-
 ```bash
-# Deploy with KEDA autoscaling enabled
-helm upgrade --install openproject . \
-  --namespace openproject \
-  --create-namespace \
-  --values my-values.yaml
+kubectl apply -f loadtest-job.yaml
 ```
 
-### 3. Verify KEDA Configuration
+### Monitoring During Load Testing
+
+While running load tests, monitor the scaling behavior:
 
 ```bash
-# Check ScaledObject status
-kubectl get scaledobject -n openproject
-kubectl describe scaledobject openproject-web-scaler -n openproject
+# Watch HPA status in real-time
+kubectl get hpa openproject-web-hpa -n openproject -w
 
-# Check HPA created by KEDA
-kubectl get hpa -n openproject
-kubectl describe hpa keda-hpa-openproject-web-scaler -n openproject
+# Watch pod scaling
+kubectl get pods -n openproject -w
 
-# Monitor scaling events
-kubectl get events -n openproject --sort-by=.firstTimestamp
+# Check current puma backlog
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/openproject/pods/*/puma_request_backlog_avg_1min" | jq '.items[].value'
+
+# Monitor Prometheus metrics
+curl -s "http://localhost:9091/api/v1/query?query=puma_request_backlog" | jq '.data.result[].value[1]'
 ```
 
 ## Monitoring and Troubleshooting
 
-### Check KEDA Metrics
+### Check Metrics Availability
 
 ```bash
-# View KEDA operator logs
-kubectl logs -n keda deployment/keda-operator
+# Test metrics endpoint directly
+kubectl port-forward -n openproject deployment/openproject-web 9394:9394
+curl http://localhost:9394/metrics | grep puma_request_backlog
 
-# Check metrics server logs  
-kubectl logs -n keda deployment/keda-metrics-apiserver
+# Check if Prometheus is scraping metrics
+kubectl port-forward -n monitoring svc/prometheus-server 9090:80
+# Visit http://localhost:9090/targets
+```
 
-# View ScaledObject status
-kubectl get scaledobject openproject-web-scaler -n openproject -o yaml
+### Test Custom Metrics API
+
+```bash
+# Check if custom metrics are available
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq
+
+# Check specific metric
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/openproject/pods/*/puma_request_backlog_avg_1min" | jq
 ```
 
 ### Common Prometheus Queries
@@ -247,167 +309,91 @@ kubectl get scaledobject openproject-web-scaler -n openproject -o yaml
 Test your queries directly in Prometheus UI:
 
 ```promql
-# Average requests in flight per pod
-avg(
-  sum by (pod) (
-    openproject_requests_in_flight{pod=~".*openproject.*web.*"}
-  )
-)
+# Current puma request backlog
+puma_request_backlog
 
-# Total background job queue size
-sum(openproject_background_jobs_queue_size)
+# Average backlog over 1 minute
+avg_over_time(puma_request_backlog[1m])
 
-# Request rate per second
-sum(rate(openproject_http_requests_total[1m]))
-
-# 95th percentile response time
-histogram_quantile(0.95, 
-  rate(openproject_http_request_duration_seconds_bucket[5m])
-)
+# Average request backlog across all pods
+avg(avg_over_time(puma_request_backlog[1m]))
 ```
 
 ### Debugging Steps
 
-1. **ScaledObject not working:**
+1. **HPA shows "Unknown" for custom metrics:**
    ```bash
-   kubectl describe scaledobject -n openproject
-   kubectl logs -n keda deployment/keda-operator
-   ```
+   # Check Prometheus Adapter logs
+   kubectl logs -n monitoring deployment/prometheus-adapter
 
-2. **Prometheus connection issues:**
-   ```bash
-   # Test Prometheus connectivity from KEDA namespace
-   kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- \
-     curl http://prometheus-server.monitoring.svc.cluster.local:80/api/v1/query?query=up
-   ```
-
-3. **Metrics not available:**
-   ```bash
-   # Check if OpenProject exposes metrics
-   kubectl port-forward -n openproject deployment/openproject-web 8080:8080
-   curl http://localhost:8080/api/metrics
-   
-   # Check Prometheus targets
+   # Verify metric is available in Prometheus
    kubectl port-forward -n monitoring svc/prometheus-server 9090:80
-   # Visit http://localhost:9090/targets
+   # Query: puma_request_backlog
+
+   # Check custom metrics API
+   kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1
    ```
 
-4. **Scaling not responsive:**
-   - Check if trigger thresholds are appropriate for your workload
-   - Verify `pollingInterval` is suitable (lower = more responsive, higher = less overhead)
-   - Check `cooldownPeriod` isn't too long for your scaling needs
+2. **Metrics not available:**
+   ```bash
+   # Verify OpenProject metrics are enabled
+   kubectl get service -n openproject -o yaml | grep metrics
 
-## Advanced Configuration
+   # Check ServiceMonitor (if using Prometheus Operator)
+   kubectl get servicemonitor -n openproject
 
-### Authentication for Prometheus
+   # Test metrics endpoint
+   kubectl exec -n openproject deployment/openproject-web -- curl localhost:9394/metrics
+   ```
 
-If your Prometheus requires authentication:
+3. **ServiceMonitor CRD not found error:**
+   ```bash
+   # Check if Prometheus Operator CRDs are installed
+   kubectl get crd servicemonitors.monitoring.coreos.com
 
-```yaml
-# Create secret with credentials
-apiVersion: v1
-kind: Secret
-metadata:
-  name: prometheus-auth
-type: Opaque
-stringData:
-  username: "prometheus-user"
-  password: "prometheus-password"
----
-# Reference in ScaledObject trigger
-keda:
-  triggers:
-    - type: prometheus
-      metadata:
-        serverAddress: https://prometheus.example.com
-        # ... other config
-      authenticationRef:
-        name: prometheus-auth
-        kind: SecretAuth
-```
+   # If not found, install Prometheus Operator CRDs (see above)
+   ```
 
-### Custom Scaling Behavior
+4. **HPA not scaling:**
+   ```bash
+   # Check HPA status and conditions
+   kubectl describe hpa -n openproject
 
-Fine-tune scaling behavior:
+   # Check deployment replica count
+   kubectl get deployment -n openproject
 
-```yaml
-keda:
-  advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleDown:
-          stabilizationWindowSeconds: 300
-          policies:
-          - type: Pods
-            value: 1
-            periodSeconds: 60
-          - type: Percent  
-            value: 10
-            periodSeconds: 60
-          selectPolicy: Min
-        scaleUp:
-          stabilizationWindowSeconds: 60
-          policies:
-          - type: Pods
-            value: 2
-            periodSeconds: 60
-          - type: Percent
-            value: 50 
-            periodSeconds: 60
-          selectPolicy: Max
-```
+   # Monitor HPA in real-time
+   kubectl get hpa -n openproject -w
+   ```
 
-### Fallback Configuration
-
-Handle metric server outages (advanced use case):
-
-```yaml
-keda:
-  # Fallback requires at least one non-CPU/memory trigger with AverageValue type
-  triggers:
-    - type: prometheus
-      metadata:
-        serverAddress: http://prometheus:9090
-        query: avg(openproject_requests_in_flight)
-        threshold: "30"
-        # This trigger uses AverageValue by default, enabling fallback
-  fallback:
-    failureThreshold: 3
-    replicas: 3  # Fallback to 3 replicas if metrics unavailable
-```
-
-**⚠️ Important**: KEDA's admission webhook requires at least one trigger (other than cpu/memory) that uses `AverageValue` target type when fallback is enabled.
+5. **Prometheus connection issues:**
+   ```bash
+   # Test connectivity from adapter to Prometheus
+   kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- \
+     curl http://prometheus-server.monitoring.svc.cluster.local/api/v1/query?query=up
+   ```
 
 ## Production Considerations
 
-1. **Resource Limits**: Set appropriate CPU/memory limits on KEDA components
-2. **Monitoring**: Monitor KEDA operator health and scaling events
-3. **Testing**: Test autoscaling behavior under load before production
-4. **Backup Strategy**: Consider fallback replicas for metric server outages
+1. **Resource Limits**: Set appropriate CPU/memory requests and limits on HPA target deployment
+2. **Monitoring**: Monitor HPA scaling events and metric accuracy
+3. **Testing**: Load test autoscaling behavior before production deployment
+4. **Alerting**: Set up alerts for scaling events and metric availability
 5. **Security**: Use authentication for Prometheus in production environments
-6. **Networking**: Ensure KEDA can reach Prometheus across namespaces
-
-## Migration from HPA
-
-If migrating from standard HPA:
-
-1. **Backup existing HPA configuration**
-2. **Disable existing HPA**: `kubectl delete hpa <name>`
-3. **Enable KEDA**: Set `keda.enabled: true`
-4. **Test thoroughly** before production deployment
-
-KEDA creates its own HPA internally, so you cannot run both simultaneously on the same deployment.
+6. **Networking**: Ensure Prometheus Adapter can reach Prometheus across namespaces
+7. **Backup Strategy**: Always configure resource-based scaling as a fallback
 
 ## Troubleshooting Guide
 
 | Issue | Cause | Solution |
-|-------|--------|----------|
-| ScaledObject exists but no scaling | No triggers active | Check trigger thresholds and metrics |
-| Scaling too aggressive | Short cooldown/polling | Increase `cooldownPeriod` and `pollingInterval` |
-| Metrics unavailable | Prometheus not reachable | Verify `serverAddress` and network connectivity |
-| Not scaling down to minimum | Active triggers above threshold | Check trigger conditions and thresholds |
-| Authentication errors | Wrong credentials | Verify `authenticationRef` secret |
-| Memory issues in KEDA | High metric cardinality | Optimize Prometheus queries, add query limits |
-| Admission webhook error (fallback) | Fallback enabled without AverageValue trigger | Remove fallback or add Prometheus trigger with AverageValue |
+|-------|-------|----------|
+| ServiceMonitor CRD not found | Prometheus Operator not installed | Install Prometheus Operator CRDs or full stack |
+| HPA shows "Unknown" metrics | Custom metrics API not available | Check Prometheus Adapter installation and logs |
+| No scaling activity | Metrics below/above thresholds | Check metric values and adjust thresholds |
+| Metrics not found | Metric name mismatch | Verify metric name in Prometheus and adapter config |
+| Scaling too aggressive | Short stabilization window | Increase `stabilizationWindowSeconds` |
+| Can't reach Prometheus | Network/DNS issues | Verify Prometheus URL and network connectivity |
+| Authentication errors | Wrong credentials | Check Prometheus authentication configuration |
+| HPA created but not active | Target deployment not found | Verify deployment name matches HPA target |
 
-For more information, see the [official KEDA documentation](https://keda.sh/docs/).
+For more information, see the [official Kubernetes HPA documentation](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) and [Prometheus Adapter documentation](https://github.com/kubernetes-sigs/prometheus-adapter).
