@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 10.7.0
+
+### Minor Changes
+
+- 644c7ad: Add nodeSelector for seeder job
+- 7ae53a8: Add topologySpreadConstraints
+
 ## 10.6.0
 
 ### Minor Changes
