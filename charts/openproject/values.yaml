@@ -286,6 +286,14 @@ worker:
   #
   topologySpreadConstraints: []
 
+## Node labels for seeder job pod assignment.
+## If not specified, falls back to the global nodeSelector above.
+##
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+#
+seeder:
+  nodeSelector: {}
+
 ## Deployment strategy
 ##
 ## Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
