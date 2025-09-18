@@ -6,9 +6,12 @@ kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-worker-{{ $workerName }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- range $key, $value := .Values.worker.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
     openproject/process: worker-{{ $workerName }}
-  {{- if or .Values.openproject.annotations .Values.commonAnnotations }}
-  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.openproject.annotations .Values.commonAnnotations ) "context" . ) }}
+  {{- if or .Values.worker.annotations .Values.openproject.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.worker.annotations .Values.openproject.annotations .Values.commonAnnotations ) "context" . ) }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
   {{- end }}
 spec:

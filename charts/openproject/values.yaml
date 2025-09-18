@@ -279,6 +279,14 @@ web:
   #
   topologySpreadConstraints: []
 
+  ## Define custom web deployment labels:
+  ##
+  labels: {}
+
+  ## Define custom web deployment annotations:
+  ##
+  annotations: {}
+
 ## Node labels for worker pod assignment.
 ## If not specified, falls back to the global nodeSelector above.
 ##
@@ -286,6 +294,14 @@ web:
 #
 worker:
   nodeSelector: {}
+
+  ## Define custom worker deployment labels:
+  ##
+  labels: {}
+
+  ## Define custom worker deployment annotations:
+  ##
+  annotations: {}
   ## Topology spread constraints for worker pod assignment.
   ## If not specified, falls back to the global topologySpreadConstraints above.
   ##

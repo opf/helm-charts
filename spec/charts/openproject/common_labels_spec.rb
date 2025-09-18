@@ -279,43 +279,54 @@ describe 'commonLabels and commonAnnotations' do
     end
   end
 
-  context 'with web-specific labels' do
+  context 'with web-specific labels and annotations' do
     let(:default_values) do
       HelmTemplate.with_defaults(<<~YAML
         commonLabels:
           environment: production
-          team: frontend
-          tier: web
-          component: openproject
+          team: backend
         commonAnnotations:
           monitoring.io/scrape: "true"
-          monitoring.io/port: "8080"
+        web:
+          labels:
+            tier: web
+            component: frontend
+            custom-web-label: "web-specific-value"
+          annotations:
+            custom.io/web-annotation: "web-specific-annotation"
+            monitoring.io/port: "8080"
       YAML
       )
     end
 
-    it 'applies web-specific labels to web deployment', :aggregate_failures do
+    it 'applies web-specific labels to web deployment only', :aggregate_failures do
       web_labels = template.labels('Deployment/optest-openproject-web')
 
       # Test common labels are applied
       expect(web_labels).to include('environment' => 'production')
-      expect(web_labels).to include('team' => 'frontend')
+      expect(web_labels).to include('team' => 'backend')
+
+      # Test web-specific labels are applied
       expect(web_labels).to include('tier' => 'web')
-      expect(web_labels).to include('component' => 'openproject')
+      expect(web_labels).to include('component' => 'frontend')
+      expect(web_labels).to include('custom-web-label' => 'web-specific-value')
 
       # Test web-specific process label
       expect(web_labels).to include('openproject/process' => 'web')
 
-      # Test standard Helm labels are still present
+      # Test standard Helm labels are present
       expect(web_labels).to include('app.kubernetes.io/name' => 'openproject')
       expect(web_labels).to include('app.kubernetes.io/instance' => 'optest')
     end
 
-    it 'applies web-specific annotations to web deployment', :aggregate_failures do
+    it 'applies web-specific annotations to web deployment only', :aggregate_failures do
       web_annotations = template.annotations('Deployment/optest-openproject-web')
 
       # Test common annotations are applied
       expect(web_annotations).to include('monitoring.io/scrape' => 'true')
+
+      # Test web-specific annotations are applied
+      expect(web_annotations).to include('custom.io/web-annotation' => 'web-specific-annotation')
       expect(web_annotations).to include('monitoring.io/port' => '8080')
     end
 
@@ -323,18 +334,162 @@ describe 'commonLabels and commonAnnotations' do
       # Worker deployment should not have web-specific labels
       worker_labels = template.labels('Deployment/optest-openproject-worker-default')
       expect(worker_labels).to include('environment' => 'production')
-      expect(worker_labels).to include('team' => 'frontend')
-      expect(worker_labels).to include('tier' => 'web')
-      expect(worker_labels).to include('component' => 'openproject')
+      expect(worker_labels).to include('team' => 'backend')
       expect(worker_labels).to include('openproject/process' => 'worker-default')
+      expect(worker_labels).not_to include('tier' => 'web')
+      expect(worker_labels).not_to include('component' => 'frontend')
+      expect(worker_labels).not_to include('custom-web-label' => 'web-specific-value')
 
       # Service should have common labels but not process-specific labels
       service_labels = template.labels('Service/optest-openproject')
       expect(service_labels).to include('environment' => 'production')
-      expect(service_labels).to include('team' => 'frontend')
-      expect(service_labels).to include('tier' => 'web')
-      expect(service_labels).to include('component' => 'openproject')
+      expect(service_labels).to include('team' => 'backend')
       expect(service_labels).not_to include('openproject/process')
+      expect(service_labels).not_to include('tier' => 'web')
+    end
+  end
+
+  context 'with worker-specific labels and annotations' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        commonLabels:
+          environment: production
+          team: backend
+        commonAnnotations:
+          monitoring.io/scrape: "true"
+        worker:
+          labels:
+            tier: worker
+            component: background
+            custom-worker-label: "worker-specific-value"
+          annotations:
+            custom.io/worker-annotation: "worker-specific-annotation"
+            monitoring.io/port: "8080"
+      YAML
+      )
+    end
+
+    it 'applies worker-specific labels to worker deployment only', :aggregate_failures do
+      worker_labels = template.labels('Deployment/optest-openproject-worker-default')
+
+      # Test common labels are applied
+      expect(worker_labels).to include('environment' => 'production')
+      expect(worker_labels).to include('team' => 'backend')
+
+      # Test worker-specific labels are applied
+      expect(worker_labels).to include('tier' => 'worker')
+      expect(worker_labels).to include('component' => 'background')
+      expect(worker_labels).to include('custom-worker-label' => 'worker-specific-value')
+
+      # Test worker-specific process label
+      expect(worker_labels).to include('openproject/process' => 'worker-default')
+
+      # Test standard Helm labels are present
+      expect(worker_labels).to include('app.kubernetes.io/name' => 'openproject')
+      expect(worker_labels).to include('app.kubernetes.io/instance' => 'optest')
+    end
+
+    it 'applies worker-specific annotations to worker deployment only', :aggregate_failures do
+      worker_annotations = template.annotations('Deployment/optest-openproject-worker-default')
+
+      # Test common annotations are applied
+      expect(worker_annotations).to include('monitoring.io/scrape' => 'true')
+
+      # Test worker-specific annotations are applied
+      expect(worker_annotations).to include('custom.io/worker-annotation' => 'worker-specific-annotation')
+      expect(worker_annotations).to include('monitoring.io/port' => '8080')
+    end
+
+    it 'does not apply worker-specific labels to other resources', :aggregate_failures do
+      # Web deployment should not have worker-specific labels
+      web_labels = template.labels('Deployment/optest-openproject-web')
+      expect(web_labels).to include('environment' => 'production')
+      expect(web_labels).to include('team' => 'backend')
+      expect(web_labels).to include('openproject/process' => 'web')
+      expect(web_labels).not_to include('tier' => 'worker')
+      expect(web_labels).not_to include('component' => 'background')
+      expect(web_labels).not_to include('custom-worker-label' => 'worker-specific-value')
+
+      # Service should have common labels but not process-specific labels
+      service_labels = template.labels('Service/optest-openproject')
+      expect(service_labels).to include('environment' => 'production')
+      expect(service_labels).to include('team' => 'backend')
+      expect(service_labels).not_to include('openproject/process')
+      expect(service_labels).not_to include('tier' => 'worker')
+    end
+  end
+
+  context 'with both web and worker specific labels' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        commonLabels:
+          environment: production
+          team: backend
+        commonAnnotations:
+          monitoring.io/scrape: "true"
+        web:
+          labels:
+            tier: web
+            component: frontend
+            custom-web-label: "web-specific-value"
+          annotations:
+            custom.io/web-annotation: "web-specific-annotation"
+        worker:
+          labels:
+            tier: worker
+            component: background
+            custom-worker-label: "worker-specific-value"
+          annotations:
+            custom.io/worker-annotation: "worker-specific-annotation"
+      YAML
+      )
+    end
+
+    it 'applies correct labels to each deployment type', :aggregate_failures do
+      # Web deployment gets common + web-specific labels
+      web_labels = template.labels('Deployment/optest-openproject-web')
+      expect(web_labels).to include('environment' => 'production')
+      expect(web_labels).to include('team' => 'backend')
+      expect(web_labels).to include('tier' => 'web')
+      expect(web_labels).to include('component' => 'frontend')
+      expect(web_labels).to include('custom-web-label' => 'web-specific-value')
+      expect(web_labels).to include('openproject/process' => 'web')
+
+      # Worker deployment gets common + worker-specific labels
+      worker_labels = template.labels('Deployment/optest-openproject-worker-default')
+      expect(worker_labels).to include('environment' => 'production')
+      expect(worker_labels).to include('team' => 'backend')
+      expect(worker_labels).to include('tier' => 'worker')
+      expect(worker_labels).to include('component' => 'background')
+      expect(worker_labels).to include('custom-worker-label' => 'worker-specific-value')
+      expect(worker_labels).to include('openproject/process' => 'worker-default')
+
+      # Service gets only common labels
+      service_labels = template.labels('Service/optest-openproject')
+      expect(service_labels).to include('environment' => 'production')
+      expect(service_labels).to include('team' => 'backend')
+      expect(service_labels).not_to include('tier')
+      expect(service_labels).not_to include('component')
+      expect(service_labels).not_to include('custom-web-label')
+      expect(service_labels).not_to include('custom-worker-label')
+    end
+
+    it 'applies correct annotations to each deployment type', :aggregate_failures do
+      # Web deployment gets common + web-specific annotations
+      web_annotations = template.annotations('Deployment/optest-openproject-web')
+      expect(web_annotations).to include('monitoring.io/scrape' => 'true')
+      expect(web_annotations).to include('custom.io/web-annotation' => 'web-specific-annotation')
+
+      # Worker deployment gets common + worker-specific annotations
+      worker_annotations = template.annotations('Deployment/optest-openproject-worker-default')
+      expect(worker_annotations).to include('monitoring.io/scrape' => 'true')
+      expect(worker_annotations).to include('custom.io/worker-annotation' => 'worker-specific-annotation')
+
+      # Service gets only common annotations
+      service_annotations = template.annotations('Service/optest-openproject')
+      expect(service_annotations).to include('monitoring.io/scrape' => 'true')
+      expect(service_annotations).not_to include('custom.io/web-annotation')
+      expect(service_annotations).not_to include('custom.io/worker-annotation')
     end
   end
 
