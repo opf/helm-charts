@@ -233,33 +233,14 @@ To test the HPA scaling behavior, you need to generate enough load to increase t
 
 For a simple test without installing additional tools:
 
-```yaml
-# loadtest-job.yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: openproject-loadtest
-  namespace: openproject
-spec:
-  parallelism: 30
-  completions: 500
-  template:
-    spec:
-      restartPolicy: Never
-      containers:
-      - name: curl
-        image: curlimages/curl:latest
-        command: ["/bin/sh"]
-        args:
-          - -c
-          - |
-            for i in $(seq 1 10000); do
-              curl -s http://openproject:8080/health_checks/all
-            done
+```bash
+kubectl apply -f ./examples/loadtest-job.yaml
 ```
 
+To remove the test:
+
 ```bash
-kubectl apply -f loadtest-job.yaml
+kubectl delete -f ./examples/loadtest-job.yaml
 ```
 
 ### Monitoring During Load Testing
