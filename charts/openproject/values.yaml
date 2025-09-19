@@ -20,6 +20,10 @@ global:
   ##   - myRegistryKeySecretName
   #
   imagePullSecrets: []
+## Add labels to all the deployed resources
+commonLabels: {}
+## Add annotations to all the deployed resources
+commonAnnotations: {}
 
 ## Affinity for pod assignment.
 ##
@@ -236,6 +240,9 @@ memcached:
       readOnlyRootFilesystem: true
       runAsNonRoot: true
 
+  ## @param commonLabels Add labels to all the deployed resources
+  ##
+  commonLabels: {}
   ## When "bundled" is set to false, you need to define the memcached connection details.
   #
   connection:
@@ -272,6 +279,14 @@ web:
   #
   topologySpreadConstraints: []
 
+  ## Define custom web deployment labels:
+  ##
+  labels: {}
+
+  ## Define custom web deployment annotations:
+  ##
+  annotations: {}
+
 ## Node labels for worker pod assignment.
 ## If not specified, falls back to the global nodeSelector above.
 ##
@@ -279,6 +294,14 @@ web:
 #
 worker:
   nodeSelector: {}
+
+  ## Define custom worker deployment labels:
+  ##
+  labels: {}
+
+  ## Define custom worker deployment annotations:
+  ##
+  annotations: {}
   ## Topology spread constraints for worker pod assignment.
   ## If not specified, falls back to the global topologySpreadConstraints above.
   ##
@@ -319,6 +342,10 @@ cron:
     IMAP_USERNAME:
     IMAP_PASSWORD:
     IMAP_PORT: 993
+
+  ## Define custom cron deployment annotations:
+  ##
+  annotations: {}
 
   ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
   ## use an existing secret containing the IMAP credentials.
@@ -439,6 +466,10 @@ openproject:
   ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/environment/#postgresql-statement_timeout
   #
   postgresStatementTimeout: 120s
+
+  ## Define custom web/worker deployment annotations:
+  ##
+  annotations: {}
 
   ## Whether or not to use ephemeral volumes for /app/tmp and /tmp.
   ## Falls back to a sensible default if undefined.
@@ -600,6 +631,10 @@ postgresql:
         type: "RuntimeDefault"
       readOnlyRootFilesystem: true
       runAsNonRoot: true
+
+  ## @param commonLabels Add labels to all the deployed resources
+  ##
+  commonLabels: {}
 
   ## When "bundled" is set to false, you need to define the database connection details.
   #

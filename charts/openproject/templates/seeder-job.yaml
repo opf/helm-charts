@@ -2,11 +2,10 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "common.names.fullname" . }}-seeder-{{ .Release.Revision }}
-  labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
-  {{- with .Values.seederJob.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  {{- if or .Values.seederJob.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.seederJob.annotations .Values.commonAnnotations ) "context" . ) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
   {{- end }}
 spec:
   {{- if .Values.cleanup.deletePodsOnSuccess }}
@@ -15,7 +14,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "common.labels.standard" . | nindent 8 }}
+        {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 8 }}
         openproject/process: seeder
       {{- with .Values.seederJob.annotations }}
       annotations:
