@@ -224,6 +224,10 @@ memcached:
   #
   bundled: true
 
+  ## Override image repository to use Bitnami Secure images
+  image:
+    repository: bitnamisecure/memcached
+
   global:
     containerSecurityContext:
       enabled: true
@@ -588,6 +592,16 @@ postgresql:
   ## own database instance.
   #
   bundled: true
+
+  ## Override image repository to use Bitnami Secure images
+  image:
+    repository: bitnamisecure/postgresql
+  volumePermissions:
+    image:
+      repository: bitnamisecure/os-shell
+  metrics:
+    image:
+      repository: bitnamisecure/postgres-exporter
 
   global:
     containerSecurityContext:
