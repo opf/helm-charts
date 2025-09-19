@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 11.1.0
+
+### Minor Changes
+
+- 8103ece: Allow commonLabels and custom labels on deployments
+
 ## 11.0.0
 
 ### Major Changes
