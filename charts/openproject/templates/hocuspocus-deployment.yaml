@@ -1,3 +1,4 @@
+{{- if .Values.hocuspocus.enabled }}
 ---
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
@@ -66,3 +67,4 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 ...
+{{- end }}
