@@ -1,0 +1,70 @@
+{{- if .Values.hocuspocus.enabled }}
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}-hocuspocus
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+    openproject/process: hocuspocus
+spec:
+  replicas: 1
+  strategy:
+    {{ .Values.hocuspocus.strategy | toYaml | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      openproject/process: hocuspocus
+  template:
+    metadata:
+      annotations:
+        {{- range $key, $val := .Values.podAnnotations }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+        {{- include "openproject.envChecksums" . | nindent 8 }}
+      labels:
+        {{- include "common.labels.standard" . | nindent 8 }}
+        openproject/process: hocuspocus
+    spec:
+      {{- include "openproject.imagePullSecrets" . | indent 6 }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- include "openproject.podSecurityContext" . | indent 6 }}
+      serviceAccountName: {{ include "common.names.fullname" . }}
+      containers:
+        - name: "hocuspocus"
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
+          image: "{{ with .Values.hocuspocus.image }}{{ .registry }}/{{ .repository }}:{{ .tag }}{{ end }}"
+          imagePullPolicy: {{ .Values.hocuspocus.image.imagePullPolicy }}
+          env:
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hocuspocus.auth.existingSecret }}
+                  key: {{ .Values.hocuspocus.auth.secretKey }}
+          volumeMounts:
+            {{- if .Values.egress.tls.rootCA.fileName }}
+            - name: ca-pemstore
+              mountPath: /etc/ssl/certs/custom-ca.pem
+              subPath: {{ .Values.egress.tls.rootCA.fileName }}
+              readOnly: false
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 1234
+              port: {{ .Values.hocuspocus.service.port }}
+              protocol: "TCP"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+...
+{{- end }}
