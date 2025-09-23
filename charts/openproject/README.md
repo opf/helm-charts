@@ -407,3 +407,16 @@ memcached:
   podSecurityContext:
     enabled: false
 ```
+
+If Openshift routes with TLS termination `edge` are to be used, TLS of the ingress must be deactivated.
+
+```
+ingress:
+  host: openproject.example.com
+  annotations:
+    # generate openshift route
+    route.openshift.io/termination: "edge"
+  # openshift router offers TLS on edge
+  tls:
+    enabled: false
+```
