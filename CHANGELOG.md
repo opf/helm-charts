@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 11.1.2
+
+### Patch Changes
+
+- ed6d078: only allow for hocuspocus ingress, if hocuspocus is enabled
+- b94fee6: fix broken ingress.yaml when ingress: disabled
+
 ## 11.1.1
 
 ### Patch Changes
