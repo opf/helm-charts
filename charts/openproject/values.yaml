@@ -329,7 +329,7 @@ hocuspocus:
     tag: "main-4daf60f5"
 
   strategy:
-      type: "Recreate"
+    type: "Recreate"
 
   podAnnotations:
 
