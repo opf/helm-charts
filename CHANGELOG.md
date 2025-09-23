@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 11.1.1
+
+### Patch Changes
+
+- 13ac110: Add optional hocuspocus deployment to chart and configure OpenProject with it for use with collaborative editing (blocknotejs, behind a feature flag for now).
+
 ## 11.1.0
 
 ### Minor Changes
