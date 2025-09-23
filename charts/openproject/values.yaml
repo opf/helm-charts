@@ -378,6 +378,7 @@ workers:
 hocuspocus:
   enabled: false
   ingress:
+    enabled: true
     ingressClassName:
     annotations: {}
     host: "openproject.example.com"
