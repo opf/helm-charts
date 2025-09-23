@@ -322,14 +322,11 @@ hocuspocus:
     existingSecret:
     secretKey: secret
 
-  foobar: "Setting.collaborative_editing_hocuspocus_secret"
-  baz: "collaborative_editing_hocuspocus_url"
-
   image:
     registry: "docker.io"
     repository: "openproject/hocuspocus"
     imagePullPolicy: "Always"
-    tag: "latest"
+    tag: "main-4daf60f5"
 
   strategy:
       type: "Recreate"
