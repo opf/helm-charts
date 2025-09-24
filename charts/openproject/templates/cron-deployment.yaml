@@ -103,9 +103,4 @@ spec:
             {{- end }}
             {{- include "openproject.extraVolumeMounts" . | indent 12 }}
           resources:
-            requests:
-              memory: "256Mi"
-              cpu: "250m"
-            limits:
-              memory: "1Gi"
-              cpu: "1"
+            {{- coalesce .Values.cron.resources .Values.resources | toYaml | nindent 12 }}
