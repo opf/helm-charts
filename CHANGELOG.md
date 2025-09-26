@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 11.2.0
+
+### Minor Changes
+
+- 9d6e5a2: Move cron-deployment resurces into values
+
 ## 11.1.2
 
 ### Patch Changes
