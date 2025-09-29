@@ -226,7 +226,8 @@ memcached:
 
   ## Override image repository to use Bitnami Secure images
   image:
-    repository: bitnamisecure/memcached
+    repository: bitnamilegacy/memcached
+    tag: 1.6.24-debian-12-r0
 
   global:
     containerSecurityContext:
@@ -595,13 +596,14 @@ postgresql:
 
   ## Override image repository to use Bitnami Secure images
   image:
-    repository: bitnamisecure/postgresql
+    repository: bitnamilegacy/postgresql
+    tag: 15.4.0-debian-11-r45
   volumePermissions:
     image:
-      repository: bitnamisecure/os-shell
+      repository: bitnamilegacy/os-shell
   metrics:
     image:
-      repository: bitnamisecure/postgres-exporter
+      repository: bitnamilegacy/postgres-exporter
 
   global:
     containerSecurityContext:
