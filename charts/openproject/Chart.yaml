@@ -12,15 +12,15 @@ maintainers:
   url: https://github.com/opf/helm-charts
 dependencies:
 - name: postgresql
-  repository: https://charts.bitnami.com/bitnami
+  repository: oci://registry-1.docker.io/bitnamicharts
   version: "^12.1.6"
   condition: postgresql.bundled
 - name: memcached
-  repository: https://charts.bitnami.com/bitnami
+  repository: oci://registry-1.docker.io/bitnamicharts
   condition: memcached.bundled
   version: "^6.3.2"
 - name: common
-  repository: https://charts.bitnami.com/bitnami
+  repository: oci://registry-1.docker.io/bitnamicharts
   version: "^2.2.2"
 annotations:
   artifacthub.io/license: GPL-3.0-only

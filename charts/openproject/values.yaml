@@ -228,6 +228,11 @@ memcached:
   #
   bundled: true
 
+  ## Override image repository to use Bitnami Secure images
+  image:
+    repository: bitnamilegacy/memcached
+    tag: 1.6.24-debian-12-r0
+
   global:
     containerSecurityContext:
       enabled: true
@@ -666,6 +671,17 @@ postgresql:
   ## own database instance.
   #
   bundled: true
+
+  ## Override image repository to use Bitnami Secure images
+  image:
+    repository: bitnamilegacy/postgresql
+    tag: 15.4.0-debian-11-r45
+  volumePermissions:
+    image:
+      repository: bitnamilegacy/os-shell
+  metrics:
+    image:
+      repository: bitnamilegacy/postgres-exporter
 
   global:
     containerSecurityContext:
