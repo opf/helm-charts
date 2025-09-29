@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 11.2.0
+
+### Minor Changes
+
+- 316d259: Switch to bitnami secure images for development
+- 9d6e5a2: Move cron-deployment resurces into values
+
 ## 11.1.2
 
 ### Patch Changes
