@@ -135,6 +135,10 @@ ingress:
   ##   nginx.ingress.kubernetes.io/rewrite-target: /
   annotations: {}
 
+  ## Ingress labels
+  #
+  labels: {}
+
   ## Define the Fully Qualified Domain Name (FQDN) where OpenProject should be reachable.
   #
   host: "openproject.example.com"
