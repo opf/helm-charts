@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 11.3.1
+
+### Patch Changes
+
+- 1cd01c2: Upgrade OpenProject core version to 16.5.1 (patch update)
+- 8352d05: add ingress labels
+
 ## 11.3.0
 
 ### Minor Changes
