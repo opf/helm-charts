@@ -15,6 +15,45 @@ entries:
         url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
     apiVersion: v2
     appVersion: 16.5.1
+    created: "2025-10-22T09:31:42.765099604Z"
+    dependencies:
+    - condition: postgresql.bundled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^12.1.6
+    - condition: memcached.bundled
+      name: memcached
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^6.3.2
+    - name: common
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^2.2.2
+    description: A Helm chart for running OpenProject via Kubernetes
+    digest: 06262c13b7d2c679af903a76f14724a528a3980f1939a15bc97e18107eaeb544
+    home: https://www.openproject.org/
+    icon: https://charts.openproject.org/logo.svg
+    maintainers:
+    - name: OpenProject
+      url: https://github.com/opf/helm-charts
+    name: openproject
+    type: application
+    urls:
+    - https://github.com/opf/helm-charts/releases/download/openproject-11.3.2/openproject-11.3.2.tgz
+    version: 11.3.2
+  - annotations:
+      artifacthub.io/license: GPL-3.0-only
+      artifacthub.io/links: |
+        - name: Homepage
+          url: https://www.openproject.org/
+        - name: OpenProject Community
+          url: https://community.openproject.org
+        - name: support
+          url: https://www.openproject.org/docs/development/report-a-bug/
+      artifacthub.io/signKey: |
+        fingerprint: CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+        url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+    apiVersion: v2
+    appVersion: 16.5.1
     created: "2025-10-16T08:52:31.370256031Z"
     dependencies:
     - condition: postgresql.bundled
@@ -3670,4 +3709,4 @@ entries:
     urls:
     - https://github.com/opf/helm-charts/releases/download/openproject-1.4.0/openproject-1.4.0.tgz
     version: 1.4.0
-generated: "2025-10-16T08:52:31.370585917Z"
+generated: "2025-10-22T09:31:42.765404528Z"
