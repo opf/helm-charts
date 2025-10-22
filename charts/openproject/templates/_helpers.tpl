@@ -193,18 +193,6 @@ securityContext:
       name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
       key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
 {{- end }}
-{{- if .Values.hocuspocus.enabled }}
-{{- if .Values.hocuspocus.auth.existingSecret }}
-- name: OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET
-  valueFrom:
-    secretKeyRef:
-      name: {{ .Values.hocuspocus.auth.existingSecret }}
-      key: {{ .Values.hocuspocus.auth.secretKey }}
-{{- else }}
-- name: OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET
-  value: {{ .Values.hocuspocus.auth.password }}
-{{- end }}
-{{- end }}
 {{- end }}
 
 {{- define "openproject.envChecksums" }}

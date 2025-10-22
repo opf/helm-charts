@@ -59,4 +59,47 @@ describe 'configuring hocuspocus' do
       expect(ingress).to be_nil
     end
   end
+
+  context 'when allowedOpenProjectDomains is configured' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          hocuspocus:
+            enabled: true
+            allowedOpenProjectDomains:
+              - example.org
+              - sometest.com
+        YAML
+      )
+    end
+
+    it 'sets the ALLOWED_DOMAINS environment variable with comma-separated domains' do
+      deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+      env = deployment.dig('spec', 'template', 'spec', 'containers').first['env']
+      allowed_domains_env = env.find { |e| e['name'] == 'ALLOWED_DOMAINS' }
+
+      expect(allowed_domains_env).not_to be_nil
+      expect(allowed_domains_env['value']).to eq 'example.org,sometest.com'
+    end
+  end
+
+  context 'when allowedOpenProjectDomains uses default values' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          hocuspocus:
+            enabled: true
+        YAML
+      )
+    end
+
+    it 'sets the ALLOWED_DOMAINS environment variable with default domain' do
+      deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+      env = deployment.dig('spec', 'template', 'spec', 'containers').first['env']
+      allowed_domains_env = env.find { |e| e['name'] == 'ALLOWED_DOMAINS' }
+
+      expect(allowed_domains_env).not_to be_nil
+      expect(allowed_domains_env['value']).to eq 'openproject.example.com'
+    end
+  end
 end

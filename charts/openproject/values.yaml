@@ -404,10 +404,6 @@ hocuspocus:
       enabled: true
       secretName: ""
 
-  auth:
-    existingSecret:
-    secretKey: secret
-
   image:
     registry: "docker.io"
     repository: "openproject/hocuspocus"
@@ -418,6 +414,9 @@ hocuspocus:
     type: "Recreate"
 
   podAnnotations:
+
+  allowedOpenProjectDomains:
+    - openproject.example.com
 
   service:
     port: 1234
