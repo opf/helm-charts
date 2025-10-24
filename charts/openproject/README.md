@@ -102,6 +102,25 @@ openproject.admin_user.name="Firstname Lastname"
 openproject.admin_user.mail="admin@example.com"
 ```
 
+#### Real-time collaboration (Hocuspocus)
+
+OpenProject supports real-time collaboration features through a WebSocket backend called Hocuspocus. To enable Hocuspocus, it is necessary to set the allowed domains for hocuspocus to communicate with:
+
+```yaml
+hocuspocus:
+  ...
+
+  allowedOpenProjectDomains:
+    - my-openproject-domain.com
+```
+
+**Important**: The `allowedOpenProjectDomains` can be the top level domain (e.g. my-openproject-domain.com) or subdomain (e.g. openproject.example.com). No wildcards are allowed.
+
+The configuration accepts multiple domains in case of a single websocket server for multiple OpenProject instances.
+
+The domains are passed to the Hocuspocus container as the `ALLOWED_DOMAINS` environment variable (comma-separated). This setting is a security feature that restricts which the Hocuspocus server will be able to connect to.
+
+
 ### TMP volume mounts
 
 OpenProject needs some tmp volumes to be mounted in `/app/tmp`  and `/tmp`, if `global.containerSecurityContext.readOnlyRootFilesystem` is set to true.
