@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 11.3.3
+
+### Patch Changes
+
+- 641b7db: mount tmp volume for hocuspocus under /tmp if tmp volumes are enabled
+
 ## 11.3.2
 
 ### Patch Changes
