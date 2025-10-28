@@ -42,7 +42,7 @@ spec:
       {{- include "openproject.podSecurityContext" . | indent 6 }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
-        # to do: only define app, not app-tmp volume
+        # to do: only define tmp, not app-tmp volume
         {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
       containers:
         - name: "hocuspocus"
