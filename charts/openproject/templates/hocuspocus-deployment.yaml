@@ -41,6 +41,9 @@ spec:
       {{- end }}
       {{- include "openproject.podSecurityContext" . | indent 6 }}
       serviceAccountName: {{ include "common.names.fullname" . }}
+      volumes:
+        # to do: only define tmp, not app-tmp volume
+        {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
       containers:
         - name: "hocuspocus"
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
@@ -50,6 +53,7 @@ spec:
             - name: ALLOWED_DOMAINS
               value: {{ join "," .Values.hocuspocus.allowedOpenProjectDomains | quote }}
           volumeMounts:
+            {{- include "hocuspocus.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.egress.tls.rootCA.fileName }}
             - name: ca-pemstore
               mountPath: /etc/ssl/certs/custom-ca.pem

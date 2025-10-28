@@ -84,6 +84,13 @@ securityContext:
 {{- end }}
 {{- end -}}
 
+{{- define "hocuspocus.tmpVolumeMounts" -}}
+{{- if eq (include "openproject.useTmpVolumes" .) "true" }}
+- mountPath: /tmp
+  name: tmp
+{{- end }}
+{{- end -}}
+
 {{- define "openproject.tmpVolumeSpec" -}}
 {{- if eq (include "openproject.useTmpVolumes" .) "true" }}
 - name: tmp
