@@ -5,22 +5,22 @@ description: A Helm chart for running OpenProject via Kubernetes
 home: https://www.openproject.org/
 icon: https://charts.openproject.org/logo.svg
 type: application
-appVersion: 16.4.1
-version: 11.1.0
+appVersion: 16.5.1
+version: 11.3.3
 maintainers:
 - name: OpenProject
   url: https://github.com/opf/helm-charts
 dependencies:
 - name: postgresql
-  repository: https://charts.bitnami.com/bitnami
+  repository: oci://registry-1.docker.io/bitnamicharts
   version: "^12.1.6"
   condition: postgresql.bundled
 - name: memcached
-  repository: https://charts.bitnami.com/bitnami
+  repository: oci://registry-1.docker.io/bitnamicharts
   condition: memcached.bundled
   version: "^6.3.2"
 - name: common
-  repository: https://charts.bitnami.com/bitnami
+  repository: oci://registry-1.docker.io/bitnamicharts
   version: "^2.2.2"
 annotations:
   artifacthub.io/license: GPL-3.0-only

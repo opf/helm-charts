@@ -135,6 +135,10 @@ ingress:
   ##   nginx.ingress.kubernetes.io/rewrite-target: /
   annotations: {}
 
+  ## Ingress labels
+  #
+  labels: {}
+
   ## Define the Fully Qualified Domain Name (FQDN) where OpenProject should be reachable.
   #
   host: "openproject.example.com"
@@ -205,7 +209,7 @@ image:
   ## For the helm chart, use the `-slim` variants as the all-in-one container is not compatible
   ## with some of the options (non-root execution, password splitting, etc.) and is inefficient for using in helm
   ## due to embedded a number of services.
-  tag: "16.4.1-slim"
+  tag: "16.5.1-slim"
 
   ## Define image sha256 - mutual exclusive with image tag.
   ## The sha256 has a higher precedence than
@@ -227,6 +231,11 @@ memcached:
   ## memcached instance.
   #
   bundled: true
+
+  ## Override image repository to use Bitnami Secure images
+  image:
+    repository: bitnamilegacy/memcached
+    tag: 1.6.24-debian-12-r0
 
   global:
     containerSecurityContext:
@@ -355,6 +364,13 @@ cron:
   secretKeys:
     imapUsername: imapUsername
     imapPassword: imapPassword
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1"
 
 # Define the workers to run, their queues, max threads, replicas, strategy, and resources
 workers:
@@ -373,6 +389,45 @@ workers:
       limits:
         memory: "4Gi"
         cpu: "4"
+
+## WebSocket backend for use with real time collaboration features.
+hocuspocus:
+  enabled: false
+  ingress:
+    enabled: true
+    ingressClassName:
+    annotations: {}
+    host: "openproject.example.com"
+    path: /hocuspocus
+    pathType: "Prefix"
+    tls:
+      enabled: true
+      secretName: ""
+
+  image:
+    registry: "docker.io"
+    repository: "openproject/hocuspocus"
+    imagePullPolicy: "Always"
+    tag: "main-defdb238"
+
+  strategy:
+    type: "Recreate"
+
+  podAnnotations:
+
+  allowedOpenProjectDomains:
+    - openproject.example.com
+
+  service:
+    port: 1234
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "2"
 
 ## OpenProject related settings.
 ##
@@ -619,6 +674,17 @@ postgresql:
   ## own database instance.
   #
   bundled: true
+
+  ## Override image repository to use Bitnami Secure images
+  image:
+    repository: bitnamilegacy/postgresql
+    tag: 15.4.0-debian-11-r45
+  volumePermissions:
+    image:
+      repository: bitnamilegacy/os-shell
+  metrics:
+    image:
+      repository: bitnamilegacy/postgres-exporter
 
   global:
     containerSecurityContext:

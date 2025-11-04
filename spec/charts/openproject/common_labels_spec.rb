@@ -549,6 +549,68 @@ describe 'commonLabels and commonAnnotations' do
     end
   end
 
+  context 'with ingress-specific labels' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        commonLabels:
+          environment: production
+          team: platform
+        ingress:
+          labels:
+            ingress-specific-label: "ingress-value"
+            custom.ingress/label: "custom-ingress"
+            monitoring.io/ingress: "true"
+      YAML
+      )
+    end
+
+    it 'applies ingress-specific labels to ingress resource only', :aggregate_failures do
+      # Test ingress gets both common and ingress-specific labels
+      ingress_labels = template.labels('Ingress/optest-openproject')
+      expect(ingress_labels).to include('environment' => 'production')
+      expect(ingress_labels).to include('team' => 'platform')
+      expect(ingress_labels).to include('ingress-specific-label' => 'ingress-value')
+      expect(ingress_labels).to include('custom.ingress/label' => 'custom-ingress')
+      expect(ingress_labels).to include('monitoring.io/ingress' => 'true')
+
+      # Test other resources only get common labels, not ingress-specific ones
+      web_labels = template.labels('Deployment/optest-openproject-web')
+      expect(web_labels).to include('environment' => 'production')
+      expect(web_labels).to include('team' => 'platform')
+      expect(web_labels).not_to include('ingress-specific-label')
+      expect(web_labels).not_to include('custom.ingress/label')
+      expect(web_labels).not_to include('monitoring.io/ingress')
+
+      service_labels = template.labels('Service/optest-openproject')
+      expect(service_labels).to include('environment' => 'production')
+      expect(service_labels).to include('team' => 'platform')
+      expect(service_labels).not_to include('ingress-specific-label')
+      expect(service_labels).not_to include('custom.ingress/label')
+      expect(service_labels).not_to include('monitoring.io/ingress')
+    end
+
+    context 'with empty ingress labels' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          commonLabels:
+            environment: production
+            team: platform
+          ingress:
+            labels: {}
+        YAML
+        )
+      end
+
+      it 'does not break with empty ingress labels' do
+        ingress_labels = template.labels('Ingress/optest-openproject')
+        expect(ingress_labels).to include('environment' => 'production')
+        expect(ingress_labels).to include('team' => 'platform')
+        expect(ingress_labels).to include('app.kubernetes.io/name' => 'openproject')
+        expect(ingress_labels).to include('app.kubernetes.io/instance' => 'optest')
+      end
+    end
+  end
+
   context 'edge cases' do
     context 'with empty commonLabels and commonAnnotations' do
       let(:default_values) do

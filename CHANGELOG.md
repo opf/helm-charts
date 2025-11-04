@@ -1,5 +1,51 @@
 # @openproject/helm-charts
 
+## 11.3.3
+
+### Patch Changes
+
+- 641b7db: mount tmp volume for hocuspocus under /tmp if tmp volumes are enabled
+
+## 11.3.2
+
+### Patch Changes
+
+- c050882: - Remove hocuspocus SECRET environment variable as we will not be using it anymore
+  - Allow hocuspocus server to use the new ALLOWED_DOMAINS env variable
+
+## 11.3.1
+
+### Patch Changes
+
+- 1cd01c2: Upgrade OpenProject core version to 16.5.1 (patch update)
+- 8352d05: add ingress labels
+
+## 11.3.0
+
+### Minor Changes
+
+- 04c2725: Upgrade OpenProject core version to 16.5.0 (minor update)
+
+## 11.2.0
+
+### Minor Changes
+
+- 316d259: Switch to bitnami secure images for development
+- 9d6e5a2: Move cron-deployment resurces into values
+
+## 11.1.2
+
+### Patch Changes
+
+- ed6d078: only allow for hocuspocus ingress, if hocuspocus is enabled
+- b94fee6: fix broken ingress.yaml when ingress: disabled
+
+## 11.1.1
+
+### Patch Changes
+
+- 13ac110: Add optional hocuspocus deployment to chart and configure OpenProject with it for use with collaborative editing (blocknotejs, behind a feature flag for now).
+
 ## 11.1.0
 
 ### Minor Changes
