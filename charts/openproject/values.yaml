@@ -347,9 +347,9 @@ cron:
   enabled: false
   ## See documentation referenced above for all variables.
   environment:
-    IMAP_HOST:
-    IMAP_USERNAME:
-    IMAP_PASSWORD:
+    IMAP_HOST: ""
+    IMAP_USERNAME: ""
+    IMAP_PASSWORD: ""
     IMAP_PORT: 993
 
   ## Define custom cron deployment annotations:
