@@ -14,7 +14,8 @@ def version_bump(v1, v2)
 end
 
 
-next_version = Gem::Version.new(ARGV.pop)
+version_string = ARGV.pop.delete_prefix("v")
+next_version = Gem::Version.new(version_string)
 
 # Find current version
 chart_file = File.expand_path('../charts/openproject/Chart.yaml', __dir__)
