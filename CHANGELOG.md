@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 11.4.1
+
+### Patch Changes
+
+- ceaf68f: Set default to empty value in cron imap configuration and only roll out config if cron is enabled
+
 ## 11.4.0
 
 ### Minor Changes
