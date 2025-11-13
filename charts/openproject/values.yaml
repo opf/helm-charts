@@ -209,7 +209,7 @@ image:
   ## For the helm chart, use the `-slim` variants as the all-in-one container is not compatible
   ## with some of the options (non-root execution, password splitting, etc.) and is inefficient for using in helm
   ## due to embedded a number of services.
-  tag: "16.6.0-slim"
+  tag: "16.6.1-slim"
 
   ## Define image sha256 - mutual exclusive with image tag.
   ## The sha256 has a higher precedence than
