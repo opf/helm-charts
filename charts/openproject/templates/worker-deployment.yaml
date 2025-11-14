@@ -65,7 +65,8 @@ spec:
             claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
         {{- end }}
         {{- include "openproject.extraVolumes" . | indent 8 }}
-      initContainers:
+      initContainers: []
+      containers:
         - name: wait-for-db
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
@@ -81,7 +82,6 @@ spec:
             {{- toYaml .Values.appInit.resources | nindent 12 }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
-      containers:
         - name: "openproject"
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
           image: {{ include "openproject.image" . }}
