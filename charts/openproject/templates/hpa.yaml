@@ -4,9 +4,11 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "common.names.fullname" . }}-web-hpa
+  namespace: {{ include "common.names.namespace" . | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
     openproject/process: web
+    app.kubernetes.io/component: web
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

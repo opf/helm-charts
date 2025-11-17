@@ -3,11 +3,13 @@ apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-web
+  namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     {{- range $key, $value := .Values.web.labels }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
     openproject/process: web
+    app.kubernetes.io/component: web
   {{- if or .Values.web.annotations .Values.openproject.annotations .Values.commonAnnotations }}
   {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.web.annotations .Values.openproject.annotations .Values.commonAnnotations ) "context" . ) }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}

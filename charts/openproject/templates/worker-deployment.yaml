@@ -5,11 +5,13 @@ apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-worker-{{ $workerName }}
+  namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     {{- range $key, $value := .Values.worker.labels }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
     openproject/process: worker-{{ $workerName }}
+    app.kubernetes.io/component: worker-{{ $workerName }}
   {{- if or .Values.worker.annotations .Values.openproject.annotations .Values.commonAnnotations }}
   {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.worker.annotations .Values.openproject.annotations .Values.commonAnnotations ) "context" . ) }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}

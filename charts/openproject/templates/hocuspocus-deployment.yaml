@@ -4,9 +4,11 @@ apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-hocuspocus
+  namespace: {{ include "common.names.namespace" . | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
     openproject/process: hocuspocus
+    app.kubernetes.io/component: hocuspocus
 spec:
   replicas: 1
   strategy:

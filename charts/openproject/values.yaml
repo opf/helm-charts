@@ -20,6 +20,8 @@ global:
   ##   - myRegistryKeySecretName
   #
   imagePullSecrets: []
+## Name to override the release namespace with
+namespaceOverride: ""
 ## Add labels to all the deployed resources
 commonLabels: {}
 ## Add annotations to all the deployed resources

@@ -2,7 +2,9 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "common.names.fullname" . }}-seeder-{{ .Release.Revision }}
+  namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: seeder
   {{- if or .Values.seederJob.annotations .Values.commonAnnotations }}
   {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.seederJob.annotations .Values.commonAnnotations ) "context" . ) }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
@@ -21,6 +23,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      serviceAccountName: {{ include "common.names.fullname" . }}
       {{- include "openproject.imagePullSecrets" . | indent 6 }}
       {{- include "openproject.podSecurityContext" . | indent 6 }}
       {{- with .Values.affinity }}
