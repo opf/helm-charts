@@ -60,6 +60,26 @@ describe 'configuring hocuspocus' do
     end
   end
 
+  context 'auth secrets' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          hocuspocus:
+            enabled: true
+        YAML
+      )
+    end
+
+    it 'sets the SECRET environment variable' do
+      deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+      env = deployment.dig('spec', 'template', 'spec', 'containers').first['env']
+      secret_env = env.find { |e| e['name'] == 'SECRET' }
+
+      expect(secret_env).not_to be_nil
+      expect(secret_env['valueFrom']['secretKeyRef']['key']).to eq 'secret'
+    end
+  end
+
   context 'when allowedOpenProjectDomains is configured' do
     let(:default_values) do
       HelmTemplate.with_defaults(

@@ -404,6 +404,10 @@ hocuspocus:
       enabled: true
       secretName: ""
 
+  auth:
+    existingSecret:
+    secretKey: secret
+
   image:
     registry: "docker.io"
     repository: "openproject/hocuspocus"
