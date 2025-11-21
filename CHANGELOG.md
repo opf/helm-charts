@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 11.5.0
+
+### Minor Changes
+
+- 10d264f: Add component labels, namespace metadata and service account name
+
 ## 11.4.2
 
 ### Patch Changes
