@@ -33,6 +33,11 @@ commonAnnotations: {}
 #
 affinity: {}
 
+## @param runtimeClassName Name of the runtime class name
+## ref: https://kubernetes.io/docs/concepts/containers/runtime-class/#usage
+##
+runtimeClassName: ""
+
 ## Cleanup settings.
 #
 cleanup:
@@ -98,6 +103,10 @@ dbInit:
     #
     imagePullPolicy: "Always"
 
+  ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+  ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+  ##
+  resourcesPreset: ~
   resources:
     limits:
       memory: "200Mi"
@@ -108,6 +117,10 @@ dbInit:
 # These containers need access to the Rails stack and wait for the database to be ready
 # (i.e., the seeder and migration job to have completed)
 appInit:
+  ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+  ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+  ##
+  resourcesPreset: ~
   resources:
     limits:
       memory: "512Mi"
@@ -131,10 +144,14 @@ ingress:
   ingressClassName:
 
   ## Define custom ingress annotations:
-  ##
-  ## Example:
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ## e.g:
   ## annotations:
   ##   nginx.ingress.kubernetes.io/rewrite-target: /
+  ##   kubernetes.io/ingress.class: nginx
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  ##
   annotations: {}
 
   ## Ingress labels
@@ -175,6 +192,16 @@ ingress:
     ##
     #
     secretName: ""
+
+    ## TLS configuration for additional hostname(s) to be covered with this ingress record
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+    ## e.g:
+    ## extraTls:
+    ## - hosts:
+    ##     - openproject.local
+    ##   secretName: openproject.local-tls
+    ##
+    extraTls: []
 
 egress:
   tls:
@@ -366,6 +393,10 @@ cron:
   secretKeys:
     imapUsername: imapUsername
     imapPassword: imapPassword
+  ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+  ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+  ##
+  resourcesPreset: ~
   resources:
     requests:
       memory: "256Mi"
@@ -384,6 +415,10 @@ workers:
     replicaCount: 1
     strategy:
       type: "Recreate"
+    ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+    ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+    ##
+    resourcesPreset: ~
     resources:
       requests:
         memory: "512Mi"
@@ -423,6 +458,10 @@ hocuspocus:
   service:
     port: 1234
 
+  ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+  ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+  ##
+  resourcesPreset: ~
   resources:
     requests:
       memory: "256Mi"
@@ -1064,6 +1103,10 @@ metrics:
     #
     honorLabels: false
 
+## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+##
+resourcesPreset: ~
 ## Configure resource requests and limits.
 ##
 ## http://kubernetes.io/docs/user-guide/compute-resources/
@@ -1151,6 +1194,10 @@ seederJob:
   ## Define custom seeder job annotations.
   #
   annotations: {}
+  ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+  ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+  ##
+  resourcesPreset: ~
   resources:
     limits:
       memory: "512Mi"

@@ -45,6 +45,9 @@ spec:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
       {{- include "openproject.podSecurityContext" . | indent 6 }}
+      {{- if .Values.runtimeClassName }}
+      runtimeClassName: {{ .Values.runtimeClassName | quote }}
+      {{- end }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
         {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
@@ -73,8 +76,13 @@ spec:
           args:
             - bash
             - /app/docker/prod/wait-for-db
+          {{- if .Values.appInit.resources }}
           resources:
             {{- toYaml .Values.appInit.resources | nindent 12 }}
+          {{- else if ne .Values.appInit.resourcesPreset "none" }}
+          resources:
+            {{- include "common.resources.preset" (dict "type" .Values.appInit.resourcesPreset) | nindent 12 }}
+          {{- end }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
       containers:
@@ -104,5 +112,10 @@ spec:
               readOnly: false
             {{- end }}
             {{- include "openproject.extraVolumeMounts" . | indent 12 }}
+          {{- if (coalesce .Values.cron.resources .Values.resources) }}
           resources:
             {{- coalesce .Values.cron.resources .Values.resources | toYaml | nindent 12 }}
+          {{- else if ne (coalesce .Values.cron.resourcesPreset .Values.resourcesPreset) "none" }}
+          resources:
+            {{- include "common.resources.preset" (dict "type" (coalesce .Values.cron.resourcesPreset .Values.resourcesPreset)) | nindent 12 }}
+          {{- end }}
