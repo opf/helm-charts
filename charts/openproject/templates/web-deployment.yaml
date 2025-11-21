@@ -58,6 +58,9 @@ spec:
         {{ toYaml . | nindent 8 | trim }}
       {{- end }}
       {{- include "openproject.podSecurityContext" . | indent 6 }}
+      {{- if .Values.runtimeClassName }}
+      runtimeClassName: {{ .Values.runtimeClassName | quote }}
+      {{- end }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
         {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
@@ -83,8 +86,13 @@ spec:
             {{- include "openproject.env" . | nindent 12 }}
           args:
             - /app/docker/prod/wait-for-db
+          {{- if .Values.appInit.resources }}
           resources:
             {{- toYaml .Values.appInit.resources | nindent 12 }}
+          {{- else if ne .Values.appInit.resourcesPreset "none" }}
+          resources:
+            {{- include "common.resources.preset" (dict "type" .Values.appInit.resourcesPreset) | nindent 12 }}
+          {{- end }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
       containers:
@@ -167,5 +175,10 @@ spec:
             failureThreshold: {{ .Values.probes.startup.failureThreshold }}
             successThreshold: {{ .Values.probes.startup.successThreshold }}
           {{- end }}
+          {{- if .Values.resources }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- else if ne .Values.resourcesPreset "none" }}
+          resources:
+            {{- include "common.resources.preset" (dict "type" .Values.resourcesPreset) | nindent 12 }}
+          {{- end }}
