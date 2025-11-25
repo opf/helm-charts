@@ -52,6 +52,11 @@ spec:
           image: "{{ with .Values.hocuspocus.image }}{{ .registry }}/{{ .repository }}:{{ .tag }}{{ end }}"
           imagePullPolicy: {{ .Values.hocuspocus.image.imagePullPolicy }}
           env:
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hocuspocus.auth.existingSecret }}
+                  key: {{ .Values.hocuspocus.auth.secretKey }}
             - name: ALLOWED_DOMAINS
               value: {{ join "," .Values.hocuspocus.allowedOpenProjectDomains | quote }}
           volumeMounts:
