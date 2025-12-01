@@ -221,3 +221,14 @@ securityContext:
 checksum/env-{{ $suffix }}: {{ include (print $.Template.BasePath "/secret_" $suffix ".yaml") $ | sha256sum }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "openproject.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "common.names.fullname" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}

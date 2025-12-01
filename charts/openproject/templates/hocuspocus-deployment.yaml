@@ -15,8 +15,9 @@ spec:
     {{ .Values.hocuspocus.strategy | toYaml | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      {{- include "common.labels.matchLabels" (dict "customLabels" .Values.commonLabels "context" $) | nindent 6 }}
       openproject/process: hocuspocus
+      app.kubernetes.io/component: hocuspocus
   template:
     metadata:
       annotations:
@@ -25,8 +26,9 @@ spec:
         {{- end }}
         {{- include "openproject.envChecksums" . | nindent 8 }}
       labels:
-        {{- include "common.labels.standard" . | nindent 8 }}
+        {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 8 }}
         openproject/process: hocuspocus
+        app.kubernetes.io/component: hocuspocus
     spec:
       {{- include "openproject.imagePullSecrets" . | indent 6 }}
       {{- with .Values.affinity }}

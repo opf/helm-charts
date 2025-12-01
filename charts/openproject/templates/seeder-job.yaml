@@ -18,6 +18,7 @@ spec:
       labels:
         {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 8 }}
         openproject/process: seeder
+        app.kubernetes.io/component: seeder
       {{- with .Values.seederJob.annotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
