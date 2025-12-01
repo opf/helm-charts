@@ -59,8 +59,13 @@ spec:
             {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
+          {{- if .Values.dbInit.resources }}
           resources:
             {{- toYaml .Values.dbInit.resources | nindent 12 }}
+          {{- else if ne .Values.dbInit.resourcesPreset "none" }}
+          resources:
+            {{- include "common.resources.preset" (dict "type" .Values.dbInit.resourcesPreset) | nindent 12 }}
+          {{- end }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
@@ -75,8 +80,13 @@ spec:
             {{- include "openproject.envFrom" . | nindent 12 }}
           env:
             {{- include "openproject.env" . | nindent 12 }}
+          {{- if .Values.seederJob.resources }}
           resources:
             {{- toYaml .Values.seederJob.resources | nindent 12 }}
+          {{- else if ne .Values.seederJob.resourcesPreset "none" }}
+          resources:
+            {{- include "common.resources.preset" (dict "type" .Values.seederJob.resourcesPreset) | nindent 12 }}
+          {{- end }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.persistence.enabled }}

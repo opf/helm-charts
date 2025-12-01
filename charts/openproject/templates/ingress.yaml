@@ -23,6 +23,9 @@ spec:
     - hosts:
         - {{ .Values.ingress.host | quote }}
       secretName: "{{ .Values.ingress.tls.secretName }}"
+    {{- if .Values.ingress.tls.extraTls }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.ingress.tls.extraTls "context" $) | nindent 4 }}
+    {{- end }}
   {{- end }}
   rules:
     - host: {{ .Values.ingress.host | quote }}
