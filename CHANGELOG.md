@@ -1,5 +1,16 @@
 # @openproject/helm-charts
 
+## 11.6.0
+
+### Minor Changes
+
+- 236dd59: Add OpenShift compatibility resources and configuration
+- 0b71a89: Add support for runtimeClassName, resourcesPreset, and extraTls
+
+### Patch Changes
+
+- df504d6: Upgrade OpenProject core version to 16.6.2 (patch update)
+
 ## 11.5.0
 
 ### Minor Changes
