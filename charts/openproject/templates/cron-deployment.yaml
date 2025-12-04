@@ -17,8 +17,9 @@ spec:
     type: "Recreate"
   selector:
     matchLabels:
-      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 6 }}
       openproject/process: cron
+      app.kubernetes.io/component: cron
   template:
     metadata:
       annotations:
@@ -28,8 +29,9 @@ spec:
         {{- include "openproject.envChecksums" . | nindent 8 }}
         checksum/env-cron-environment: {{ include (print $.Template.BasePath "/secret_cron_environment.yaml") $ | sha256sum }}
       labels:
-        {{- include "common.labels.standard" . | nindent 8 }}
+        {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 8 }}
         openproject/process: cron
+        app.kubernetes.io/component: cron
     spec:
       {{- include "openproject.imagePullSecrets" . | indent 6 }}
       {{- with .Values.affinity }}

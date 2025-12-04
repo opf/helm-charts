@@ -49,8 +49,9 @@ apiVersion: "v1"
 kind: "Service"
 metadata:
   name: {{ include "common.names.fullname" . }}-hocuspocus
-  labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: openproject
 spec:
   type: {{ .Values.hocuspocus.service.type }}
   {{- if eq .Values.hocuspocus.service.type "LoadBalancer" }}
