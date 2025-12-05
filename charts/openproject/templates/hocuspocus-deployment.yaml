@@ -62,8 +62,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.hocuspocus.auth.existingSecret }}
                   key: {{ .Values.hocuspocus.auth.secretKey }}
-            - name: ALLOWED_DOMAINS
-              value: {{ join "," .Values.hocuspocus.allowedOpenProjectDomains | quote }}
           volumeMounts:
             {{- include "hocuspocus.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.egress.tls.rootCA.fileName }}

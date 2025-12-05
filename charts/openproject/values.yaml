@@ -523,9 +523,6 @@ hocuspocus:
 
   podAnnotations:
 
-  allowedOpenProjectDomains:
-    - openproject.example.com
-
   service:
     port: 1234
 
