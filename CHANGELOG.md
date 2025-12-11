@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 11.6.1
+
+### Patch Changes
+
+- 5cd2894: Upgrade OpenProject core version to 16.6.3 (patch update)
+- 1166c74: Remove 'allowed domains' configuration from Hocuspocus - The value is not used anymore
+
 ## 11.6.0
 
 ### Minor Changes
