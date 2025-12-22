@@ -59,6 +59,9 @@ cleanup:
 #
 environment: {}
 
+# Optionally specify an extra list environment variables.
+extraEnvVars: []
+
 # Optionally specify an extra list of additional volumes.
 extraVolumes: []
 

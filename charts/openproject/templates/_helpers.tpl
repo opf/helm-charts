@@ -212,6 +212,9 @@ securityContext:
   value: {{ .Values.hocuspocus.auth.password }}
 {{- end }}
 {{- end }}
+{{- if .Values.extraEnvVars }}
+{{- toYaml .Values.extraEnvVars | nindent 0 }}
+{{- end }}
 {{- end }}
 
 {{- define "openproject.envChecksums" }}
