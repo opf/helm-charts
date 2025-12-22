@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 11.7.0
+
+### Minor Changes
+
+- 2b44560: Add support for optional `extraEnvVars` in the Helm chart to allow users to inject additional environment variables without modifying templates.
+
 ## 11.6.1
 
 ### Patch Changes
