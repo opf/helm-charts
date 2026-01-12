@@ -200,16 +200,29 @@ securityContext:
       name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
       key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
 {{- end }}
-{{- if .Values.hocuspocus.enabled }}
-{{- if .Values.hocuspocus.auth.existingSecret }}
+{{- if .Values.openproject.realtime_collaboration.enabled }}
+# External backend: we are using an external hocuspocus backend with an existing secret containing the password
+{{- if .Values.openproject.realtime_collaboration.hocuspocus.auth.existingSecret }}
+- name: OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.openproject.realtime_collaboration.hocuspocus.auth.existingSecret }}
+      key: {{ .Values.openproject.realtime_collaboration.hocuspocus.auth.secretKey }}
+# Included backend: we are using the included hocuspocus backend and configure its secret to connect the frontend, looking it up in an existing secret
+{{- else if .Values.hocuspocus.auth.existingSecret }}
 - name: OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET
   valueFrom:
     secretKeyRef:
       name: {{ .Values.hocuspocus.auth.existingSecret }}
       key: {{ .Values.hocuspocus.auth.secretKey }}
+# if nothing at all was defined, we use an auto generated secret (see secret_hocuspocus.yaml)
+# this will also be used by the included backend
 {{- else }}
 - name: OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET
-  value: {{ .Values.hocuspocus.auth.password }}
+  valueFrom:
+    secretKeyRef:
+      name: hocuspocus-secret-auto-generated
+      key: secret
 {{- end }}
 {{- end }}
 {{- if .Values.extraEnvVars }}

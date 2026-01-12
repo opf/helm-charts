@@ -4,12 +4,14 @@ require 'spec_helper'
 describe 'configuring hocuspocus' do
   let(:template) { HelmTemplate.new(default_values) }
 
-  context 'when hocuspocus is disabled (default) while the global ingress is enabled' do
+  context 'when hocuspocus is disabled while the global ingress is enabled' do
     let(:default_values) do
       HelmTemplate.with_defaults(
         <<~YAML
           ingress:
             enabled: true
+          hocuspocus:
+            enabled: false
         YAML
       )
     end
@@ -22,13 +24,11 @@ describe 'configuring hocuspocus' do
     end
   end
 
-  context 'when hocuspocus is enabled while the global ingress is enabled' do
+  context 'when hocuspocus is enabled (default) while the global ingress is enabled' do
     let(:default_values) do
       HelmTemplate.with_defaults(
         <<~YAML
           ingress:
-            enabled: true
-          hocuspocus:
             enabled: true
         YAML
       )

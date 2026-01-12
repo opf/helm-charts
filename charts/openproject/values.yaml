@@ -126,7 +126,7 @@ appInit:
   resourcesPreset: ~
   resources:
     limits:
-      memory: "512Mi"
+      memory: "1024Mi"
     requests:
       memory: "512Mi"
 
@@ -485,20 +485,16 @@ workers:
         memory: "4Gi"
         cpu: "4"
 
-## WebSocket backend for use with real time collaboration features.
+## hocuspocus - WebSocket backend for use with real time collaboration features in OpenProject (cf. openproject.realtime_collaboration)
+##
+## Disable if you want to use an external hocuspocus (openproject/hocuspocus docker container) backend.
 hocuspocus:
-  enabled: false
+  enabled: true
   ingress:
-    enabled: true
-    ingressClassName:
-    annotations: {}
-    host: "openproject.example.com"
     path: /hocuspocus
     pathType: "Prefix"
-    tls:
-      enabled: true
-      secretName: ""
 
+  ## If not defined, a secret will be generated automatically, and used.
   auth:
     existingSecret:
     secretKey: secret
@@ -626,6 +622,20 @@ openproject:
     # Ref: https://github.com/argoproj/argo-cd/issues/5202
     #
     extraOidcSealedSecret:
+  
+  ## openproject.realtime_collaboration - Configuration of realtime collaboration in OpenProject.
+  ##
+  ## Default values connect to hocuspocus server included in the chart (see hocuspocus: under root).
+  realtime_collaboration:
+    enabled: true
+    hocuspocus:
+      protocol: wss
+      host: # if empty, use same host as OpenProject by default
+      path: "/hocuspocus"
+
+      auth:
+        existingSecret: # if empty, will fallback to the secret defined for the included hocuspocus backend (see hocuspocus: under root)
+        secretKey: secret
 
   ## Modify PostgreSQL statement timout.
   ## Increase in case you get errors such as "ERROR: canceling statement due to statement timeout".
@@ -1278,7 +1288,7 @@ seederJob:
   resourcesPreset: ~
   resources:
     limits:
-      memory: "512Mi"
+      memory: "1Gi"
     requests:
       memory: "512Mi"
 
