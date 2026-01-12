@@ -61,22 +61,119 @@ describe 'configuring hocuspocus' do
   end
 
   context 'auth secrets' do
-    let(:default_values) do
-      HelmTemplate.with_defaults(
-        <<~YAML
-          hocuspocus:
-            enabled: true
-        YAML
-      )
+    context 'with nothing defined' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(
+          <<~YAML
+            hocuspocus:
+              enabled: true
+          YAML
+        )
+      end
+
+      it 'auto generates a secret' do
+        secret = template.dig('Secret/hocuspocus-secret-auto-generated')
+
+        expect(secret["stringData"]["secret"]).not_to be_empty
+      end
+
+      it 'sets the SECRET environment variable to the auto-generated secret in the hocuspocus deployment' do
+        deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+        env = deployment.dig('spec', 'template', 'spec', 'containers').first['env']
+        secret_env = env.find { |e| e['name'] == 'SECRET' }
+
+        expect(secret_env).not_to be_nil
+        expect(secret_env['valueFrom']['secretKeyRef']['name']).to eq 'hocuspocus-secret-auto-generated'
+        expect(secret_env['valueFrom']['secretKeyRef']['key']).to eq 'secret'
+      end
+
+      it 'sets the SECRET environment variable to the auto-generated secret in the openproject-web deployment' do
+        deployment = template.dig('Deployment/optest-openproject-web')
+        env = deployment.dig('spec', 'template', 'spec', 'containers').first['env']
+        secret_env = env.find { |e| e['name'] == 'OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET' }
+
+        expect(secret_env).not_to be_nil
+        expect(secret_env['valueFrom']['secretKeyRef']['name']).to eq 'hocuspocus-secret-auto-generated'
+        expect(secret_env['valueFrom']['secretKeyRef']['key']).to eq 'secret'
+      end
     end
 
-    it 'sets the SECRET environment variable' do
-      deployment = template.dig('Deployment/optest-openproject-hocuspocus')
-      env = deployment.dig('spec', 'template', 'spec', 'containers').first['env']
-      secret_env = env.find { |e| e['name'] == 'SECRET' }
+    context 'with only the backend secret defined' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(
+          <<~YAML
+            hocuspocus:
+              enabled: true
+              auth:
+                existingSecret: hp-secret
+          YAML
+        )
+      end
 
-      expect(secret_env).not_to be_nil
-      expect(secret_env['valueFrom']['secretKeyRef']['key']).to eq 'secret'
+      it 'does not auto generate a secret' do
+        secret = template.dig('Secret/hocuspocus-secret-auto-generated')
+
+        expect(secret).to be_nil
+      end
+
+      it 'sets the SECRET environment variable to the named secret in the hocuspocus deployment' do
+        deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+        env = deployment.dig('spec', 'template', 'spec', 'containers').first['env']
+        secret_env = env.find { |e| e['name'] == 'SECRET' }
+
+        expect(secret_env).not_to be_nil
+        expect(secret_env['valueFrom']['secretKeyRef']['name']).to eq 'hp-secret'
+        expect(secret_env['valueFrom']['secretKeyRef']['key']).to eq 'secret'
+      end
+
+      it 'sets the SECRET environment variable to the named secret in the openproject-web deployment' do
+        deployment = template.dig('Deployment/optest-openproject-web')
+        env = deployment.dig('spec', 'template', 'spec', 'containers').first['env']
+        secret_env = env.find { |e| e['name'] == 'OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET' }
+
+        expect(secret_env).not_to be_nil
+        expect(secret_env['valueFrom']['secretKeyRef']['name']).to eq 'hp-secret'
+        expect(secret_env['valueFrom']['secretKeyRef']['key']).to eq 'secret'
+      end
+    end
+
+    context 'with only the frontend secret defined' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(
+          <<~YAML
+            hocuspocus:
+              enabled: false
+
+            openproject:
+              realtime_collaboration:
+                hocuspocus:
+                  auth:
+                    existingSecret: rt-collab-secret
+          YAML
+        )
+      end
+
+      it 'does not auto generate a secret' do
+        secret = template.dig('Secret/hocuspocus-secret-auto-generated')
+
+        expect(secret).to be_nil
+      end
+
+      it 'does not create a hocuspocus deployment' do
+        deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+        
+        expect(deployment).to be_nil
+      end
+
+      it 'sets the SECRET environment variable to the named secret in the openproject-web deployment' do
+        deployment = template.dig('Deployment/optest-openproject-web')
+        env = deployment.dig('spec', 'template', 'spec', 'containers').first['env']
+        secret_env = env.find { |e| e['name'] == 'OPENPROJECT_COLLABORATIVE__EDITING__HOCUSPOCUS__SECRET' }
+
+        expect(secret_env).not_to be_nil
+        expect(secret_env['valueFrom']['secretKeyRef']['name']).to eq 'rt-collab-secret'
+        expect(secret_env['valueFrom']['secretKeyRef']['key']).to eq 'secret'
+      end
     end
   end
 end
