@@ -622,7 +622,7 @@ openproject:
     # Ref: https://github.com/argoproj/argo-cd/issues/5202
     #
     extraOidcSealedSecret:
-  
+
   ## openproject.realtime_collaboration - Configuration of realtime collaboration in OpenProject.
   ##
   ## Default values connect to hocuspocus server included in the chart (see hocuspocus: under root).
@@ -630,11 +630,13 @@ openproject:
     enabled: true
     hocuspocus:
       protocol: wss
-      host: # if empty, use same host as OpenProject by default
+      # if host is empty, use same host as OpenProject by default
+      host:
       path: "/hocuspocus"
 
       auth:
-        existingSecret: # if empty, will fallback to the secret defined for the included hocuspocus backend (see hocuspocus: under root)
+        # if empty, will fallback to the secret defined for the included hocuspocus backend (see hocuspocus: under root)
+        existingSecret:
         secretKey: secret
 
   ## Modify PostgreSQL statement timout.
