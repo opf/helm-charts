@@ -184,32 +184,7 @@ Either increase the cluster's resources to have at least 4 CPUs or install the O
 
 ## Development
 
-To install or update from this directory run the following command.
-
-```bash
-bin/install-dev
-```
-
-This will install the chart with `--set develop=true` which is recommended
-on local clusters such as **minikube** or **kind**.
-
-This will also set `OPENPROJECT_HTTPS` to false so no TLS certificate is required
-to access it.
-
-You can set other options just like when installing via `--set`
-(e.g. `bin/install-dev --set persistence.enabled=false`).
-
-### Debugging
-
-Changes to the chart can be debugged using the following.
-
-```bash
-bin/debug
-```
-
-This will try to render the templates and show any errors.
-You can set values just like when installing via `--set`
-(e.g. `bin/debug --set persistence.enabled=false`).
+Please refer to [DEVELOPMENT.md](./DEVELOPMENT.md) for local development.
 
 ## TLS
 

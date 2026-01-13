@@ -38,4 +38,4 @@ We welcome all contributions. For the release management, we're using the [chang
 
 # Development
 
-Please refer to [DEVELOPMENT.md](./DEVELOPMENT.md) for help with developing locally.
+Please refer to [DEVELOPMENT.md](./charts/openproject/DEVELOPMENT.md) for help with developing locally.
