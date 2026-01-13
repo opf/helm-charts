@@ -7,8 +7,6 @@
 This is a self-contained Helm chart registry for OpenProject based on github pages
 using helm's [chart-releaser](https://github.com/helm/chart-releaser-action) action.
 
-
-
 ## Installation
 
 Please refer to our [documentation](https://www.openproject.org/docs/installation-and-operations/installation/helm-chart/) for instructions on how to install the OpenProject helm chart.
@@ -37,3 +35,7 @@ We sign our chart using the [Helm Provenance and Integrity](https://helm.sh/docs
 # Contribution
 
 We welcome all contributions. For the release management, we're using the [changeset action](https://github.com/changesets/action) to generate the changelog and maintain the release process.
+
+# Development
+
+Please refer to [DEVELOPMENT.md](./DEVELOPMENT.md) for help with developing locally.
