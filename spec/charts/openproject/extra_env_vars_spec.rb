@@ -124,7 +124,6 @@ describe 'extraEnvVars configuration' do
     end
 
     it 'does not add any extraEnvVars to web deployment container', :aggregate_failures do
-      binding.irb
       env = template.env('Deployment/optest-openproject-web', 'openproject')
       expect(env).not_to be_nil
 
