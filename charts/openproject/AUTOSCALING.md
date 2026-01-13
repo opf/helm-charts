@@ -24,7 +24,7 @@ kubectl get deployment metrics-server -n kube-system
 helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
 helm repo update
 
-# For development environments (minikube, kind, etc.):
+# For development environments (minikube, k3d, kind, etc.):
 helm install metrics-server metrics-server/metrics-server \
   --namespace kube-system \
   --set args="{--cert-dir=/tmp,--secure-port=4443,--kubelet-preferred-address-types=InternalIP\,ExternalIP\,Hostname,--kubelet-use-node-status-port,--metric-resolution=15s,--kubelet-insecure-tls}"

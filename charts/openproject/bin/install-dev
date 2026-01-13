@@ -2,8 +2,27 @@
 
 # Install OpenProject in development mode, that is without https and allowing writes
 # to the container file system.
+#
+# By default it will be accessible under http://helm.openproject-dev.com if the cluster
+# is exposed on localhost.
 
 # Example: ./bin/install-dev -f ./examples/openproject-hpa-values.yaml
 
 # You might need to run `helm dependency update` first
-helm upgrade --create-namespace --namespace openproject --install openproject --set develop=true "$@" .
+#
+# Options explained:
+#
+#   * develop - sets a number of defaults making it easier for local development (such as no TLS)
+#   * host - pointing used host to localhost, assuming your cluster is exposed there
+#   * protocol - use ws instead of wss, also to avoid having to set up TLS
+#   * accessModes - using 'ReadWriteOnce' works on local development clusters because they usually
+#                   only have 1 node. Pods on the same node can read/write the same volumes.
+#                   This breaks on real clusters which is why the default is 'ReadWriteMany'
+helm upgrade \
+  --create-namespace --namespace openproject \
+  --install openproject \
+  --set develop=true \
+  --set ingress.host=helm.openproject-dev.com \
+  --set openproject.realtime_collaboration.hocuspocus.protocol=ws \
+  --set persistence.accessModes=['ReadWriteOnce'] \
+  "$@" .

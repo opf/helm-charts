@@ -5,7 +5,7 @@
 ## Enable development mode.
 ##
 ## Set this to true if you want are working on the charts locally using
-## local clusters such as minikube or kind.
+## local clusters such as minikube, k3d, or kind.
 ##
 ## This will set `OPENPROJECT_HTTPS` to `false` and avoid using volumes for
 ## tmp folders as (permissions for) these don't work correctly in local clusters.
