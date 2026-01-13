@@ -29,7 +29,7 @@ You can set values just like when installing via `--set`
 
 ## Local development
 
-In this document we give some advices on how to develop the [helm chart](./) locally.
+In this document we give some advice on how to develop the [helm chart](./) locally.
 
 For that you need to install a local kubernetes cluster and install the [chart](./Chart.yaml) on it.
 
