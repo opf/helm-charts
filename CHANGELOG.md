@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 12.0.0
+
+### Major Changes
+
+- 7bb67cc: Feature: enable hocuspocus by default for 17.0
+
 ## 11.7.0
 
 ### Minor Changes
