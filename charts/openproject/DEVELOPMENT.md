@@ -2,7 +2,8 @@
 
 ## Quick start
 
-To install or update from this directory (charts/openproject) run the following command.
+To install or update from this directory (`charts/openproject`), start your
+Kubernetes cluster and run the following command:
 
 ```bash
 bin/install-dev
@@ -28,13 +29,13 @@ You can set values just like when installing via `--set`
 
 ## Local development
 
-In this document we try to give some useful tips on how to develop the [helm chart](./charts/openproject/) locally.
+In this document we give some advices on how to develop the [helm chart](./) locally.
 
-For that you will need to install a local kubernetes cluster and simply install the chart on it.
+For that you need to install a local kubernetes cluster and install the [chart](./Chart.yaml) on it.
 
 ## Prerequisites
 
-No matter which kubernetes cluster you use, you will need the following tools.
+No matter which kubernetes cluster you use, you will need the following tools:
 
 * docker
 * kubectl
@@ -44,34 +45,40 @@ No matter which kubernetes cluster you use, you will need the following tools.
 
 As for kubernetes, there are multiple choices such as:
 
-* minikube
-* k3d
-* kind
+* [minikube](https://minikube.sigs.k8s.io/)
+* [k3d](https://k3d.io/) (recommended)
+* [kind](https://kind.sigs.k8s.io/)
+* etc.
 
 ### k3d
 
-Following the instructions on [k3d.io](https://k3d.io/stable/#installation) to install `k3d`.
-Once you have done that, you can simply create the cluster as follows.
+Follow the instructions on [k3d.io](https://k3d.io/stable/#installation) to install `k3d`.
+Once done, create the cluster as follows:
 
 ```bash
 k3d cluster create -p "80:80@loadbalancer" default
 ```
 
 This will create the cluster `k3d-default` and also add it to your `~/.kube/config`.
-The `-p` option here maps your local machines port 80 to the cluster.
+`k3d` automatically creates a loadbalancer container (separate from Kubernetes nodes) that handles ingress traffic.
+The `-p` option maps port 80 on your local machine (first number) to port 80 on the loadbalancer container (second number).
+
 Any ingress created on the cluster will be reachable this way directly,
 as long as you point the chosen host name to localhost.
 
 > *.openproject-dev.com points to localhost already, so you could simply use any subdomain of that for development.
 > For instance: helm.openproject-dev.com
 
-You can of course change the port (the first 80:) to something else if needed.
+Note that *.openproject-dev.com works only if you're online.
+
+
+You can change the port (the first `80:`) to something else if `localhost:80` is already used.
 
 ## Installing the chart
 
 Under [bin/install-dev] is a script you can use and build on to test the OpenProject chart locally.
 
-Use it as follows.
+Use it as follows:
 
 ```bash
 bin/install-dev
@@ -83,8 +90,10 @@ on local clusters.
 This will also set `OPENPROJECT_HTTPS` to false so no TLS certificate is required
 to access it. It will also disable TLS in other places where needed.
 
-Assuming you have your kubernetes cluster set up and exposed on port 80, you can now access OpenProject under
+Assuming your kubernetes cluster is set up and exposed on port 80, you can now access OpenProject under
 [http://helm.openproject-dev.com](http://helm.openproject-dev.com).
+
+Default login/password is admin/admin.
 
 You can create your own file adding to and overriding values and pass that with
 an additional `-f` option in the command above. For instance `bin/install-dev -f my-values.yaml`.

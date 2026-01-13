@@ -107,9 +107,9 @@ openproject.admin_user.mail="admin@example.com"
 OpenProject needs some tmp volumes to be mounted in `/app/tmp`  and `/tmp`, if `global.containerSecurityContext.readOnlyRootFilesystem` is set to true.
 This is due to the application server storing a non-configurable PID file and some temporary caches or files being put there.
 
-This setting is true by default (to be precise, it follows its configured value or falls back to `develop !=true`)
+This setting is true by default (to be precise, it follows its configured value or falls back to `develop != true`)
 
-To explicity disable this, use `openproject.useTmpVolumes=false`. This will fail if `readOnlyRootFilesystem=true`.
+To explicitly disable this, use `openproject.useTmpVolumes=false`. This will fail if `readOnlyRootFilesystem=true`.
 
 These volumes do not contain any critical information and can be excluded from backups using the labels/annotations values.
 
