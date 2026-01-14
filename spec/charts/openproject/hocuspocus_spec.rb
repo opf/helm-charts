@@ -176,4 +176,23 @@ describe 'configuring hocuspocus' do
       end
     end
   end
+
+  context 'hocuspocus image configuration' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          hocuspocus:
+            enabled: true
+        YAML
+      )
+    end
+
+    it 'uses the correct image tag in the hocuspocus deployment' do
+      deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+      container = deployment.dig('spec', 'template', 'spec', 'containers').first
+      image = container['image']
+
+      expect(image).to eq 'docker.io/openproject/hocuspocus:release-38128805'
+    end
+  end
 end

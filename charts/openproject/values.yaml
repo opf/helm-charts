@@ -515,7 +515,7 @@ hocuspocus:
     registry: "docker.io"
     repository: "openproject/hocuspocus"
     imagePullPolicy: "Always"
-    tag: "main-defdb238"
+    tag: "release-38128805"
 
   strategy:
     type: "Recreate"
