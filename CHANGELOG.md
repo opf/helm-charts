@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.0.1
+
+### Patch Changes
+
+- 77f56cd: Udpate hocuspocus image
+
 ## 13.0.0
 
 ### Major Changes
