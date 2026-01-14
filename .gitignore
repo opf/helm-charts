@@ -6,3 +6,5 @@ node_modules/
 /demo/.kube
 /demo/config/*.yaml
 !/demo/config/*.example.yaml
+vendor/bundle/
+.bundle/
