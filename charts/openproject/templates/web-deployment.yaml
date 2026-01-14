@@ -22,9 +22,8 @@ spec:
     {{ .Values.strategy | toYaml | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "common.labels.matchLabels" (dict "customLabels" .Values.commonLabels "context" $) | nindent 6 }}
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
       openproject/process: web
-      app.kubernetes.io/component: web
   template:
     metadata:
       annotations:

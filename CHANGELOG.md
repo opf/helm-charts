@@ -24,6 +24,10 @@
 - 236dd59: Add OpenShift compatibility resources and configuration
 - 0b71a89: Add support for runtimeClassName, resourcesPreset, and extraTls
 
+### Breaking Changes
+
+- **Deployment selector changes**: This version changed how `commonLabels` are handled in Deployment selectors. If you have `commonLabels` configured. As a result, this breaks upgrades from 11.5.0, as Kubernetes does not allow changing Deployment selectors after creation. We recommend you skip 11.6.0 and 11.7.0, and go straight for versions 12+. See the steps above for how to fix this.
+
 ### Patch Changes
 
 - df504d6: Upgrade OpenProject core version to 16.6.2 (patch update)
