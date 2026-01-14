@@ -22,9 +22,8 @@ spec:
     {{ coalesce $workerValues.strategy .Values.strategy | toYaml | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "common.labels.matchLabels" (dict "customLabels" .Values.commonLabels "context" $) | nindent 6 }}
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
       openproject/process: worker-{{ $workerName }}
-      app.kubernetes.io/component: worker-{{ $workerName }}
   template:
     metadata:
       annotations:

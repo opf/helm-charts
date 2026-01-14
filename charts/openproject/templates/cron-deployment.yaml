@@ -17,9 +17,8 @@ spec:
     type: "Recreate"
   selector:
     matchLabels:
-      {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 6 }}
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
       openproject/process: cron
-      app.kubernetes.io/component: cron
   template:
     metadata:
       annotations:
