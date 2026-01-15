@@ -79,8 +79,7 @@ spec:
             {{- end }}
           ports:
             - name: http
-              containerPort: 1234
-              port: {{ .Values.hocuspocus.service.port }}
+              containerPort: {{ .Values.hocuspocus.service.port }}
               protocol: "TCP"
           {{- if .Values.resources }}
           resources:
