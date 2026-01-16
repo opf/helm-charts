@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.1.0
+
+### Minor Changes
+
+- 16214ab: Upgrade OpenProject core version to 16.6.5 (minor update)
+
 ## 13.0.1
 
 ### Patch Changes
