@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.0.4
+
+### Patch Changes
+
+- 22acaa2: Update hocuspocus
+
 ## 13.0.3
 
 ### Patch Changes
