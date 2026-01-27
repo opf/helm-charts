@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.1.0
+
+### Minor Changes
+
+- 15c7096: Add digest, policy, and repository for hocuspocus
+
 ## 13.0.4
 
 ### Patch Changes
