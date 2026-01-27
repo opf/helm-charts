@@ -6,6 +6,30 @@ Returns the OpenProject image to be used including the respective registry and i
 {{- end -}}
 
 {{/*
+Returns the Hocuspocus image to be used including registry, tag and optional digest.
+
+If a sha256 digest is provided, we render `image:tag@sha256:digest` (tag is kept for traceability).
+*/}}
+{{- define "openproject.hocuspocus.image" -}}
+{{- $img := .Values.hocuspocus.image -}}
+{{- $registry := required "hocuspocus.image.registry is required" $img.registry -}}
+{{- $repository := required "hocuspocus.image.repository is required" $img.repository -}}
+{{- $tag := required "hocuspocus.image.tag is required" ($img.tag | toString) -}}
+{{- if $img.sha256 -}}
+{{ $registry }}/{{ $repository }}:{{ $tag }}@sha256:{{ $img.sha256 }}
+{{- else -}}
+{{ $registry }}/{{ $repository }}:{{ $tag }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the Hocuspocus imagePullPolicy with a safe fallback.
+*/}}
+{{- define "openproject.hocuspocus.imagePullPolicy" -}}
+{{- default .Values.image.imagePullPolicy .Values.hocuspocus.image.imagePullPolicy -}}
+{{- end -}}
+
+{{/*
 Returns the OpenProject image pull secrets, if any are defined
 */}}
 {{- define "openproject.imagePullSecrets" -}}
