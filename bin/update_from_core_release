@@ -27,6 +27,11 @@ if next_version == current_version
   exit 1
 end
 
+if next_version < current_version
+  puts "Version #{next_version} is older. Skipping previous patch release."
+  exit 1
+end
+
 # Get the bump type (major, minor, patch)
 bump_type = version_bump(current_version, next_version)
 raise ArgumentError.new("Failed to find version bump") if bump_type.nil?
