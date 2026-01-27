@@ -516,6 +516,9 @@ hocuspocus:
     repository: "openproject/hocuspocus"
     imagePullPolicy: "Always"
     tag: "release-338001b2"
+    ## Define image sha256 digest (optional).
+    ## If set, the chart will render `repository:tag@sha256:digest`.
+    # sha256:
 
   strategy:
     type: "Recreate"

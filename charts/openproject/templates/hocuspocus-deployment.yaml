@@ -53,8 +53,8 @@ spec:
       containers:
         - name: "hocuspocus"
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
-          image: "{{ with .Values.hocuspocus.image }}{{ .registry }}/{{ .repository }}:{{ .tag }}{{ end }}"
-          imagePullPolicy: {{ .Values.hocuspocus.image.imagePullPolicy }}
+          image: {{ include "openproject.hocuspocus.image" . }}
+          imagePullPolicy: {{ include "openproject.hocuspocus.imagePullPolicy" . }}
           env:
             {{- if .Values.hocuspocus.auth.existingSecret }}
             - name: SECRET
