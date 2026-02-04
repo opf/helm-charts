@@ -1,5 +1,19 @@
 # @openproject/helm-charts
 
+## 13.2.0
+
+### Minor Changes
+
+- 1f65754: Avoid setting OPENPROJECT_SEED_LOCALE by default
+
+### Patch Changes
+
+- 098b9ba: Fix resources values in hocuspocus deployment.
+- 0d90b51: fix: prevent invalid ":" value in memcached secret when external server not configured
+
+  When `memcached.bundled: false` is set without providing external connection values,
+  the secret now correctly sets an empty string instead of ":" which caused YAML parse errors.
+
 ## 13.1.0
 
 ### Minor Changes
