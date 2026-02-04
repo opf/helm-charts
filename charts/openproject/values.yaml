@@ -564,9 +564,10 @@ openproject:
 
   extraEnvVarsSecret: ""
 
-  ## Define the language to seed the instance in
+  ## Force the language to seed the instance in.
+  # Defaults to English if not set.
   #
-  seed_locale: "en"
+  # seed_locale: "en"
 
   ##
   # Let OpenProject run in a subdirectory,
