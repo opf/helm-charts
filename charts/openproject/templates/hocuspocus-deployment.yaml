@@ -69,6 +69,10 @@ spec:
                   name: hocuspocus-secret-auto-generated
                   key: secret
             {{- end }}
+            {{- if .Values.egress.tls.rootCA.fileName }}
+            - name: NODE_EXTRA_CA_CERTS
+              value: /etc/ssl/certs/custom-ca.pem
+            {{- end }}
           volumeMounts:
             {{- include "hocuspocus.tmpVolumeMounts" . | indent 12 }}
             {{- if .Values.egress.tls.rootCA.fileName }}
