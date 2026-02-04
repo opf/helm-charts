@@ -1,5 +1,5 @@
 ---
-"openproject": patch
+"@openproject/helm-charts": patch
 ---
 
 fix: prevent invalid ":" value in memcached secret when external server not configured
