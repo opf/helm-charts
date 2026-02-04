@@ -181,6 +181,10 @@ securityContext:
 - secretRef:
     name: {{ .Values.s3.auth.existingSecret }}
 {{- end }}
+{{- if .Values.openproject.railsSecretKey.enabled }}
+- secretRef:
+    name: {{ .Values.openproject.railsSecretKey.existingSecret | default (printf "%s-rails-secret-key" (include "common.names.fullname" .)) }}
+{{- end }}
 {{- if eq .Values.openproject.cache.store "memcache" }}
 - secretRef:
     name: {{ include "common.names.fullname" . }}-memcached
