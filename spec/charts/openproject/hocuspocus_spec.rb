@@ -176,4 +176,79 @@ describe 'configuring hocuspocus' do
       end
     end
   end
+
+  describe 'resources' do
+    context 'when hocuspocus.resources is set' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          hocuspocus:
+            enabled: true
+            resources:
+              requests:
+                memory: "99Mi"
+                cpu: "50m"
+              limits:
+                memory: "199Mi"
+                cpu: "100m"
+        YAML
+        )
+      end
+
+      it 'uses hocuspocus.resources in the hocuspocus deployment (not .Values.resources)' do
+        deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+        resources = deployment.dig('spec', 'template', 'spec', 'containers').first['resources']
+
+        expect(resources).to include(
+          'requests' => hash_including('memory' => '99Mi', 'cpu' => '50m'),
+          'limits' => hash_including('memory' => '199Mi', 'cpu' => '100m')
+        )
+      end
+    end
+
+    context 'when hocuspocus.resourcesPreset is set (and resources not set)' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          hocuspocus:
+            enabled: true
+            resources: null
+            resourcesPreset: small
+        YAML
+        )
+      end
+
+      it 'uses hocuspocus.resourcesPreset in the hocuspocus deployment' do
+        deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+        resources = deployment.dig('spec', 'template', 'spec', 'containers').first['resources']
+
+        # Bitnami common "small" preset: requests 512Mi, limits 768Mi
+        expect(resources).not_to be_nil
+        expect(resources.dig('requests', 'memory')).to eq('512Mi')
+        expect(resources.dig('limits', 'memory')).to eq('768Mi')
+      end
+    end
+
+    context 'when cron.resourcesPreset and hocuspocus.resourcesPreset are both set' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          hocuspocus:
+            enabled: true
+            resources: null
+            resourcesPreset: small
+          cron:
+            enabled: true
+            resourcesPreset: large
+        YAML
+        )
+      end
+
+      it 'uses hocuspocus.resourcesPreset (not cron.resourcesPreset) in the hocuspocus deployment' do
+        deployment = template.dig('Deployment/optest-openproject-hocuspocus')
+        resources = deployment.dig('spec', 'template', 'spec', 'containers').first['resources']
+
+        # Should be "small" (768Mi limits), not "large" (3072Mi limits)
+        expect(resources.dig('limits', 'memory')).to eq('768Mi')
+        expect(resources.dig('limits', 'memory')).not_to eq('3072Mi')
+      end
+    end
+  end
 end

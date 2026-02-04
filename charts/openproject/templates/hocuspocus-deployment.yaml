@@ -82,12 +82,12 @@ spec:
               containerPort: 1234
               port: {{ .Values.hocuspocus.service.port }}
               protocol: "TCP"
-          {{- if .Values.resources }}
+          {{- if .Values.hocuspocus.resources }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          {{- else if ne (coalesce .Values.cron.resourcesPreset .Values.resourcesPreset) "none" }}
+            {{- toYaml .Values.hocuspocus.resources | nindent 12 }}
+          {{- else if ne (coalesce .Values.hocuspocus.resourcesPreset .Values.resourcesPreset) "none" }}
           resources:
-            {{- include "common.resources.preset" (dict "type" (coalesce .Values.cron.resourcesPreset .Values.resourcesPreset)) | nindent 12 }}
+            {{- include "common.resources.preset" (dict "type" (coalesce .Values.hocuspocus.resourcesPreset .Values.resourcesPreset)) | nindent 12 }}
           {{- end }}
 ...
 {{- end }}
