@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.2.1
+
+### Patch Changes
+
+- aa89ccc: Expose custom CA files to hocuspocus through NODE_EXTRA_CA_CERTS env
+
 ## 13.2.0
 
 ### Minor Changes
