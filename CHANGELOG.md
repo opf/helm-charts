@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.2.2
+
+### Patch Changes
+
+- 423505a: fix volume mount of custom CA file
+
 ## 13.2.1
 
 ### Patch Changes
