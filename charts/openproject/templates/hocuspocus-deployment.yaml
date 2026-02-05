@@ -50,6 +50,11 @@ spec:
       volumes:
         # to do: only define tmp, not app-tmp volume
         {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
+        {{- if .Values.egress.tls.rootCA.fileName }}
+        - name: ca-pemstore
+          configMap:
+            name: "{{- .Values.egress.tls.rootCA.configMap }}"
+        {{- end }}
       containers:
         - name: "hocuspocus"
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
