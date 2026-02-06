@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.2.3
+
+### Patch Changes
+
+- 1fb2025: Upgrade OpenProject core version to 17.0.3 (patch update)
+
 ## 13.2.2
 
 ### Patch Changes
