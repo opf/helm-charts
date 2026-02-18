@@ -5,7 +5,7 @@ description: A Helm chart for running OpenProject via Kubernetes
 home: https://www.openproject.org/
 icon: https://charts.openproject.org/logo.svg
 type: application
-appVersion: 17.1.0
+appVersion: 17.1.1
 version: 13.3.0
 maintainers:
 - name: OpenProject
