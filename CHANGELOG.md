@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.4.3
+
+### Patch Changes
+
+- 46353ac: fix port in hocuspocus deployment
+
 ## 13.4.2
 
 ### Patch Changes
