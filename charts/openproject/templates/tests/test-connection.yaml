@@ -20,5 +20,12 @@ spec:
         - '--tries=1'
         - '--spider'
         - '{{ include "common.names.fullname" . }}:{{ .Values.service.ports.http.port }}/health_check'
+      {{- if (coalesce .Values.testconnection.resources .Values.resources) }}
+      resources:
+        {{- coalesce .Values.testconnection.resources .Values.resources | toYaml | nindent 12 }}
+      {{- else if ne (coalesce .Values.testconnection.resourcesPreset .Values.resourcesPreset) "none" }}
+      resources:
+        {{- include "common.resources.preset" (dict "type" (coalesce .Values.testconnection.resourcesPreset .Values.resourcesPreset)) | nindent 12 }}
+      {{- end }}
   restartPolicy: "Never"
 ...
