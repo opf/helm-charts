@@ -675,6 +675,12 @@ openproject:
   #
   tmpVolumesLabels: {}
 
+## Define the image source for the container started in the test-connection pod.
+#
+connectionTestImage:
+  image: "busybox"
+  tag: "latest"
+
 ## Whether to allocate persistent volume disk for the data directory.
 ## In case of node failure, the node data directory will still persist.
 ##
