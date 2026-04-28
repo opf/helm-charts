@@ -177,10 +177,6 @@ securityContext:
 - secretRef:
     name: {{ include "common.names.fullname" . }}-s3
 {{- end }}
-{{- if .Values.s3.auth.existingSecret }}
-- secretRef:
-    name: {{ .Values.s3.auth.existingSecret }}
-{{- end }}
 {{- if eq .Values.openproject.cache.store "memcache" }}
 - secretRef:
     name: {{ include "common.names.fullname" . }}-memcached
@@ -223,6 +219,18 @@ securityContext:
     secretKeyRef:
       name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
       key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- end }}
+{{- if .Values.s3.auth.existingSecret}}
+- name: OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.s3.auth.existingSecret }}
+      key: {{ .Values.s3.auth.secretKeys.accessKeyId }}
+- name: OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.s3.auth.existingSecret }}
+      key: {{ .Values.s3.auth.secretKeys.secretAccessKey }}
 {{- end }}
 {{- if .Values.openproject.realtime_collaboration.enabled }}
 # External backend: we are using an external hocuspocus backend with an existing secret containing the password
