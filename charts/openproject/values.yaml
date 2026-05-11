@@ -1263,6 +1263,10 @@ service:
     #
     timeoutSeconds: 10800
 
+  ## Define custom service annotations.
+  #
+  annotations: {}
+
 ## Define Service Accounts for Pods.
 ##
 ## Ref.: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
