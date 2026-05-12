@@ -249,6 +249,20 @@ securityContext:
       key: secret
 {{- end }}
 {{- end }}
+{{- if .Values.openproject.secretKeyBase.existingSecret }}
+- name: SECRET_KEY_BASE
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.openproject.secretKeyBase.existingSecret }}
+      key: {{ .Values.openproject.secretKeyBase.secretKey }}
+# if nothing was defined, we use an auto generated secret (see secret_secret_key_base.yaml)
+{{- else }}
+- name: SECRET_KEY_BASE
+  valueFrom:
+    secretKeyRef:
+      name: secret-key-base-auto-generated
+      key: secret-key-base
+{{- end }}
 {{- if .Values.extraEnvVars }}
 {{- toYaml .Values.extraEnvVars | nindent 0 }}
 {{- end }}

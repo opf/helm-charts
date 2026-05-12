@@ -69,7 +69,20 @@ By default, the helm chart will target the latest stable major release. You can 
 
 Please make sure to use the `-slim` variant of OpenProject, as the all-in-one container is adding unnecessary services and will not work as expected with default options such as operating as a non-root user.
 
+#### SECRET_KEY_BASE
 
+The `SECRET_KEY_BASE` in rails applications is used to sign or encrypt data such as cookies, sessions or tokens.
+The chart automatically generates a value for this if you don't provide one.
+You can provide one via an existing secret, however.
+
+```
+openproject:
+  secretKeyBase:
+    existingSecret: my-secret-key-base-secret
+    secretKey: secret-key-base
+```
+
+Please refer below to the Secrets section for examples on how to create secrets.
 
 #### HTTPS mode
 

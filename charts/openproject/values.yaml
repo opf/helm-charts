@@ -576,6 +576,16 @@ openproject:
   # e.g., /openproject
   railsRelativeUrlRoot:
 
+  ## SECRET_KEY_BASE is required by Rails for cookie signing and other cryptographic operations.
+  ## By default, an auto-generated secret is created on first install and kept across upgrades.
+  ## To use your own secret, provide an existing Kubernetes secret with the key below.
+  secretKeyBase:
+    ## Name of an existing secret containing the SECRET_KEY_BASE value.
+    ## Leave empty to use the auto-generated secret.
+    existingSecret: ""
+    ## Key within the secret that holds the value.
+    secretKey: "secret-key-base"
+
   ## Define admin user details
   # only applicable on first installation
   # c.f. https://www.openproject.org/docs/installation-and-operations/configuration/#initial-admin-user-creation
