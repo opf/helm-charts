@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.5.2
+
+### Patch Changes
+
+- 37fad67: allow defining service annotations
+
 ## 13.5.1
 
 ### Patch Changes
