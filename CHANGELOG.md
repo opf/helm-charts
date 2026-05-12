@@ -1,5 +1,11 @@
 # @openproject/helm-charts
 
+## 13.5.3
+
+### Patch Changes
+
+- bf897ed: Fix: missing secret key base config
+
 ## 13.5.2
 
 ### Patch Changes
