@@ -18,7 +18,7 @@ class HelmTemplate
     @values = values
     result = Open3.capture3("helm template --debug #{release_name} . #{extra_args} -f -",
                             chdir: File.join(__dir__, '..', 'charts', chart),
-                            stdin_data: YAML.dump(values))
+                            stdin_data: YAML.dump(values).sub(/\A---[ \t]*\n?/, ''))
     @stdout, @stderr, @exit_code = result
     # handle common failures when helm or chart not setup properly
     if @exit_code == 256
