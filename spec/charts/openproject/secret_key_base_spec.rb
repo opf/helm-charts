@@ -73,4 +73,39 @@ describe 'configuring SECRET_KEY_BASE' do
       expect(env.dig('valueFrom', 'secretKeyRef', 'key')).to eq 'my-key'
     end
   end
+
+  context 'when SECRET_KEY_BASE is provided via environment values' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          environment:
+            SECRET_KEY_BASE: manually-configured-secret-key-base
+        YAML
+      )
+    end
+
+    it 'does not auto-generate a secret' do
+      secret = template.dig('Secret/secret-key-base-auto-generated')
+
+      expect(secret).to be_nil
+    end
+
+    it 'adds SECRET_KEY_BASE to the environment secret' do
+      secret = template.dig('Secret/optest-openproject-environment')
+
+      expect(secret.dig('stringData', 'SECRET_KEY_BASE')).to eq 'manually-configured-secret-key-base'
+    end
+
+    it 'does not point SECRET_KEY_BASE to a secret in the web deployment' do
+      env = template.env_named('Deployment/optest-openproject-web', 'openproject', 'SECRET_KEY_BASE')
+
+      expect(env).to be_nil
+    end
+
+    it 'does not point SECRET_KEY_BASE to a secret in the worker deployment' do
+      env = template.env_named('Deployment/optest-openproject-worker-default', 'openproject', 'SECRET_KEY_BASE')
+
+      expect(env).to be_nil
+    end
+  end
 end

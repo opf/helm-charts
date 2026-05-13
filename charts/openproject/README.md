@@ -82,11 +82,11 @@ openproject:
     secretKey: secret-key-base
 ```
 
-> [!IMPORTANT]
-> If you previously passed in a secret through an ENV variable, you need to change it to the existingSecret syntax as shown above.
-> Otherwise, all session and 2FA cookies will be reset for users upon starting, as this key is the basis for deriving cookie values.
+Helm-charts version 13.5.4 and higher of the helm chart will automatically create a kubernetes secret using a random string.
+If you have not passed a `environment.SECRET_KEY_BASE` value previously, we recommend updating to the newest helm version to have it auto-generate.
 
-Please refer below to the Secrets section for examples on how to create secrets.
+If you have an existing strong secret, you are safe already and nothing needs to be done.
+You can optionally place it as the existingSecret as shown in the Helm chart documentation to use the conventional secret to pass it into the specs.
 
 #### HTTPS mode
 
