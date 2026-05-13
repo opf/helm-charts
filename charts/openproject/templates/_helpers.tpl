@@ -249,6 +249,7 @@ securityContext:
       key: secret
 {{- end }}
 {{- end }}
+{{- if not (hasKey (default (dict) .Values.environment) "SECRET_KEY_BASE") }}
 {{- if .Values.openproject.secretKeyBase.existingSecret }}
 - name: SECRET_KEY_BASE
   valueFrom:
@@ -262,6 +263,7 @@ securityContext:
     secretKeyRef:
       name: secret-key-base-auto-generated
       key: secret-key-base
+{{- end }}
 {{- end }}
 {{- if .Values.extraEnvVars }}
 {{- toYaml .Values.extraEnvVars | nindent 0 }}
