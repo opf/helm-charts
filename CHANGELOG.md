@@ -6,6 +6,25 @@
 
 - bf897ed: Fix: missing secret key base config
 
+**Note**: The change above will change the way the SECRET_KEY_BASE is configured in the helm chart.
+Previously it was passed in as a normal environment variable as follows:
+
+```yaml
+environment:
+  SECRET_KEY_BASE: e1ZA7Fm09D9FKo8oP5hXPIQjJnCevTvD
+```
+
+Users were not forced to provide a value for this, though, leaving people who didn't do it
+with the default value which is not secure (because it is known).
+
+With this release we introduce a dedicated value `openproject.secretKeyBase.existingSecret`.
+If this value isn't provided, a key will be generated automatically and used instead.
+
+**Important**: This value will override any value set as a normal environment variable as shown above.
+That means if you want to avoid users being logged out, you should create and configure an existing
+secret with the value from the environment before upgrading. Lastly, you should remove `environment.SECRET_KEY_BASE`
+as it will be ignored.
+
 ## 13.5.2
 
 ### Patch Changes
