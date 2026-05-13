@@ -13,7 +13,7 @@
 - bf897ed: Fix: missing secret key base config
 
 **Note**: The change above will change the way the SECRET_KEY_BASE is configured in the helm chart.
-Previously it was passed in as a normal environment variable as follows:
+Previously, you could pass it in as a normal environment variable as follows:
 
 ```yaml
 environment:
@@ -26,10 +26,9 @@ with the default value which is not secure (because it is known).
 With this release we introduce a dedicated value `openproject.secretKeyBase.existingSecret`.
 If this value isn't provided, a key will be generated automatically and used instead.
 
-**Important**: This value will override any value set as a normal environment variable as shown above.
-That means if you want to avoid users being logged out, you should create and configure an existing
-secret with the value from the environment before upgrading. Lastly, you should remove `environment.SECRET_KEY_BASE`
-as it will be ignored.
+If you have not passed in a `environment.SECRET_KEY_BASE` value previously, we recommend updating to the newest helm version to auto-generate it.
+If you have an existing strong secret, you are safe already and nothing needs to be done. 
+You can optionally place it as the existingSecret as shown in the Helm chart documentation to use the conventional secret to pass it into the specs.
 
 ## 13.5.2
 
