@@ -82,6 +82,10 @@ openproject:
     secretKey: secret-key-base
 ```
 
+> [!IMPORTANT]
+> If you previously passed in a secret through an ENV variable, you need to change it to the existingSecret syntax as shown above.
+> Otherwise, all session and 2FA cookies will be reset for users upon starting, as this key is the basis for deriving cookie values.
+
 Please refer below to the Secrets section for examples on how to create secrets.
 
 #### HTTPS mode
