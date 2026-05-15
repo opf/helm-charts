@@ -1,0 +1,175 @@
+{{- if .Values.backup.enabled }}
+{{- include "openproject.backup.checkPodSecurity" . }}
+{{- $fuse := include "openproject.backup.fuse" . }}
+{{- /* The volume to back up attachments from, unless the backup mounts the S3 bucket itself (FUSE). */}}
+{{- $attachmentsClaim := "" }}
+{{- $attachmentsSubPath := "" }}
+{{- if include "openproject.backup.s3Attachments" . }}
+{{- if .Values.backup.s3Attachments.existingClaim }}
+{{- $attachmentsClaim = .Values.backup.s3Attachments.existingClaim }}
+{{- $attachmentsSubPath = include "openproject.backup.s3AttachmentsSubPath" . }}
+{{- end }}
+{{- else if .Values.persistence.enabled }}
+{{- $attachmentsClaim = .Values.persistence.existingClaim | default (include "common.names.fullname" .) }}
+{{- $attachmentsSubPath = include "openproject.backup.attachmentsSubPath" . }}
+{{- end }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "common.names.fullname" . }}-backup
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: backup
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  # Prevent overlapping backup runs — a new job is skipped if the previous one is still running.
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      {{- if .Values.cleanup.deletePodsOnSuccess }}
+      ttlSecondsAfterFinished: {{ .Values.cleanup.deletePodsOnSuccessTimeout }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          # Kopia identifies snapshot sources by hostname, so keep it stable across job runs.
+          hostname: backup-cronjob
+          {{- include "openproject.imagePullSecrets" . | indent 10 }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{ toYaml . | nindent 12 | trim }}
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{ toYaml . | nindent 12 | trim }}
+          {{- end }}
+          {{- include "openproject.backup.podSettings" . | nindent 10 }}
+          volumes:
+            - name: scripts
+              configMap:
+                name: {{ include "common.names.fullname" . }}-backup-scripts
+                defaultMode: 0755
+            {{- include "openproject.backup.cacheVolume" . | nindent 12 }}
+            - name: tmp
+              emptyDir: {}
+            # Database dump, written by the db-dump init container and snapshotted by the backup container.
+            - name: db-dump
+              emptyDir: {}
+            {{- if $attachmentsClaim }}
+            # The volume with the attachments and custom styles: the assets PVC, or the OpenProject
+            # S3 bucket provided as a volume (backup.s3Attachments.existingClaim).
+            - name: data
+              persistentVolumeClaim:
+                claimName: {{ $attachmentsClaim }}
+            {{- end }}
+          initContainers:
+            {{- if $attachmentsClaim }}
+            # The backup container mounts these directories via subPath. Make sure they exist and
+            # are owned by the OpenProject user, as kubelet would create missing ones owned by root.
+            - name: prepare-assets
+              image: {{ include "openproject.backup.image" . }}
+              imagePullPolicy: {{ .Values.backup.image.imagePullPolicy }}
+              command: ["mkdir", "-p", {{ list "/assets" $attachmentsSubPath "attachment" | compact | join "/" | quote }}, {{ list "/assets" $attachmentsSubPath "custom_style" | compact | join "/" | quote }}]
+              {{- include "openproject.containerSecurityContext" . | nindent 14 }}
+              volumeMounts:
+                - name: data
+                  mountPath: /assets
+            {{- end }}
+            - name: db-dump
+              image: {{ include "openproject.backup.dbDumpImage" . }}
+              imagePullPolicy: {{ .Values.backup.dbDump.image.imagePullPolicy }}
+              command: ["/scripts/dump-db.sh"]
+              {{- include "openproject.containerSecurityContext" . | nindent 14 }}
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "common.names.fullname" . }}-core
+                      key: DATABASE_URL
+                {{- include "openproject.backup.pgPasswordEnv" . | nindent 16 }}
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 16 }}
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: db-dump
+                  mountPath: /backup/db
+          containers:
+            - name: backup
+              image: {{ include "openproject.backup.image" . }}
+              imagePullPolicy: {{ .Values.backup.image.imagePullPolicy }}
+              command: ["/scripts/backup.sh"]
+              {{- if $fuse }}
+              securityContext:
+                # Required for the rclone/FUSE mount of the OpenProject S3 bucket. Set
+                # backup.s3Attachments.existingClaim to back up S3 attachments without it.
+                privileged: true
+              {{- else }}
+              {{- include "openproject.containerSecurityContext" . | nindent 14 }}
+              {{- end }}
+              envFrom:
+                - secretRef:
+                    name: {{ include "common.names.fullname" . }}-backup
+                {{- if $fuse }}
+                - secretRef:
+                    name: {{ include "common.names.fullname" . }}-s3
+                {{- if and (not .Values.rustfs.bundled) .Values.s3.auth.existingSecret }}
+                - secretRef:
+                    name: {{ .Values.s3.auth.existingSecret }}
+                {{- end }}
+                {{- end }}
+                {{- if .Values.backup.s3.auth.existingSecret }}
+                - secretRef:
+                    name: {{ .Values.backup.s3.auth.existingSecret }}
+                {{- end }}
+              env:
+                {{- include "openproject.backup.kopiaPasswordEnv" . | nindent 16 }}
+                {{- if and $fuse .Values.rustfs.bundled }}
+                # The bundled RustFS: its endpoint in the -s3 secret is the public ingress (for browsers),
+                # use the in-cluster service instead, and its own credentials.
+                - name: OPENPROJECT_FOG_CREDENTIALS_ENDPOINT
+                  value: "http://{{ include "openproject.rustfsServiceHost" . }}:{{ .Values.rustfs.service.endpoint.port | default 9000 }}"
+                - name: OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.rustfs.secret.existingSecret }}
+                      key: RUSTFS_ACCESS_KEY
+                - name: OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.rustfs.secret.existingSecret }}
+                      key: RUSTFS_SECRET_KEY
+                {{- end }}
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 16 }}
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: backup-cache
+                  mountPath: /mnt/cache
+                - name: tmp
+                  mountPath: /tmp
+                - name: db-dump
+                  mountPath: /backup/openproject.sql
+                  subPath: openproject.sql
+                  readOnly: true
+                {{- if $attachmentsClaim }}
+                - name: data
+                  mountPath: /backup/attachment
+                  subPath: {{ list $attachmentsSubPath "attachment" | compact | join "/" }}
+                  readOnly: true
+                - name: data
+                  mountPath: /backup/custom_style
+                  subPath: {{ list $attachmentsSubPath "custom_style" | compact | join "/" }}
+                  readOnly: true
+                {{- end }}
+{{- end }}

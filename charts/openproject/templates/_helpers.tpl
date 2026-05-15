@@ -355,6 +355,170 @@ checksum/env-{{ $suffix }}: {{ include (print $.Template.BasePath "/secret_" $su
 {{- end }}
 
 {{/*
+Returns the KOPIA_PASSWORD env entry for backup pods.
+When kopiaPassword is set directly in values it is already present in the backup
+secret (via envFrom), so no explicit env entry is needed.
+Otherwise the password is sourced from existingSecret or the auto-generated secret.
+*/}}
+{{- define "openproject.backup.kopiaPasswordEnv" -}}
+{{- if not .Values.backup.kopiaPassword }}
+- name: KOPIA_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      {{- if .Values.backup.existingSecret }}
+      name: {{ .Values.backup.existingSecret }}
+      key: {{ .Values.backup.secretKeys.kopiaPassword }}
+      {{- else }}
+      name: backup-kopia-password-auto-generated
+      key: kopiaPassword
+      {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Image of the kopia containers in backup pods.
+*/}}
+{{- define "openproject.backup.image" -}}
+"{{ .Values.backup.image.registry }}/{{ .Values.backup.image.repository }}:{{ .Values.backup.image.tag }}"
+{{- end }}
+
+{{/*
+Image of the database dump init container in backup pods.
+*/}}
+{{- define "openproject.backup.dbDumpImage" -}}
+"{{ .Values.backup.dbDump.image.registry }}/{{ .Values.backup.dbDump.image.repository }}:{{ include "openproject.backup.dbDumpImageTag" . }}"
+{{- end }}
+
+{{/*
+Tag of the database dump image: backup.dbDump.image.tag or, if empty, "<major>-alpine" with the major
+version of the bundled PostgreSQL, so pg_dump matches the server. For an external database the
+tag has to be set explicitly, as the server's version is unknown here.
+*/}}
+{{- define "openproject.backup.dbDumpImageTag" -}}
+{{- if .Values.backup.dbDump.image.tag -}}
+{{- .Values.backup.dbDump.image.tag -}}
+{{- else if .Values.postgresql.bundled -}}
+{{- $major := regexFind "^[0-9]+" (toString .Values.postgresql.image.tag) -}}
+{{- if not $major -}}
+{{- fail (printf "backup: cannot determine the major version of the bundled PostgreSQL from postgresql.image.tag %q. Set backup.dbDump.image.tag to a postgres image tag of the same major version, e.g. \"15-alpine\"." (toString .Values.postgresql.image.tag)) -}}
+{{- end -}}
+{{- printf "%s-alpine" $major -}}
+{{- else -}}
+{{- fail "backup: set backup.dbDump.image.tag to a postgres image tag matching the major version of your database server, e.g. \"16-alpine\" for PostgreSQL 16 (see backup.dbDump in values.yaml)." -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Returns "true" if OpenProject stores attachments in S3: an external one (s3.enabled) or the
+bundled RustFS (rustfs.bundled).
+*/}}
+{{- define "openproject.backup.s3Attachments" -}}
+{{- if or .Values.s3.enabled .Values.rustfs.bundled -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+Returns "true" if the backup has to mount the OpenProject S3 bucket itself via rclone/FUSE,
+which requires a privileged container. That is the case for attachments stored in S3 unless
+the bucket is provided as a volume (backup.s3Attachments.existingClaim), e.g. via a CSI driver.
+*/}}
+{{- define "openproject.backup.fuse" -}}
+{{- if and (include "openproject.backup.s3Attachments" .) (not .Values.backup.s3Attachments.existingClaim) -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+Fails the installation if the backup needs a privileged container (see openproject.backup.fuse)
+but the namespace enforces a Pod Security Standard which forbids that, as the backup pods would
+then be rejected on every run. Can only check real installs (and --dry-run=server), as the
+namespace cannot be looked up in `helm template`.
+*/}}
+{{- define "openproject.backup.checkPodSecurity" -}}
+{{- if include "openproject.backup.fuse" . }}
+{{- $namespace := lookup "v1" "Namespace" "" .Release.Namespace }}
+{{- $level := dig "metadata" "labels" "pod-security.kubernetes.io/enforce" "" ($namespace | default dict) }}
+{{- if has $level (list "baseline" "restricted") }}
+{{- fail (printf "\n\nbackup: Attachments are stored in S3 (s3.enabled or rustfs.bundled), which the backup can only read by mounting the bucket via FUSE in a privileged container. But namespace %q enforces the %q Pod Security Standard, so the backup pods would be rejected.\n\nProvide the bucket as a volume instead, e.g. via an S3 CSI driver, and set backup.s3Attachments.existingClaim (see the chart's README, section \"Backups of S3 attachments\").\n" .Release.Namespace $level) }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Pod-level settings shared by all backup pods: service account and security context.
+*/}}
+{{- define "openproject.backup.podSettings" -}}
+{{- if .Values.backup.serviceAccountName }}
+serviceAccountName: {{ .Values.backup.serviceAccountName }}
+{{- end }}
+{{- if .Values.podSecurityContext.enabled }}
+securityContext:
+  {{- omit .Values.podSecurityContext "enabled" | merge (dict "fsGroupChangePolicy" "OnRootMismatch") | toYaml | nindent 2 }}
+{{- end }}
+{{- end }}
+
+{{/*
+Returns backup.s3Attachments.path, the location of OpenProject's "uploads" directory
+within the S3 attachments volume, as a relative path ("" for the root of the volume).
+*/}}
+{{- define "openproject.backup.s3AttachmentsSubPath" -}}
+{{- $path := .Values.backup.s3Attachments.path | default "" | clean | trimPrefix "/" -}}
+{{- if ne $path "." }}{{ $path }}{{ end -}}
+{{- end }}
+
+{{/*
+Returns the local attachments storage path relative to the assets PVC (mounted at
+/var/openproject/assets), e.g. "files" for OpenProject's default /var/openproject/assets/files.
+Taken from backup.attachmentsStoragePath, else environment.OPENPROJECT_ATTACHMENTS__STORAGE__PATH.
+*/}}
+{{- define "openproject.backup.attachmentsSubPath" -}}
+{{- $mountPath := "/var/openproject/assets" -}}
+{{- $path := .Values.backup.attachmentsStoragePath | default (get .Values.environment "OPENPROJECT_ATTACHMENTS__STORAGE__PATH") | default (printf "%s/files" $mountPath) | clean -}}
+{{- if not (or (eq $path $mountPath) (hasPrefix (printf "%s/" $mountPath) $path)) -}}
+{{- fail (printf "backup: the attachments storage path %q is not on the assets volume (%s), so it cannot be backed up. Set backup.attachmentsStoragePath to the path OpenProject stores attachments in." $path $mountPath) -}}
+{{- end -}}
+{{- trimPrefix "/" (trimPrefix $mountPath $path) -}}
+{{- end }}
+
+{{/*
+Returns the kopia cache volume for backup pods: the shared cache PVC or, if
+backup.cache.persistent is false, an emptyDir.
+*/}}
+{{- define "openproject.backup.cacheVolume" -}}
+- name: backup-cache
+{{- if .Values.backup.cache.persistent }}
+  persistentVolumeClaim:
+    claimName: {{ include "common.names.fullname" . }}-backup-cache
+{{- else }}
+  emptyDir: {}
+{{- end }}
+{{- end }}
+
+{{/*
+Returns the PGPASSWORD env entry sourcing the database password for pg_dump in the db-dump init container.
+Mirrors the OPENPROJECT_DB_PASSWORD logic from openproject.env.
+*/}}
+{{- define "openproject.backup.pgPasswordEnv" -}}
+{{- if .Values.postgresql.auth.existingSecret }}
+- name: PGPASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.postgresql.auth.existingSecret }}
+      key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- else if .Values.postgresql.auth.password }}
+- name: PGPASSWORD
+  value: {{ .Values.postgresql.auth.password }}
+{{- else }}
+- name: PGPASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
+      key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- end }}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "openproject.serviceAccountName" -}}

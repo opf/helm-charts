@@ -102,3 +102,128 @@ an additional `-f` option in the command above. For instance `bin/install-dev -f
 
 If you want to use TLS you can use [`bin/install-local-with-tls`](./bin/install-local-with-tls).
 This will generate a self-signed certificate the root CA of which you will have to import into your browser.
+
+## Backups
+
+The chart's [backups](./README.md#backups) can be tried out and tested on the same local k3d cluster.
+For `bin/backup list`, `mount` and `restore` you also need a local [kopia](https://kopia.io/docs/installation/)
+(plus FUSE for `mount`); everything else only needs `kubectl` and `helm`.
+
+### Trying out backups locally
+
+[`bin/install-local-with-backups`](./bin/install-local-with-backups) installs OpenProject like `bin/install-dev`,
+with backups and backup replication enabled ([`examples/local-with-backups-values.yaml`](./examples/local-with-backups-values.yaml)).
+The backups go to two separate S3 services (single-node RustFS), each in its own namespace with its own credentials:
+
+| Namespace           | Service              | Bucket                       | Access key / secret key               |
+|---------------------|----------------------|------------------------------|---------------------------------------|
+| `openproject`       | OpenProject          |                              |                                       |
+| `backup-s3`         | `rustfs` (9000/9001) | `openproject-backup`         | `backup-access` / `backup-secret-key` |
+| `backup-replica-s3` | `rustfs` (9000/9001) | `openproject-backup-replica` | `replica-access` / `replica-secret-key` |
+
+```bash
+bin/install-local-with-backups
+```
+
+The backup runs every 5 minutes in this setup; use `bin/backup` to run it right away. The replication keeps its
+default schedule (daily). Additional options are passed on to helm, e.g. `--set backup.replica.schedule='*/30 * * * *'`.
+
+#### Running the jobs
+
+```bash
+bin/backup -n openproject create-snapshot   # backup
+bin/backup -n openproject sync-replica      # replication to the replica bucket
+bin/backup -n openproject verify            # verification of all snapshots
+```
+
+Each of these creates a job from the respective CronJob, waits for it and prints its logs.
+
+#### Browsing snapshots
+
+Without a local kopia, use the kopia web UI. It runs in a temporary pod in the cluster, so it doesn't need access
+to the S3 services from your machine:
+
+```bash
+bin/backup -n openproject ui              # primary repository
+bin/backup -n openproject --replica ui    # replica
+```
+
+With a local kopia, you can list, mount and restore snapshots directly. The S3 services are only reachable inside
+the cluster, so `bin/backup` forwards them to a local port for the duration of each command:
+
+```bash
+bin/backup -n openproject list
+bin/backup -n openproject mount                    # all snapshots, by date
+bin/backup -n openproject restore latest ./restore
+bin/backup -n openproject --replica list
+```
+
+To look at what actually ends up in the buckets (encrypted kopia blobs), open the RustFS console:
+`kubectl -n backup-s3 port-forward svc/rustfs 9001:9001`, then <http://localhost:9001/rustfs/console/>, logging
+in with the credentials from the table above.
+
+#### Restoring the database
+
+A restored snapshot contains `openproject.sql`, `attachment/` and `custom_style/`. To check that the database dump
+is complete, you can load it into a scratch database next to the real one:
+
+```bash
+cd restore
+PGPASSWORD=$(kubectl -n openproject get secret openproject-postgresql -o jsonpath='{.data.postgres-password}' | base64 -d)
+DB_DUMP_IMAGE=$(kubectl -n openproject get cronjob openproject-backup \
+  -o jsonpath='{.spec.jobTemplate.spec.template.spec.initContainers[?(@.name=="db-dump")].image}')
+psql() {
+  kubectl -n openproject run "psql-$RANDOM" --rm -i --quiet --restart=Never --image="$DB_DUMP_IMAGE" \
+    --env=PGPASSWORD="$PGPASSWORD" --command -- psql -h openproject-postgresql -U postgres "$@"
+}
+
+psql -c 'CREATE DATABASE restore_test'
+psql -d restore_test -q < openproject.sql > /dev/null
+psql -d restore_test -c 'SELECT count(*) FROM work_packages'
+psql -c 'DROP DATABASE restore_test'
+```
+
+This uses `psql` from the same image the backup's `pg_dump` runs in (`backup.dbDump.image`, which follows the
+bundled PostgreSQL's major version), as `psql` from older patch releases (like the one in the bundled PostgreSQL
+15.4 image) fails on the `\restrict` lines that current `pg_dump` versions write.
+
+### Integration tests
+
+The integration specs in [`spec/charts/openproject/integration`](../../spec/charts/openproject/integration) test
+the backups end to end. For each scenario they install OpenProject with backups and replication into a fresh
+namespace, together with two S3 services, write marker data, run two backups, the replication and the
+verification, and restore the latest snapshot from both repositories:
+
+| Scenario (`ATTACHMENTS=`) | Attachments                                                   | Namespace enforces |
+|---------------------------|---------------------------------------------------------------|--------------------|
+| `local`                   | on the assets volume                                          | `restricted`       |
+| `s3`                      | in S3, mounted by the backup via FUSE (privileged)            | —                  |
+| `s3-csi`                  | in S3, provided as a volume by the k8s-csi-s3 driver          | `restricted`       |
+
+The `s3` scenario also checks that installing FUSE-based backups into a `restricted` namespace fails.
+
+They use the current kube context and install the k8s-csi-s3 driver into `kube-system`, so use a separate,
+disposable cluster. No load balancer is needed:
+
+```bash
+k3d cluster create backup-test --no-lb
+helm dependency build                      # in charts/openproject, if not done yet
+cd ../.. && bundle install
+
+bin/rspec --tag integration                # all scenarios, takes about 15 minutes
+ATTACHMENTS=s3-csi bin/rspec --tag integration spec/charts/openproject/integration/backup_spec.rb
+```
+
+The namespaces are named `backup-test-<scenario>` and deleted afterwards. With `KEEP_NAMESPACE=1` they are kept
+for debugging, and you can also use `bin/backup` on them (the release is called `openproject`):
+
+```bash
+KEEP_NAMESPACE=1 ATTACHMENTS=local bin/rspec --tag integration
+
+cd charts/openproject
+bin/backup -n backup-test-local ui
+bin/backup -n backup-test-local list
+```
+
+Delete kept namespaces with `kubectl delete namespace backup-test-<scenario>` (for `s3-csi` also
+`kubectl delete pv backup-test-s3-csi-attachments`), or the whole cluster with `k3d cluster delete backup-test`.

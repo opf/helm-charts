@@ -1,0 +1,409 @@
+#!/bin/bash
+# Helper for ops to work with the kopia backups of an OpenProject installed with this chart
+# (backup.enabled=true): list, mount and restore snapshots, browse them in the kopia web UI,
+# and trigger the backup jobs.
+#
+# The repository connection (S3 endpoint, bucket, credentials and kopia password) is read from
+# the cluster, i.e. from the secrets the backup CronJobs use, so you only need kubectl access
+# to the namespace and a local kopia (https://kopia.io/docs/installation/).
+# Mounting additionally requires FUSE. The web UI (`ui`) runs kopia in the cluster instead and
+# only needs kubectl.
+#
+# Snapshots have the same layout as OpenProject's own backups:
+#   openproject.sql   database dump, restore with e.g. `psql "$DATABASE_URL" < openproject.sql`
+#   attachment/       attachments
+#   custom_style/     custom logos, icons and fonts
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+usage: $(basename "$0") [options] <command>
+
+commands:
+  list                           List all snapshots.
+  mount [<snapshot-id>]          Mount a snapshot (default: all snapshots, browsable by date) in a
+                                 temporary directory and open a shell there. Exiting the shell unmounts it.
+  restore <snapshot-id|latest> <target-dir>
+                                 Restore a snapshot into a local directory.
+  create-snapshot                Run the backup job now and wait for it to finish.
+  sync-replica                   Run the replication job now and wait for it to finish.
+  verify                         Run the verification job now and wait for it to finish.
+  ui                             Start the kopia web UI in a temporary pod in the cluster and forward it to
+                                 localhost, to browse snapshots and download files. Needs neither a local
+                                 kopia nor access to the S3 bucket. Stop it with Ctrl-C.
+
+options:
+  -n, --namespace <namespace>    Namespace of the release (default: current namespace of the kube context).
+  -r, --release <release>        Helm release name (default: openproject).
+  --replica                      Use the replica repository instead of the primary one.
+  --endpoint <host:port>         Connect to this S3 endpoint instead of the configured one (implies no TLS
+                                 for localhost). Not needed for S3 services inside the cluster: those are
+                                 port-forwarded automatically.
+  --port <port>                  Local port for the web UI (default: 51515).
+EOF
+}
+
+NAMESPACE=""
+RELEASE="openproject"
+REPOSITORY="primary"
+ENDPOINT_OVERRIDE=""
+UI_PORT=51515
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -n | --namespace) NAMESPACE="$2"; shift 2 ;;
+    -r | --release) RELEASE="$2"; shift 2 ;;
+    --replica) REPOSITORY="replica"; shift ;;
+    --endpoint) ENDPOINT_OVERRIDE="$2"; shift 2 ;;
+    --port) UI_PORT="$2"; shift 2 ;;
+    -h | --help) usage; exit 0 ;;
+    -*) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+    *) break ;;
+  esac
+done
+
+COMMAND="${1:-}"
+[ -n "$COMMAND" ] || { usage >&2; exit 2; }
+shift
+
+k() {
+  if [ -n "$NAMESPACE" ]; then
+    kubectl -n "$NAMESPACE" "$@"
+  else
+    kubectl "$@"
+  fi
+}
+
+# Creates a job from one of the backup CronJobs, waits for it and prints its logs.
+run_job() {
+  local cronjob="$RELEASE-$1" job
+  job="$cronjob-manual-$(date -u +%Y%m%d-%H%M%S)"
+  k create job "$job" --from="cronjob/$cronjob"
+  echo "Waiting for job $job to finish ..."
+
+  while true; do
+    if [ "$(k get job "$job" -o jsonpath='{.status.succeeded}')" = "1" ]; then
+      k logs "job/$job" --all-containers
+      echo "Job $job succeeded."
+      return 0
+    fi
+    if [ "$(k get job "$job" -o jsonpath='{.status.conditions[?(@.type=="Failed")].status}')" = "True" ]; then
+      k logs "job/$job" --all-containers || true
+      echo "Job $job failed." >&2
+      return 1
+    fi
+    sleep 5
+  done
+}
+
+case "$COMMAND" in
+  create-snapshot) run_job backup; exit ;;
+  sync-replica) run_job backup-replica; exit ;;
+  verify) run_job backup-verification; exit ;;
+  list | mount | restore | ui) ;;
+  *) echo "Unknown command: $COMMAND" >&2; usage >&2; exit 2 ;;
+esac
+
+## Read the repository connection from the secrets used by the respective CronJob.
+
+if [ "$REPOSITORY" = "replica" ]; then
+  CRONJOB="$RELEASE-backup-replica"
+  PREFIX="REPLICA"
+else
+  # Loads the same secrets as the backup job, but never runs privileged (see `ui`).
+  CRONJOB="$RELEASE-backup-verification"
+  PREFIX="BACKUP"
+fi
+
+container_spec='{.spec.jobTemplate.spec.template.spec.containers[0]'
+if ! SECRETS="$(k get cronjob "$CRONJOB" -o jsonpath="$container_spec.envFrom[*].secretRef.name}")"; then
+  echo "Could not find cronjob/$CRONJOB. Are backups$([ "$REPOSITORY" = replica ] && echo " and replication") enabled for release '$RELEASE'?" >&2
+  exit 1
+fi
+
+# Runs `kopia server` with the web UI in a temporary pod, using the same image, secrets and kopia
+# password as the CronJob, and forwards it to localhost. The repository is connected read-only.
+run_ui() {
+  local pod image password_env pull_secrets ui_password port_forward_pid pod_security container_security
+  pod="$RELEASE-backup-ui-$(date -u +%Y%m%d-%H%M%S)"
+  image="$(k get cronjob "$CRONJOB" -o jsonpath="$container_spec.image}")"
+  # Same security contexts as the backup jobs, so the pod is admitted wherever they are.
+  pod_security="$(k get cronjob "$CRONJOB" -o jsonpath='{.spec.jobTemplate.spec.template.spec.securityContext}')"
+  container_security="$(k get cronjob "$CRONJOB" -o jsonpath="$container_spec.securityContext}")"
+  pull_secrets="$(k get cronjob "$CRONJOB" -o jsonpath='{.spec.jobTemplate.spec.template.spec.imagePullSecrets[*].name}')"
+  ui_password="$(head -c 18 /dev/urandom | base64 | tr -d '/+=')"
+
+  password_env="$(k get cronjob "$CRONJOB" -o jsonpath="$container_spec.env[?(@.name==\"KOPIA_PASSWORD\")].valueFrom.secretKeyRef}")"
+  if [ -n "$password_env" ]; then
+    password_env="
+        - name: KOPIA_PASSWORD
+          valueFrom:
+            secretKeyRef: $password_env"
+  fi
+
+  cleanup_ui() {
+    trap - EXIT INT TERM
+    [ -z "${port_forward_pid:-}" ] || kill "$port_forward_pid" 2> /dev/null || true
+    echo
+    echo "Deleting pod $pod ..."
+    k delete pod "$pod" --wait=false > /dev/null 2>&1 || true
+  }
+  trap cleanup_ui EXIT INT TERM
+
+  k apply -f - > /dev/null <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: $pod
+  labels:
+    app.kubernetes.io/instance: $RELEASE
+    app.kubernetes.io/component: backup-ui
+spec:
+  restartPolicy: Never
+  # In case this script is killed without cleaning up.
+  activeDeadlineSeconds: 28800
+  $( [ -z "$pull_secrets" ] || printf 'imagePullSecrets: [%s]' "$(for s in $pull_secrets; do printf '{name: %s},' "$s"; done | sed 's/,$//')" )
+  securityContext: ${pod_security:-{\}}
+  volumes:
+    - name: tmp
+      emptyDir: {}
+  containers:
+    - name: kopia
+      image: $image
+      securityContext: ${container_security:-{\}}
+      volumeMounts:
+        - {name: tmp, mountPath: /tmp}
+      command: ["bash", "-ec"]
+      args:
+        - |
+          ENDPOINT="\$${PREFIX}_ENDPOINT"
+          REGION="\$${PREFIX}_REGION"
+          OPTS=(--endpoint "\$(echo "\$ENDPOINT" | sed -E 's/^https?:\/\///')" --bucket "\$${PREFIX}_BUCKET"
+                --access-key "\$${PREFIX}_ACCESS_KEY_ID" --secret-access-key "\$${PREFIX}_SECRET_ACCESS_KEY")
+          [ -z "\$REGION" ] || OPTS+=(--region "\$REGION")
+          case "\$ENDPOINT" in http://*) OPTS+=(--disable-tls) ;; esac
+          kopia repository connect s3 "\${OPTS[@]}" --readonly
+          exec kopia server start --ui --insecure --address=0.0.0.0:51515 \\
+            --server-username=admin --server-password="\$UI_PASSWORD"
+      envFrom:$(for s in $SECRETS; do printf '\n        - secretRef: {name: %s}' "$s"; done)
+      env:
+        - name: KOPIA_CONFIG_PATH
+          value: /tmp/kopia/repository.config
+        - name: KOPIA_CACHE_DIRECTORY
+          value: /tmp/kopia/cache
+        - name: KOPIA_LOG_DIR
+          value: /tmp/kopia/logs
+        - name: UI_PASSWORD
+          value: "$ui_password"$password_env
+      ports:
+        - containerPort: 51515
+      readinessProbe:
+        tcpSocket: {port: 51515}
+EOF
+
+  echo "Starting the kopia web UI for the $REPOSITORY repository in pod $pod ..."
+  if ! k wait --for=condition=Ready "pod/$pod" --timeout=180s > /dev/null; then
+    k logs "$pod" >&2 || true
+    echo "The kopia web UI did not start." >&2
+    exit 1
+  fi
+
+  k port-forward "pod/$pod" "$UI_PORT:51515" > /dev/null &
+  port_forward_pid=$!
+  sleep 1
+  kill -0 "$port_forward_pid" 2> /dev/null || { echo "Port forwarding to localhost:$UI_PORT failed." >&2; exit 1; }
+
+  cat <<EOF
+
+  kopia web UI: http://localhost:$UI_PORT
+  username:     admin
+  password:     $ui_password
+
+  The repository is connected read-only. Snapshots are listed under "Snapshots";
+  open one to browse it and download files.
+
+  Press Ctrl-C to stop and delete the pod.
+EOF
+  wait "$port_forward_pid"
+}
+
+secret_value() {
+  k get secret "$1" -o jsonpath="{.data.$2}" | base64 -d
+}
+
+# Looks the key up in all secrets the CronJob loads via envFrom.
+config_value() {
+  local secret value
+  for secret in $SECRETS; do
+    value="$(secret_value "$secret" "$1" 2> /dev/null || true)"
+    if [ -n "$value" ]; then
+      echo "$value"
+      return
+    fi
+  done
+}
+
+if [ "$COMMAND" = ui ]; then
+  run_ui
+  exit
+fi
+
+if ! command -v kopia &> /dev/null; then
+  echo "Please install kopia: https://kopia.io/docs/installation/" >&2
+  exit 1
+fi
+
+ENDPOINT="$(config_value "${PREFIX}_ENDPOINT")"
+BUCKET="$(config_value "${PREFIX}_BUCKET")"
+REGION="$(config_value "${PREFIX}_REGION")"
+ACCESS_KEY_ID="$(config_value "${PREFIX}_ACCESS_KEY_ID")"
+SECRET_ACCESS_KEY="$(config_value "${PREFIX}_SECRET_ACCESS_KEY")"
+
+password_secret="$(k get cronjob "$CRONJOB" -o jsonpath="$container_spec.env[?(@.name==\"KOPIA_PASSWORD\")].valueFrom.secretKeyRef.name}")"
+password_key="$(k get cronjob "$CRONJOB" -o jsonpath="$container_spec.env[?(@.name==\"KOPIA_PASSWORD\")].valueFrom.secretKeyRef.key}")"
+if [ -n "$password_secret" ]; then
+  KOPIA_PASSWORD="$(secret_value "$password_secret" "$password_key")"
+else
+  KOPIA_PASSWORD="$(config_value KOPIA_PASSWORD)"
+fi
+export KOPIA_PASSWORD
+
+for var in ENDPOINT BUCKET ACCESS_KEY_ID SECRET_ACCESS_KEY KOPIA_PASSWORD; do
+  [ -n "${!var}" ] || { echo "Could not determine ${PREFIX}_$var from the cluster." >&2; exit 1; }
+done
+
+if [ -n "$ENDPOINT_OVERRIDE" ]; then
+  ENDPOINT="$ENDPOINT_OVERRIDE"
+  case "$ENDPOINT" in localhost:* | 127.0.0.1:*) ENDPOINT="http://$ENDPOINT" ;; esac
+fi
+
+context="$(kubectl config current-context 2> /dev/null || echo default)"
+namespace="${NAMESPACE:-$(kubectl config view --minify -o jsonpath='{..namespace}' 2> /dev/null)}"
+namespace="${namespace:-default}"
+STATE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/openproject-backup/$context/$namespace/$RELEASE/$REPOSITORY"
+mkdir -p "$STATE_DIR"
+
+## If the endpoint is a service inside the cluster (e.g. "http://minio.storage.svc.cluster.local:9000",
+## or just "http://minio:9000" in the release's namespace), it cannot be reached from here.
+## Forward it to a local port for the duration of the command instead.
+
+PORT_FORWARD_PID=""
+TLS_VERIFY_OPTS=()
+
+stop_port_forward() {
+  [ -z "$PORT_FORWARD_PID" ] || kill "$PORT_FORWARD_PID" 2> /dev/null || true
+}
+trap stop_port_forward EXIT
+
+forward_cluster_endpoint() {
+  local scheme address host port service service_namespace log local_port
+  scheme="https"
+  case "$ENDPOINT" in http://*) scheme="http" ;; esac
+  address="${ENDPOINT#*://}"
+  address="${address%%/*}"
+  host="${address%%:*}"
+  port="${address##*:}"
+  [ "$port" != "$address" ] || port="$([ "$scheme" = http ] && echo 80 || echo 443)"
+
+  case "$host" in
+    *.*.svc | *.*.svc.*) service="${host%%.*}"; service_namespace="$(echo "$host" | cut -d. -f2)" ;;
+    localhost | *.*) return 0 ;; # a regular host name
+    *) service="$host"; service_namespace="$namespace" ;;
+  esac
+  kubectl -n "$service_namespace" get service "$service" &> /dev/null || return 0
+
+  log="$STATE_DIR/port-forward.log"
+  kubectl -n "$service_namespace" port-forward "service/$service" ":$port" > "$log" 2>&1 &
+  PORT_FORWARD_PID=$!
+  for _ in $(seq 1 20); do
+    local_port="$(sed -n 's/^Forwarding from 127\.0\.0\.1:\([0-9]*\).*/\1/p' "$log" | head -1)"
+    [ -z "$local_port" ] || break
+    kill -0 "$PORT_FORWARD_PID" 2> /dev/null || break
+    sleep 0.5
+  done
+  if [ -z "$local_port" ]; then
+    echo "Could not forward service $service in namespace $service_namespace:" >&2
+    cat "$log" >&2
+    exit 1
+  fi
+
+  echo "The S3 endpoint $host is only reachable inside the cluster, forwarding it to localhost:$local_port." >&2
+  ENDPOINT="$scheme://localhost:$local_port"
+  # The service's certificate cannot be valid for localhost.
+  [ "$scheme" = http ] || TLS_VERIFY_OPTS=(--disable-tls-verification)
+}
+
+[ -n "$ENDPOINT_OVERRIDE" ] || forward_cluster_endpoint
+
+REPO_OPTS=(--endpoint "$(echo "$ENDPOINT" | sed -E 's/^https?:\/\///')" --bucket "$BUCKET"
+           --access-key "$ACCESS_KEY_ID" --secret-access-key "$SECRET_ACCESS_KEY" "${TLS_VERIFY_OPTS[@]}")
+[ -z "$REGION" ] || REPO_OPTS+=(--region "$REGION")
+case "$ENDPOINT" in http://*) REPO_OPTS+=(--disable-tls) ;; esac
+
+## Connect with a separate, read-only kopia config per repository, so this neither touches any
+## other kopia repository you may be connected to, nor can it modify the backups.
+## The password is not persisted; it is read from the cluster on every run.
+export KOPIA_CONFIG_PATH="$STATE_DIR/repository.config"
+export KOPIA_CACHE_DIRECTORY="$STATE_DIR/cache"
+export KOPIA_LOG_DIR="$STATE_DIR/logs"
+export KOPIA_CHECK_FOR_UPDATES=false
+
+# With a port-forward the local port differs on every run, so always reconnect then.
+if [ -n "$PORT_FORWARD_PID" ] || ! kopia repository status &> /dev/null; then
+  kopia repository disconnect &> /dev/null || true
+  echo "Connecting to the $REPOSITORY repository (s3://$BUCKET at $ENDPOINT) ..." >&2
+  if ! kopia repository connect s3 "${REPO_OPTS[@]}" --readonly --no-persist-credentials &> "$STATE_DIR/connect.log"; then
+    echo "Cannot connect to the repository:" >&2
+    cat "$STATE_DIR/connect.log" >&2
+    exit 1
+  fi
+fi
+
+latest_snapshot() {
+  kopia snapshot list --all --json | grep -o '"id": *"[^"]*"' | tail -1 | sed -E 's/.*"([^"]*)"$/\1/'
+}
+
+case "$COMMAND" in
+  list)
+    kopia snapshot list --all
+    ;;
+
+  mount)
+    SNAPSHOT="${1:-all}"
+    MOUNT_DIR="$(mktemp -d -t openproject-backup.XXXXXX)"
+
+    kopia mount "$SNAPSHOT" "$MOUNT_DIR" > "$STATE_DIR/mount.log" 2>&1 &
+    KOPIA_PID=$!
+    cleanup() {
+      cd /
+      kill "$KOPIA_PID" 2> /dev/null && wait "$KOPIA_PID" 2> /dev/null
+      fusermount -u "$MOUNT_DIR" 2> /dev/null || umount "$MOUNT_DIR" 2> /dev/null || true
+      rmdir "$MOUNT_DIR" 2> /dev/null || true
+      stop_port_forward
+    }
+    trap cleanup EXIT
+
+    for _ in $(seq 1 30); do
+      [ -n "$(ls -A "$MOUNT_DIR" 2> /dev/null)" ] && break
+      kill -0 "$KOPIA_PID" 2> /dev/null || { cat "$STATE_DIR/mount.log" >&2; exit 1; }
+      sleep 1
+    done
+
+    echo "Mounted $([ "$SNAPSHOT" = all ] && echo "all snapshots" || echo "snapshot $SNAPSHOT") (read-only) at $MOUNT_DIR."
+    if [ "$SNAPSHOT" = all ]; then
+      echo "Snapshots are in <user@host>/<path>/<date>, the latest one is $(cd "$MOUNT_DIR" && ls -d -- */*/* 2> /dev/null | tail -1)."
+    fi
+    echo "Exit the shell to unmount."
+    (cd "$MOUNT_DIR" && "${SHELL:-bash}") || true
+    ;;
+
+  restore)
+    SNAPSHOT="${1:-}"
+    TARGET="${2:-}"
+    [ -n "$SNAPSHOT" ] && [ -n "$TARGET" ] || { usage >&2; exit 2; }
+    [ "$SNAPSHOT" != latest ] || SNAPSHOT="$(latest_snapshot)"
+
+    kopia snapshot restore "$SNAPSHOT" "$TARGET"
+    echo "Restored snapshot $SNAPSHOT to $TARGET."
+    ;;
+esac
