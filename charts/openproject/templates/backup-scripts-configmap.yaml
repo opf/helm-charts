@@ -1,0 +1,234 @@
+{{- if .Values.backup.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.names.fullname" . }}-backup-scripts
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: backup
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+data:
+  backup.sh: |
+    #!/bin/bash
+    set -e
+    set -o pipefail
+    set -u
+
+    : "$BACKUP_ENDPOINT"
+    : "$BACKUP_BUCKET"
+    : "$BACKUP_ACCESS_KEY_ID"
+    : "$BACKUP_SECRET_ACCESS_KEY"
+    : "$DATABASE_URL"
+    : "$DUMP_NAME"
+    : "$KOPIA_CACHE_DIRECTORY"
+    : "$KOPIA_PASSWORD"
+
+    BACKUP_MONITOR_HEARTBEAT_URL="${BACKUP_MONITOR_HEARTBEAT_URL:-}"
+    BACKUP_REGION="${BACKUP_REGION:-}"
+    # "s3": mount the OpenProject S3 bucket via rclone/fuse then snapshot it
+    # "local": snapshot the assets PVC directly
+    ATTACHMENTS_STORAGE="${ATTACHMENTS_STORAGE:-local}"
+    ATTACHMENTS_LOCAL_PATH="${ATTACHMENTS_LOCAL_PATH:-/var/openproject/assets}"
+
+    DATABASE_URL_FOR_PG_DUMP="$(echo "$DATABASE_URL" | cut -f 1 -d '?')"
+
+    BACKUP_ENDPOINT_HOST="$(echo "$BACKUP_ENDPOINT" | sed -E 's/^https?:\/\///')"
+    REPO_OPTS="--endpoint $BACKUP_ENDPOINT_HOST --bucket $BACKUP_BUCKET --access-key $BACKUP_ACCESS_KEY_ID --secret-access-key $BACKUP_SECRET_ACCESS_KEY"
+    if [ -n "$BACKUP_REGION" ]; then
+      REPO_OPTS="$REPO_OPTS --region $BACKUP_REGION"
+    fi
+
+    hostname backup-cronjob
+
+    mc alias set s3 "https://$BACKUP_ENDPOINT_HOST" "$BACKUP_ACCESS_KEY_ID" "$BACKUP_SECRET_ACCESS_KEY"
+
+    set +e
+    kopia repository connect s3 $REPO_OPTS &> /tmp/kopia.output
+    connect_exit_code=$?
+    set -e
+
+    if [ "$connect_exit_code" -ne 0 ]; then
+      if grep -q "repository not initialized" /tmp/kopia.output; then
+        echo "Initializing kopia repository"
+        mc mb --ignore-existing "s3/$BACKUP_BUCKET"
+        kopia repository create s3 $REPO_OPTS
+      else
+        echo "Failed to connect to kopia repo"
+        cat /tmp/kopia.output
+        exit 1
+      fi
+    fi
+
+    if [ "$ATTACHMENTS_STORAGE" = "s3" ]; then
+      : "$OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID"
+      : "$OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY"
+      : "$OPENPROJECT_FOG_CREDENTIALS_REGION"
+      : "$OPENPROJECT_FOG_CREDENTIALS_ENDPOINT"
+      : "$OPENPROJECT_FOG_DIRECTORY"
+
+      rclone config create remote-files s3 \
+        provider Other \
+        env_auth false \
+        access_key_id "$OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID" \
+        secret_access_key "$OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY" \
+        region "$OPENPROJECT_FOG_CREDENTIALS_REGION" \
+        endpoint "$(echo "$OPENPROJECT_FOG_CREDENTIALS_ENDPOINT" | sed -E 's/^https?:\/\///')" \
+        location_constraint "$OPENPROJECT_FOG_CREDENTIALS_REGION" \
+        acl private
+
+      mkdir -p /mnt/files
+      rclone mount --daemon "remote-files:/$OPENPROJECT_FOG_DIRECTORY" /mnt/files
+      sleep 1
+
+      if [ "$(ls /mnt/files/ | wc -l)" = "0" ]; then
+        echo "Mount didn't work, no files found."
+        exit 1
+      fi
+
+      SNAPSHOT_DIR="/mnt/files"
+    else
+      SNAPSHOT_DIR="$ATTACHMENTS_LOCAL_PATH"
+    fi
+
+    DB_PREFIX=0000000000-db
+    mkdir -p "$SNAPSHOT_DIR/$DB_PREFIX"
+
+    rm "$SNAPSHOT_DIR/$DB_PREFIX/"*"${DUMP_NAME}.pgdump.gz" &> /dev/null || true
+
+    filename="$SNAPSHOT_DIR/$DB_PREFIX/$(date -u +%Y%m%d%H%M%Z)_${DUMP_NAME}.pgdump.gz"
+    pg_dump -Fc --no-owner --no-privileges "$DATABASE_URL_FOR_PG_DUMP" | gzip > "$filename"
+    ls -al "$filename"
+
+    kopia cache set \
+      --cache-directory "$KOPIA_CACHE_DIRECTORY" \
+      --metadata-cache-size-mb=250 \
+      --content-cache-size-limit-mb=250
+
+    kopia policy set --global \
+      --keep-annual 0 \
+      --keep-hourly 0 \
+      --keep-monthly 6 \
+      --keep-weekly 24 \
+      --keep-daily 168 \
+      --keep-latest 42
+
+    kopia snapshot create "$SNAPSHOT_DIR"
+
+    echo "[$(date)] Full backup complete"
+
+    if [ -n "$BACKUP_MONITOR_HEARTBEAT_URL" ]; then
+      curl --insecure "$BACKUP_MONITOR_HEARTBEAT_URL"
+    fi
+
+  verify-backup.sh: |
+    #!/bin/bash
+    # Performs a full verification of the latest kopia snapshot by downloading
+    # and decrypting all stored content.
+    set -e
+    set -o pipefail
+    set -u
+
+    : "$BACKUP_ENDPOINT"
+    : "$BACKUP_BUCKET"
+    : "$BACKUP_ACCESS_KEY_ID"
+    : "$BACKUP_SECRET_ACCESS_KEY"
+    : "$KOPIA_CACHE_DIRECTORY"
+    : "$KOPIA_PASSWORD"
+
+    BACKUP_VERIFICATION_MONITOR_HEARTBEAT_URL="${BACKUP_VERIFICATION_MONITOR_HEARTBEAT_URL:-}"
+    BACKUP_REGION="${BACKUP_REGION:-}"
+
+    BACKUP_ENDPOINT_HOST="$(echo "$BACKUP_ENDPOINT" | sed -E 's/^https?:\/\///')"
+    REPO_OPTS="--endpoint $BACKUP_ENDPOINT_HOST --bucket $BACKUP_BUCKET --access-key $BACKUP_ACCESS_KEY_ID --secret-access-key $BACKUP_SECRET_ACCESS_KEY"
+    if [ -n "$BACKUP_REGION" ]; then
+      REPO_OPTS="$REPO_OPTS --region $BACKUP_REGION"
+    fi
+
+    hostname backup-verification-cronjob
+
+    set +e
+    kopia repository connect s3 $REPO_OPTS &> /tmp/kopia.output
+    connect_exit_code=$?
+    set -e
+
+    if [ "$connect_exit_code" -ne 0 ]; then
+      echo "Failed to connect to kopia repo"
+      cat /tmp/kopia.output
+      exit 1
+    fi
+
+    kopia cache set \
+      --cache-directory "$KOPIA_CACHE_DIRECTORY" \
+      --metadata-cache-size-mb=250 \
+      --content-cache-size-limit-mb=250
+
+    echo "[$(date)] Starting verification of latest snapshot"
+
+    kopia snapshot verify --verify-files-percent=100 --file-parallelism=10 --parallel=10
+
+    echo "[$(date)] Verification of backup complete"
+
+    if [ -n "$BACKUP_VERIFICATION_MONITOR_HEARTBEAT_URL" ]; then
+      curl --insecure "$BACKUP_VERIFICATION_MONITOR_HEARTBEAT_URL"
+    fi
+
+  replicate-backup.sh: |
+    #!/bin/bash
+    set -e
+    set -o pipefail
+    set -u
+
+    : "$BACKUP_ENDPOINT"
+    : "$BACKUP_BUCKET"
+    : "$BACKUP_ACCESS_KEY_ID"
+    : "$BACKUP_SECRET_ACCESS_KEY"
+    : "$REPLICA_ENDPOINT"
+    : "$REPLICA_BUCKET"
+    : "$REPLICA_ACCESS_KEY_ID"
+    : "$REPLICA_SECRET_ACCESS_KEY"
+    : "$KOPIA_CACHE_DIRECTORY"
+    : "$KOPIA_PASSWORD"
+
+    BACKUP_REGION="${BACKUP_REGION:-}"
+    REPLICA_REGION="${REPLICA_REGION:-}"
+
+    BACKUP_ENDPOINT_HOST="$(echo "$BACKUP_ENDPOINT" | sed -E 's/^https?:\/\///')"
+    REPLICA_ENDPOINT_HOST="$(echo "$REPLICA_ENDPOINT" | sed -E 's/^https?:\/\///')"
+
+    BACKUP_REPO_OPTS="--endpoint $BACKUP_ENDPOINT_HOST --bucket $BACKUP_BUCKET --access-key $BACKUP_ACCESS_KEY_ID --secret-access-key $BACKUP_SECRET_ACCESS_KEY"
+    REPLICA_SYNC_OPTS="--endpoint $REPLICA_ENDPOINT_HOST --bucket $REPLICA_BUCKET --access-key $REPLICA_ACCESS_KEY_ID --secret-access-key $REPLICA_SECRET_ACCESS_KEY --delete"
+    if [ -n "$BACKUP_REGION" ]; then
+      BACKUP_REPO_OPTS="$BACKUP_REPO_OPTS --region $BACKUP_REGION"
+    fi
+    if [ -n "$REPLICA_REGION" ]; then
+      REPLICA_SYNC_OPTS="$REPLICA_SYNC_OPTS --region $REPLICA_REGION"
+    fi
+
+    hostname backup-cronjob
+
+    mc alias set s3 "https://$REPLICA_ENDPOINT_HOST" "$REPLICA_ACCESS_KEY_ID" "$REPLICA_SECRET_ACCESS_KEY"
+    mc mb --ignore-existing "s3/$REPLICA_BUCKET"
+
+    set +e
+    kopia repository connect s3 $BACKUP_REPO_OPTS &> /tmp/kopia.output
+    connect_exit_code=$?
+    set -e
+
+    if [ "$connect_exit_code" -ne 0 ]; then
+      echo "Failed to connect to kopia repo"
+      cat /tmp/kopia.output
+      exit 1
+    fi
+
+    kopia cache set \
+      --cache-directory "$KOPIA_CACHE_DIRECTORY" \
+      --metadata-cache-size-mb=250 \
+      --content-cache-size-limit-mb=250
+
+    kopia repository sync-to s3 $REPLICA_SYNC_OPTS
+
+    echo "[$(date)] Sync of backup replica complete"
+{{- end }}

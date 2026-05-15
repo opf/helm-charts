@@ -1,0 +1,95 @@
+{{- if .Values.backup.enabled }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "common.names.fullname" . }}-backup
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: backup
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  # Prevent overlapping backup runs — a new job is skipped if the previous one is still running.
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      {{- if .Values.cleanup.deletePodsOnSuccess }}
+      ttlSecondsAfterFinished: {{ .Values.cleanup.deletePodsOnSuccessTimeout }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          {{- include "openproject.imagePullSecrets" . | indent 10 }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{ toYaml . | nindent 12 | trim }}
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{ toYaml . | nindent 12 | trim }}
+          {{- end }}
+          securityContext:
+            fsGroupChangePolicy: "OnRootMismatch"
+          volumes:
+            - name: scripts
+              configMap:
+                name: {{ include "common.names.fullname" . }}-backup-scripts
+                defaultMode: 0755
+            - name: backup-cache
+              persistentVolumeClaim:
+                claimName: {{ include "common.names.fullname" . }}-backup-cache
+            {{- if and (not .Values.s3.enabled) .Values.persistence.enabled }}
+            # Mount the assets PVC so the backup script can snapshot local attachments.
+            - name: data
+              persistentVolumeClaim:
+                claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
+            {{- end }}
+          containers:
+            - name: backup
+              image: "{{ .Values.backup.image.registry }}/{{ .Values.backup.image.repository }}:{{ .Values.backup.image.tag }}"
+              imagePullPolicy: {{ .Values.backup.image.imagePullPolicy }}
+              command: ["/scripts/backup.sh"]
+              {{- if .Values.s3.enabled }}
+              securityContext:
+                privileged: true # required for rclone fuse mount of the OpenProject S3 bucket
+              {{- end }}
+              envFrom:
+                - secretRef:
+                    name: {{ include "common.names.fullname" . }}-backup
+                - secretRef:
+                    name: {{ include "common.names.fullname" . }}-core
+                {{- if .Values.s3.enabled }}
+                - secretRef:
+                    name: {{ include "common.names.fullname" . }}-s3
+                {{- if .Values.s3.auth.existingSecret }}
+                - secretRef:
+                    name: {{ .Values.s3.auth.existingSecret }}
+                {{- end }}
+                {{- end }}
+                {{- if .Values.backup.s3.auth.existingSecret }}
+                - secretRef:
+                    name: {{ .Values.backup.s3.auth.existingSecret }}
+                {{- end }}
+              env:
+                {{- include "openproject.backup.kopiaPasswordEnv" . | nindent 16 }}
+                {{- include "openproject.backup.pgPasswordEnv" . | nindent 16 }}
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 16 }}
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: backup-cache
+                  mountPath: /mnt/cache
+                {{- if and (not .Values.s3.enabled) .Values.persistence.enabled }}
+                - name: data
+                  mountPath: /var/openproject/assets
+                {{- end }}
+{{- end }}

@@ -1,0 +1,24 @@
+{{- if .Values.backup.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "common.names.fullname" . }}-backup-cache
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: backup
+  {{- if or .Values.backup.cache.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.backup.cache.annotations .Values.commonAnnotations ) "context" . ) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.backup.cache.storageClassName }}
+  storageClassName: {{ .Values.backup.cache.storageClassName }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.backup.cache.size | quote }}
+...
+{{- end }}

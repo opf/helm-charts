@@ -279,6 +279,50 @@ checksum/env-{{ $suffix }}: {{ include (print $.Template.BasePath "/secret_" $su
 {{- end }}
 
 {{/*
+Returns the KOPIA_PASSWORD env entry for backup pods.
+When kopiaPassword is set directly in values it is already present in the backup
+secret (via envFrom), so no explicit env entry is needed.
+Otherwise the password is sourced from existingSecret or the auto-generated secret.
+*/}}
+{{- define "openproject.backup.kopiaPasswordEnv" -}}
+{{- if not .Values.backup.kopiaPassword }}
+- name: KOPIA_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      {{- if .Values.backup.existingSecret }}
+      name: {{ .Values.backup.existingSecret }}
+      key: {{ .Values.backup.secretKeys.kopiaPassword }}
+      {{- else }}
+      name: backup-kopia-password-auto-generated
+      key: kopiaPassword
+      {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Returns the PGPASSWORD env entry sourcing the database password for pg_dump in backup pods.
+Mirrors the OPENPROJECT_DB_PASSWORD logic from openproject.env.
+*/}}
+{{- define "openproject.backup.pgPasswordEnv" -}}
+{{- if .Values.postgresql.auth.existingSecret }}
+- name: PGPASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.postgresql.auth.existingSecret }}
+      key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- else if .Values.postgresql.auth.password }}
+- name: PGPASSWORD
+  value: {{ .Values.postgresql.auth.password }}
+{{- else }}
+- name: PGPASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
+      key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- end }}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "openproject.serviceAccountName" -}}

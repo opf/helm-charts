@@ -427,6 +427,110 @@ strategy:
   #     maxSurge: 30%
   #     maxUnavailable: 30%
 
+## Backup configuration using kopia for encrypted, deduplicated backups.
+##
+## Backups include the database dump and all OpenProject attachments.
+## When attachments are stored in S3 (s3.enabled=true), the S3 bucket is
+## mounted via rclone/fuse before snapshotting — the backup container must
+## run with privileged: true (set automatically).
+## When attachments are stored locally (s3.enabled=false), the assets PVC is
+## mounted and snapshotted directly.
+##
+## The user must provide at minimum:
+##   1. S3 credentials/config for the kopia backup repository  (backup.s3.*)
+##   2. (optional) S3 credentials/config for a replica bucket  (backup.replica.s3.*)
+#
+backup:
+  enabled: false
+
+  ## Password used to encrypt the kopia repository.
+  ## IMPORTANT: Record this value — it is required to restore backups.
+  ## If neither kopiaPassword nor existingSecret is provided, a password is
+  ## auto-generated and kept across helm upgrades (helm.sh/resource-policy: keep).
+  ## A full reinstall (helm uninstall + install) will produce a NEW password and
+  ## old backups will be inaccessible unless the original password is supplied.
+  #
+  kopiaPassword: ""
+
+  ## Name of an existing secret containing the kopia password.
+  ## Must contain the key defined in secretKeys.kopiaPassword.
+  #
+  existingSecret: ""
+  secretKeys:
+    kopiaPassword: "kopiaPassword"
+
+  ## Primary S3-compatible storage for the kopia backup repository.
+  #
+  s3:
+    ## Endpoint without protocol prefix, e.g. "s3.amazonaws.com" or "minio.example.com:9000".
+    endpoint: ""
+    ## Region — optional for non-AWS providers.
+    region: ""
+    bucket: ""
+    auth:
+      accessKeyId: ""
+      secretAccessKey: ""
+      ## Alternative to plain credentials above.
+      ## Secret must contain keys BACKUP_ACCESS_KEY_ID and BACKUP_SECRET_ACCESS_KEY.
+      existingSecret: ""
+
+  ## Optional: replicate the kopia repository to a second S3 bucket.
+  #
+  replica:
+    enabled: false
+    s3:
+      endpoint: ""
+      region: ""
+      bucket: ""
+      auth:
+        accessKeyId: ""
+        secretAccessKey: ""
+        ## Secret must contain keys REPLICA_ACCESS_KEY_ID and REPLICA_SECRET_ACCESS_KEY.
+        existingSecret: ""
+    ## Cron schedule for the replication job.
+    schedule: "0 0 * * *"
+    ## Set to false to enable the replication CronJob actively.
+    suspend: false
+
+  ## Cron schedule for the main backup job (three times daily by default).
+  schedule: "0 6,12,18 * * *"
+
+  ## Optional URL to ping after a successful backup (e.g. UptimeRobot heartbeat).
+  monitorHeartbeatUrl: ""
+
+  ## Backup verification — downloads and verifies all stored backup data.
+  ## Suspended by default to limit S3 traffic; activate per-cluster as needed.
+  #
+  verification:
+    suspend: true
+    schedule: "30 21 1,15 * *"
+    ## Optional heartbeat URL to ping after successful verification.
+    monitorHeartbeatUrl: ""
+
+  ## Kopia cache PVC — keeps already-uploaded content to speed up subsequent backups.
+  #
+  cache:
+    size: "10Gi"
+    storageClassName: ""
+    annotations: {}
+
+  ## Container resources for all backup jobs.
+  #
+  resources:
+    limits:
+      memory: "4Gi"
+    requests:
+      memory: "500Mi"
+
+  ## Backup container image.
+  ## Must include kopia, rclone, mc (MinIO client), and pg_dump.
+  #
+  image:
+    registry: "docker.io"
+    repository: "openproject/backup"
+    tag: "13"
+    imagePullPolicy: "Always"
+
 ## Cron job running the incoming email [1] task.
 ##
 ## Ref: https://www.openproject.org/docs/installation-and-operations/configuration/incoming-emails/

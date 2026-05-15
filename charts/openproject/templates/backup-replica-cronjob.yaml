@@ -1,0 +1,72 @@
+{{- if and .Values.backup.enabled .Values.backup.replica.enabled }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "common.names.fullname" . }}-backup-replica
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: backup-replica
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ .Values.backup.replica.schedule | quote }}
+  suspend: {{ .Values.backup.replica.suspend }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      {{- if .Values.cleanup.deletePodsOnSuccess }}
+      ttlSecondsAfterFinished: {{ .Values.cleanup.deletePodsOnSuccessTimeout }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 12 }}
+            app.kubernetes.io/component: backup-replica
+        spec:
+          restartPolicy: OnFailure
+          {{- include "openproject.imagePullSecrets" . | indent 10 }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{ toYaml . | nindent 12 | trim }}
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{ toYaml . | nindent 12 | trim }}
+          {{- end }}
+          volumes:
+            - name: scripts
+              configMap:
+                name: {{ include "common.names.fullname" . }}-backup-scripts
+                defaultMode: 0755
+            - name: backup-cache
+              persistentVolumeClaim:
+                claimName: {{ include "common.names.fullname" . }}-backup-cache
+          containers:
+            - name: backup-replica
+              image: "{{ .Values.backup.image.registry }}/{{ .Values.backup.image.repository }}:{{ .Values.backup.image.tag }}"
+              imagePullPolicy: {{ .Values.backup.image.imagePullPolicy }}
+              command: ["/scripts/replicate-backup.sh"]
+              envFrom:
+                - secretRef:
+                    name: {{ include "common.names.fullname" . }}-backup
+                {{- if .Values.backup.s3.auth.existingSecret }}
+                - secretRef:
+                    name: {{ .Values.backup.s3.auth.existingSecret }}
+                {{- end }}
+                {{- if .Values.backup.replica.s3.auth.existingSecret }}
+                - secretRef:
+                    name: {{ .Values.backup.replica.s3.auth.existingSecret }}
+                {{- end }}
+              env:
+                {{- include "openproject.backup.kopiaPasswordEnv" . | nindent 16 }}
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 16 }}
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: backup-cache
+                  mountPath: /mnt/cache
+{{- end }}
