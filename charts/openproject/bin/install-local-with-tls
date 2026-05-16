@@ -1,0 +1,35 @@
+# Helper for installing the OpenProject helm chart locally on a single-node development cluster (e.g. k3d) with TLS.
+#
+# It will automatically try to create a TLS secret but you can skip that if you create one yourself.
+
+DEV_NAMESPACE=openproject
+DEV_DOMAIN=openproject.localhost
+TLS_SECRET=openproject-local-tls
+
+if ! kubectl get namespace $DEV_NAMESPACE &>/dev/null; then
+  kubectl create namespace $DEV_NAMESPACE
+fi
+
+if ! kubectl get secret -n $DEV_NAMESPACE $TLS_SECRET &>/dev/null; then
+  if ! which mkcert &>/dev/null; then
+    echo "Please install mkcert so we can generate a TLS certificate"
+    exit 1
+  fi
+
+  echo "Creating self-signed TLS certificate"
+  mkcert -install $DEV_DOMAIN
+  echo "Creating secret for TLS certificate"
+  kubectl -n $DEV_NAMESPACE create secret tls $TLS_SECRET --key=$DEV_DOMAIN-key.pem --cert=$DEV_DOMAIN.pem
+  rm $DEV_DOMAIN.pem $DEV_DOMAIN-key.pem
+
+  echo -e "\n  \033[0;33mPlease import `echo $(mkcert -CAROOT)/rootCA.pem` into your browser certificate store if you haven't done so already.\033[0m\n"
+else
+  echo -e "\n  Found tls secret.\n"
+fi
+
+helm upgrade \
+  --namespace openproject \
+  --install openproject . \
+  -f examples/local-with-tls-values.yaml \
+  --set ingress.host=$DEV_DOMAIN \
+  --set ingress.tls.secret=$TLS_SECRET
