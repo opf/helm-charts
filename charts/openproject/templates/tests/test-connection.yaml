@@ -12,7 +12,7 @@ spec:
   serviceAccountName: {{ include "common.names.fullname" . }}
   containers:
     - name: "wget"
-      image: "busybox"
+      image: "{{ .Values.connectionTestImage.image }}:{{ .Values.connectionTestImage.tag }}"
       imagePullPolicy: Always
       command: ['wget']
       args:
