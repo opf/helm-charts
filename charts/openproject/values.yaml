@@ -752,6 +752,18 @@ s3:
   port:
   pathStyle: false
   signatureVersion: 4
+  ## When set to true, OpenProject authenticates with S3 using the IAM role attached to the Pod
+  ## (e.g. via IRSA/IAM Roles for Service Accounts on EKS) instead of static access credentials.
+  ## In this mode neither OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID nor
+  ## OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY are written to the generated Secret,
+  ## and s3.auth.accessKeyId / s3.auth.secretAccessKey / s3.auth.existingSecret are ignored.
+  ##
+  ## To use IRSA, annotate the chart's ServiceAccount with the role ARN, for example:
+  ##
+  ##   serviceAccount:
+  ##     annotations:
+  ##       eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-openproject-s3-role
+  ##
   useIamProfile: false
   # Some providers do not properly support signature v4 streaming (e.g. Scaleway)
   enableSignatureV4Streaming: true
