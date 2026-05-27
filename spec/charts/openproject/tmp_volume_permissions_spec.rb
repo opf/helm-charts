@@ -30,6 +30,25 @@ describe 'tmp volume permission fix' do
       end
     end
 
+    it 'sizes the init container from appInit resources, matching wait-for-db', :aggregate_failures do
+      deployments.each_key do |item|
+        init = template.find_container(item, 'prepare-tmpdir', true)
+        expect(init['resources']).to eq('limits' => { 'memory' => '1024Mi' },
+                                        'requests' => { 'memory' => '512Mi' })
+      end
+    end
+
+    it 'falls back to the appInit resources preset when no explicit resources are set' do
+      preset_template = HelmTemplate.new(HelmTemplate.with_defaults(<<~YAML))
+        appInit:
+          resources: null
+          resourcesPreset: micro
+      YAML
+
+      init = preset_template.find_container('Deployment/optest-openproject-web', 'prepare-tmpdir', true)
+      expect(init['resources']['limits']).to include('cpu', 'memory')
+    end
+
     it 'orders prepare-tmpdir before the db-wait init container', :aggregate_failures do
       deployments.each do |item, (_main, db_init)|
         names = template.template_spec(item)['initContainers'].map { |c| c['name'] }

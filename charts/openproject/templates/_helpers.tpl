@@ -126,6 +126,13 @@ TMPDIR is pointed at this directory in "openproject.env".
     - sh
     - -c
     - mkdir -p /tmp/ruby && chmod 1777 /tmp/ruby
+  {{- if .Values.appInit.resources }}
+  resources:
+    {{- toYaml .Values.appInit.resources | nindent 4 }}
+  {{- else if ne .Values.appInit.resourcesPreset "none" }}
+  resources:
+    {{- include "common.resources.preset" (dict "type" .Values.appInit.resourcesPreset) | nindent 4 }}
+  {{- end }}
   volumeMounts:
     {{- include "openproject.tmpVolumeMounts" . | indent 4 }}
 {{- end }}
