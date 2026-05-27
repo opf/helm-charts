@@ -685,6 +685,15 @@ openproject:
   #
   tmpVolumesLabels: {}
 
+  ## When using tmp volumes, some CSI drivers mount them world-writable without
+  ## the sticky bit. Ruby's Dir.tmpdir then rejects them, crashing every Ruby pod
+  ## at boot (MiniMagick / ActiveStorage). When enabled, an init container creates
+  ## a sticky-bit subdirectory (/tmp/ruby) as the non-root app user and TMPDIR is
+  ## pointed at it. Only takes effect when tmp volumes are in use. Opt out if it
+  ## causes issues on your platform.
+  #
+  tmpVolumesPermissionFix: true
+
 ## Whether to allocate persistent volume disk for the data directory.
 ## In case of node failure, the node data directory will still persist.
 ##
