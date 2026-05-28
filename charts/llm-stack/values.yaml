@@ -1,0 +1,13 @@
+
+route:
+  provider: openai-compatible
+  apiKey: ""
+  model: ""
+  baseURL: ""
+
+apisixConsumers:
+  consumer_A:
+    apiKey: "sk-client-v1-abcdef123456"
+  # you can define multiple consumers
+  # consumer_B:
+  #  apiKey: "sk-client-v1-xyz987654321"
