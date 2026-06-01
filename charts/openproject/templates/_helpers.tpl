@@ -99,6 +99,45 @@ securityContext:
 {{- end -}}
 {{- end -}}
 
+{{- define "openproject.fixTmpVolumePermissions" -}}
+{{- if and (eq (include "openproject.useTmpVolumes" .) "true") .Values.openproject.tmpVolumesPermissionFix -}}
+  {{- true -}}
+{{- else -}}
+  {{- false -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Init container that prepares a sticky-bit tmp directory for Ruby's Dir.tmpdir.
+
+Some CSI drivers mount the tmp volume world-writable without the sticky bit,
+which Ruby rejects ("could not find a temporary directory"). We create an
+owned subdirectory and set the sticky bit on it as the non-root app user, so
+no elevated privileges are required (unlike chmod'ing the mount point itself).
+TMPDIR is pointed at this directory in "openproject.env".
+*/}}
+{{- define "openproject.tmpVolumeInitContainer" -}}
+{{- if eq (include "openproject.fixTmpVolumePermissions" .) "true" }}
+- name: prepare-tmpdir
+  {{- include "openproject.containerSecurityContext" . | indent 2 }}
+  image: {{ include "openproject.image" . }}
+  imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+  command:
+    - sh
+    - -c
+    - mkdir -p /tmp/ruby && chmod 1777 /tmp/ruby
+  {{- if .Values.appInit.resources }}
+  resources:
+    {{- toYaml .Values.appInit.resources | nindent 4 }}
+  {{- else if ne .Values.appInit.resourcesPreset "none" }}
+  resources:
+    {{- include "common.resources.preset" (dict "type" .Values.appInit.resourcesPreset) | nindent 4 }}
+  {{- end }}
+  volumeMounts:
+    {{- include "openproject.tmpVolumeMounts" . | indent 4 }}
+{{- end }}
+{{- end -}}
+
 {{- define "openproject.tmpVolumeMounts" -}}
 {{- if eq (include "openproject.useTmpVolumes" .) "true" }}
 - mountPath: /tmp
@@ -200,6 +239,10 @@ securityContext:
 {{- end }}
 
 {{- define "openproject.env" -}}
+{{- if eq (include "openproject.fixTmpVolumePermissions" .) "true" }}
+- name: TMPDIR
+  value: /tmp/ruby
+{{- end }}
 {{- if .Values.metrics.enabled }}
 - name: OPENPROJECT_METRICS_ENABLED
   value: "true"
