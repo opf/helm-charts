@@ -665,7 +665,7 @@ openproject:
   annotations: {}
 
   ## Whether or not to use ephemeral volumes for /app/tmp and /tmp.
-  ## Falls back to a sensible default if undefined.
+  ## Falls back to `containerSecurityContext.readOnlyRootFilesystem` if undefined.
   #
   useTmpVolumes:
 
