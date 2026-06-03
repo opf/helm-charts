@@ -352,6 +352,28 @@ stringData:
   secretAccessKey: zwH7t0H3bJQf/TvlQpE7/Y59k9hD+nYNRlKUBpuq
 ```
 
+#### Using IAM Roles for Service Accounts (IRSA) on EKS
+
+Instead of static access credentials, you can authenticate with S3 using the IAM role attached to the Pod.
+This is the recommended approach on AWS EKS via [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+
+Set `s3.useIamProfile: true` to enable this mode. The chart will then omit the
+`OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID` and `OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY`
+environment variables entirely, so OpenProject's Fog library falls back to the AWS credential chain
+(instance profile / IRSA token).
+
+```yaml
+s3:
+  enabled: true
+  useIamProfile: true
+  region: eu-central-1
+  bucketName: my-openproject-bucket
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-openproject-s3-role
+```
+
 ### Incoming E-Mails cron job (IMAP)
 
 ```yaml

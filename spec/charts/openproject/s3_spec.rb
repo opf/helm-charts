@@ -81,6 +81,58 @@ describe 's3 configuration' do
     end
   end
 
+  context 'when useIamProfile is true' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        s3:
+          enabled: true
+          bucketName: my-bucket
+          region: eu-central-1
+          useIamProfile: true
+      YAML
+      )
+    end
+
+    it 'does not include access key or secret key in the generated secret', :aggregate_failures do
+      expect(subject).not_to have_key('OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID')
+      expect(subject).not_to have_key('OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY')
+    end
+
+    it 'still sets USE__IAM__PROFILE to true and other s3 configuration', :aggregate_failures do
+      expect(subject).to include(
+        "OPENPROJECT_ATTACHMENTS__STORAGE" => "fog",
+        "OPENPROJECT_FOG_CREDENTIALS_PROVIDER" => "AWS",
+        "OPENPROJECT_FOG_CREDENTIALS_USE__IAM__PROFILE" => "true",
+        "OPENPROJECT_FOG_DIRECTORY" => "my-bucket",
+        "OPENPROJECT_FOG_CREDENTIALS_REGION" => "eu-central-1"
+      )
+    end
+  end
+
+  context 'when use_iam_profile (deprecated key) is true' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        s3:
+          enabled: true
+          bucketName: my-bucket
+          region: eu-central-1
+          use_iam_profile: true
+      YAML
+      )
+    end
+
+    it 'does not include access key or secret key in the generated secret', :aggregate_failures do
+      expect(subject).not_to have_key('OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID')
+      expect(subject).not_to have_key('OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY')
+    end
+
+    it 'sets USE__IAM__PROFILE to true', :aggregate_failures do
+      expect(subject).to include(
+        "OPENPROJECT_FOG_CREDENTIALS_USE__IAM__PROFILE" => "true"
+      )
+    end
+  end
+
   context 'when using an existing secret' do
     let(:default_values) do
       HelmTemplate.with_defaults(<<~YAML
