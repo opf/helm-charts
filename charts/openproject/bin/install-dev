@@ -22,7 +22,7 @@ helm upgrade \
   --create-namespace --namespace openproject \
   --install openproject \
   --set develop=true \
-  --set ingress.host=helm.openproject-dev.com \
+  --set ingress.host=openproject.localhost \
   --set openproject.realtime_collaboration.hocuspocus.protocol=ws \
   --set persistence.accessModes=['ReadWriteOnce'] \
   "$@" .

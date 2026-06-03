@@ -95,7 +95,7 @@ securityContext:
 {{- if ne .Values.openproject.useTmpVolumes nil -}}
   {{- .Values.openproject.useTmpVolumes -}}
 {{- else -}}
-  {{- (not .Values.develop) -}}
+  {{- .Values.containerSecurityContext.readOnlyRootFilesystem -}}
 {{- end -}}
 {{- end -}}
 
