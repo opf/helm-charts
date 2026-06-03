@@ -1,5 +1,5 @@
 ---
-"@openproject/helm-charts": patch
+"@openproject/helm-charts": minor
 ---
 
 Make `openproject.useTmpVolumes` fall back to `containerSecurityContext.readOnlyRootFilesystem` rather than `not develop`.
