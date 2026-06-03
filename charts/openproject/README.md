@@ -346,10 +346,12 @@ Set `openproject.oidc.extraOidcSealedSecret="openproject-oidc-secret-sealed"` in
 
 ### S3
 
+When using `s3.auth.existingSecret`, the secret is mounted via `envFrom`, so the keys must be the exact OpenProject environment variable names:
+
 ```yaml
 stringData:
-  accessKeyId: AKIAXDF2JNZRBFQIRTKA
-  secretAccessKey: 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
+  OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID: AKIAXDF2JNZRBFQIRTKA
+  OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY: 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
 ```
 
 #### Using IAM Roles for Service Accounts (IRSA) on EKS
