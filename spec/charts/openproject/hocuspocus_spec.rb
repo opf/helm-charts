@@ -22,6 +22,12 @@ describe 'configuring hocuspocus' do
       expect(paths.size).to eq 1
       expect(paths.first['path']).to eq '/'
     end
+
+    it 'does not auto generate a secret' do
+      secret = template.dig('Secret/hocuspocus-secret-auto-generated')
+
+      expect(secret).to be_nil
+    end
   end
 
   context 'when hocuspocus is enabled (default) while the global ingress is enabled' do
