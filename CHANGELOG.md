@@ -1,5 +1,12 @@
 # @openproject/helm-charts
 
+## 13.7.1
+
+### Patch Changes
+
+- 3237460: Upgrade OpenProject core version to 17.4.1 (patch update)
+- 19b1794: Avoid secret for hocuspocus if disabled
+
 ## 13.7.0
 
 ### Minor Changes
