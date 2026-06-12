@@ -1,13 +1,34 @@
 
 route:
   provider: openai-compatible
-  apiKey: ""
-  model: ""
-  baseURL: ""
+  apiKey: "workit2026"
+  baseURL: https://ai.werkmeister.me/v1
 
 apisixConsumers:
-  consumer_A:
+  consumerA:
     apiKey: "sk-client-v1-abcdef123456"
   # you can define multiple consumers
   # consumer_B:
   #  apiKey: "sk-client-v1-xyz987654321"
+
+apisix:
+  apisix:
+
+    deployment:
+      mode: standalone
+      role: traditional
+      role_traditional:
+        config_provider: yaml
+    admin:
+      credentials:
+        admin: "admin-key"
+      allow:
+        ipList:
+          - 10.42.0.0/16
+    prometheus:
+      enabled: true
+  etcd:
+    enabled: false
+  metrics:
+    serviceMonitor:
+      enabled: false

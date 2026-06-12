@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
-name: openproject
+name: openproject-llm-stack
 description: A Helm chart for running the LLM stack for Open Project via Kubernetes
 home: https://www.openproject.org/
 icon: https://charts.openproject.org/logo.svg
@@ -12,11 +12,17 @@ maintainers:
   url: https://github.com/opf/helm-charts
 dependencies:
 - name: apisix
-  version: "2.11.0" # Use the latest stable version
-  repository: "https://apiseven.com"
+  version: "2.14.1" # Use the latest stable version
+  repository: "https://apache.github.io/apisix-helm-chart"
 - name: common
   repository: oci://registry-1.docker.io/bitnamicharts
   version: "^2.2.2"
+#- name: prometheus
+#  version: "26.0.0"
+#  repository: "https://prometheus-community.github.io/helm-charts"
+#- name: grafana
+#  version: "8.5.0"
+#  repository: "https://grafana-community.github.io/helm-charts"
 annotations:
   artifacthub.io/license: GPL-3.0-only
   artifacthub.io/links: |

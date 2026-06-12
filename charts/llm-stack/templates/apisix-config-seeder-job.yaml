@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "common.names.fullname" . }}-config-seeder
+  labels:
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    # Runs the script after the chart is installed or upgraded
+    "helm.sh/hook": post-install,post-upgrade
+    # Automatically cleans up successful jobs to save cluster resources
+    "helm.sh/hook-delete-policy": hook-succeeded
+    # Ensures the job completes before Helm marks the release as successful
+    "helm.sh/hook-weight": "5"
+spec:
+  template:
+    metadata:
+      name: {{ include "common.names.fullname" . }}-config-seeder
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seeder
+          image: "curlimages/curl:latest"
+          command: [ "/bin/sh", "/data/seed.sh" ]
+          volumeMounts:
+            - name: data-volume
+              mountPath: /data
+      volumes:
+        - name: data-volume
+          configMap:
+            name: {{ include "common.names.fullname" . }}-config-seeder-configmap
+            defaultMode: 0755

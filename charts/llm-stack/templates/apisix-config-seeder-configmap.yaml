@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.names.fullname" . }}-config-seeder-configmap
+  labels:
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+data:
+  seed.sh: |
+    #!/bin/sh
+
+    # Wait for APISIX Admin API to be ready
+    echo "Waiting for APISIX Admin API..."
+    until curl -s -o /dev/null -w "%{http_code}" -H "X-API-KEY: {{ .Values.apisix.apisix.admin.credentials.admin }}" http://{{ include "common.names.fullname" . }}-apisix-admin-headless:9180/apisix/admin/configs | grep -q "200"; do
+      sleep 2
+    done
+
+
+    curl -i -X PUT "http://{{ include "common.names.fullname" . }}-apisix-admin-headless:9180/apisix/admin/configs" \
+      -H "X-API-KEY: {{ .Values.apisix.apisix.admin.credentials.admin }}" \
+      -H "Content-Type: application/json" \
+      -H "X-DIGEST: initial-config" \
+      -d @/data/config.json
+  config.json: |
+    {
+      "routes": [
+        {
+          "id": "completion",
+          "uri": "/v1/chat/completions",
+          "plugins": {
+            "serverless-pre-function": {
+              "phase": "rewrite",
+              "functions": [
+                "return function(conf, ctx) local auth = ngx.req.get_headers()[\"Authorization\"] if auth then local token = auth:match(\"^[Bb]earer%s+(.+)$\") if token then ngx.req.set_header(\"Authorization\", token) end end end"
+              ]
+            },
+            "prometheus": {},
+            "key-auth": {
+              "header": "Authorization",
+              "hide_credentials": true
+            },
+            "ai-proxy": {
+              "provider": "openai-compatible",
+              "auth": { "header": { "Authorization": "Bearer {{ .Values.route.apiKey }}" } },
+              "override": {
+                "endpoint": "{{ .Values.route.baseURL }}"
+              }
+            }
+          },
+          "upstream": {"type": "roundrobin", "nodes": {"main": 1}}
+        }
+      ],
+      "consumers": [
+        {{- $first := true }}
+        {{- range $username, $config := .Values.apisixConsumers }}
+        {{- if not $first }},{{- end }}
+        {
+          "username": {{ $username | quote }},
+          "plugins": {
+            "key-auth": {
+              "key": {{ $config.apiKey | quote }}
+            }
+          }
+        }
+        {{- $first = false }}
+        {{- end }}
+      ]
+    }
