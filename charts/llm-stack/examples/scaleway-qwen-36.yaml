@@ -2,8 +2,8 @@ apisixInitialConfig:
   enabled: true
   route:
     provider: openai-compatible
-    apiKey: "anykey"
-    baseURL: "" # ignored if vllm is enabled
+    apiKey: "your-scaleway-api-key"
+    baseURL: "https://api.scaleway.ai/<API_PATH_FROM_SCALEWAY>/v1/chat/completions" # ignored if vllm is enabled
 
   consumers:
     consumerA:
@@ -40,25 +40,4 @@ apisix:
           - /v1/chat/completions
 
 vllm:
-  enabled: true
-  image:
-    name: "vllm/vllm-openai-cpu"
-    tag: "v0.23.0-arm64"
-  model: Qwen/Qwen2.5-0.5B-Instruct
-  # setting the memory utilization lower to not use up all memory in the cpu case
-  # setting the dtype to float32 as cpu often cannot deal with other types
-  extraArgs:
-    - "--gpu-memory-utilization"
-    - "0.5"
-    - "--dtype"
-    - "float32"
-  # Environment variables (e.g., HF_TOKEN for private models, huggingface hub configurations)
-  resources:
-    limits:
-      cpu: "4"
-      memory: "16Gi"
-      nvidia.com/gpu: null
-    requests:
-      cpu: "4"
-      memory: "16Gi"
-      nvidia.com/gpu: null
+  enabled: false

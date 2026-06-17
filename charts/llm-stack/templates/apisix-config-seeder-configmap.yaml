@@ -1,5 +1,5 @@
 {{- if .Values.apisixInitialConfig.enabled }}
-{{- if not (hasSuffix "/v1/chat/completions" .Values.apisixInitialConfig.route.baseURL) }}
+{{- if and (not .Values.vllm.enabled) (not (hasSuffix "/v1/chat/completions" .Values.apisixInitialConfig.route.baseURL)) }}
 {{- fail "Validation Error: baseURL must end with '/v1/chat/completions'" }}
 {{- end }}
 apiVersion: v1

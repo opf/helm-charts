@@ -1,4 +1,4 @@
-curl http://127.0.0.1:9082/v1/chat/completions \
+curl http://llm-stack.local:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-client-v1-abcdef123456" \
   -d '{
@@ -8,5 +8,5 @@ curl http://127.0.0.1:9082/v1/chat/completions \
         "content": "Hello, how are you?"
       }
     ],
-    "model": "Qwen/Qwen3.6-35B-A3B-FP8"
+    "model": "qwen3.6-35b-a3b"
   }'

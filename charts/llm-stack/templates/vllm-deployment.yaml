@@ -41,7 +41,7 @@ spec:
             {{- toYaml .Values.vllm.extraArgs | nindent 12 }}
             {{- end }}
           ports:
-            - name: vllm-port
+            - name: http
               containerPort: 8000
               protocol: TCP
           env:

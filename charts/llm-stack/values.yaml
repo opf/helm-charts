@@ -32,6 +32,8 @@ apisix:
   metrics:
     serviceMonitor:
       enabled: false
+  ingress:
+    enabled: false
 
 
 vllm:

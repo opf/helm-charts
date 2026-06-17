@@ -14,7 +14,7 @@ spec:
   ports:
     - name: http
       port: {{ .Values.vllm.service.port | default 8000 }}
-      targetPort: vllm-port
+      targetPort: http
       protocol: TCP
       {{- if and (eq .Values.vllm.service.type "NodePort") .Values.vllm.service.nodePort }}
       nodePort: {{ .Values.vllm.service.nodePort }}
