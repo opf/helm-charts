@@ -2,7 +2,7 @@ apisixInitialConfig:
   enabled: true
   route:
     provider: openai-compatible
-    apiKey: ""
+    apiKey: "anykey"
     baseURL: "" # ignored if vllm is enabled
 
   consumers:
@@ -14,6 +14,7 @@ apisixInitialConfig:
 
 apisix:
   apisix:
+
     deployment:
       mode: standalone
       role: traditional
@@ -35,10 +36,10 @@ apisix:
 
 
 vllm:
-  enabled: false
+  enabled: true
   image:
-    name: "vllm/vllm-openai"
-    tag: "v0.23.0-ubuntu2404"
+    name: "vllm/vllm-openai-cpu"
+    tag: "latest-arm64"
     pullPolicy: "IfNotPresent"
   replicaCount: 1
   service:
@@ -47,10 +48,14 @@ vllm:
     type: ClusterIP
     port: 8000
     annotations: {}
-  model: Qwen/Qwen3.6-35B-A3B-FP8
+  model: Qwen/Qwen2.5-0.5B-Instruct
+  # setting the memory utilization lower to not use up all memory in the cpu case
+  # setting the dtype to float32 as cpu often cannot deal with other types
   extraArgs:
-    - "--reasoning-parser"
-    - "qwen3"
+    - "--gpu-memory-utilization"
+    - "0.5"
+    - "--dtype"
+    - "float32"
   # Environment variables (e.g., HF_TOKEN for private models, huggingface hub configurations)
   env: []
     # - name: HF_TOKEN
@@ -59,18 +64,13 @@ vllm:
   resources:
     limits:
       cpu: "4"
-      memory: "64Gi"
-      nvidia.com/gpu: "1"
+      memory: "16Gi"
     requests:
       cpu: "4"
-      memory: "64Gi"
-      nvidia.com/gpu: "1"
+      memory: "16Gi"
   # Persistence settings to cache HuggingFace/Model files locally
   persistence:
     enabled: false
-    size: "50Gi"
-    accessModes:
-      - ReadWriteOnce
     # storageClass: ""
     # existingClaim: ""
   # Node scheduling and placement configs

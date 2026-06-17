@@ -1,7 +1,12 @@
+{{- if .Values.apisixInitialConfig.enabled }}
+{{- if not (hasSuffix "/v1/chat/completions" .Values.apisixInitialConfig.route.baseURL) }}
+{{- fail "Validation Error: baseURL must end with '/v1/chat/completions'" }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "common.names.fullname" . }}-config-seeder-configmap
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
 data:
@@ -20,6 +25,7 @@ data:
       -H "Content-Type: application/json" \
       -H "X-DIGEST: initial-config" \
       -d @/data/config.json
+  # the serverless function makes sure the auth headers are the same as when an openai compatible endpoint
   config.json: |
     {
       "routes": [
@@ -39,11 +45,12 @@ data:
               "hide_credentials": true
             },
             "ai-proxy": {
-              "provider": "openai-compatible",
-              "auth": { "header": { "Authorization": "Bearer {{ .Values.route.apiKey }}" } },
+              "provider": "{{ .Values.apisixInitialConfig.route.provider }}",
+              "auth": { "header": { "Authorization": "Bearer {{ .Values.apisixInitialConfig.route.apiKey }}" } }{{- if or .Values.vllm.enabled .Values.apisixInitialConfig.route.baseURL }},
               "override": {
-                "endpoint": "{{ .Values.route.baseURL }}"
+                "endpoint": "{{ if .Values.vllm.enabled }}http://{{ .Values.vllm.service.name }}:{{ .Values.vllm.service.port | default 8000 }}/v1/chat/completions{{ else }}{{ .Values.apisixInitialConfig.route.baseURL }}{{ end }}"
               }
+              {{- end}}
             }
           },
           "upstream": {"type": "roundrobin", "nodes": {"main": 1}}
@@ -51,7 +58,7 @@ data:
       ],
       "consumers": [
         {{- $first := true }}
-        {{- range $username, $config := .Values.apisixConsumers }}
+        {{- range $username, $config := .Values.apisixInitialConfig.consumers }}
         {{- if not $first }},{{- end }}
         {
           "username": {{ $username | quote }},
@@ -65,3 +72,4 @@ data:
         {{- end }}
       ]
     }
+{{ end }}

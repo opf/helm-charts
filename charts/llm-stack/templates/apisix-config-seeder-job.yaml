@@ -1,7 +1,9 @@
+{{- if .Values.apisixInitialConfig.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "common.names.fullname" . }}-config-seeder
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
   annotations:
@@ -29,3 +31,4 @@ spec:
           configMap:
             name: {{ include "common.names.fullname" . }}-config-seeder-configmap
             defaultMode: 0755
+{{ end }}

@@ -1,0 +1,25 @@
+{{- if .Values.vllm.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.vllm.service.name | quote }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+    app.kubernetes.io/component: vllm
+  annotations:
+    {{ toYaml .Values.vllm.service.annotations | nindent 4 }}
+spec:
+  type: {{ .Values.vllm.service.type | default "ClusterIP" }}
+  ports:
+    - name: http
+      port: {{ .Values.vllm.service.port | default 8000 }}
+      targetPort: vllm-port
+      protocol: TCP
+      {{- if and (eq .Values.vllm.service.type "NodePort") .Values.vllm.service.nodePort }}
+      nodePort: {{ .Values.vllm.service.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "common.labels.matchLabels" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+    app.kubernetes.io/component: vllm
+{{- end }}
