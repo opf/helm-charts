@@ -1,3 +1,13 @@
+# LLM Stack
+A helm chart for a self-hosted llm stack featuring:
+
+* Apisix as the AI gateway
+  * running in api-based standalone mode (allowing only full config updates via api)
+  * having a config seeder job that pushes the route and consumer configs initially using a headless service for pod discovery
+* An optional VLLM deployment for hosting an LLM in the cluster
+* Optional prometheus and grafana components for local development
+* values.yaml files and basic request scripts for local development in `examples/` and `bin/`
+
 
 ## Local Development
 
