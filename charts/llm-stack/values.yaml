@@ -2,8 +2,9 @@ apisixInitialConfig:
   enabled: true
   route:
     provider: openai-compatible
-    apiKey: ""
-    baseURL: "" # ignored if vllm is enabled
+    apiKey: "scaleway-api-key"
+    # retrieve the project id from the scaleway project dashboard
+    baseURL: "https://api.scaleway.ai/<scaleway-project-id>/v1/chat/completions" # ignored if vllm is enabled
 
   consumers:
     consumerA:
@@ -33,7 +34,7 @@ apisix:
     serviceMonitor:
       enabled: false
   ingress:
-    enabled: false
+    enabled: true
 
 
 vllm:
@@ -60,11 +61,11 @@ vllm:
   # Resources request/limit including GPUs
   resources:
     limits:
-      cpu: "4"
+      cpu: "8"
       memory: "64Gi"
       nvidia.com/gpu: "1"
     requests:
-      cpu: "4"
+      cpu: "8"
       memory: "64Gi"
       nvidia.com/gpu: "1"
   # Persistence settings to cache HuggingFace/Model files locally
@@ -87,3 +88,21 @@ vllm:
   readinessProbe:
     enabled: true
     initialDelaySeconds: 240
+
+# disables entire kube-prometheus-stack
+devMonitoring:
+  enabled: false
+
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      # Tell Prometheus to discover ALL ServiceMonitors in the cluster
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelector: {}
+      serviceMonitorNamespaceSelector: {}
+  grafana:
+    ingress:
+      enabled: true
+      hosts:
+        - grafana.local
+    adminPassword: admin

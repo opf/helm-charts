@@ -2,8 +2,9 @@ apisixInitialConfig:
   enabled: true
   route:
     provider: openai-compatible
-    apiKey: "your-scaleway-api-key"
-    baseURL: "https://api.scaleway.ai/<API_PATH_FROM_SCALEWAY>/v1/chat/completions" # ignored if vllm is enabled
+    apiKey: "scaleway-api-key"
+    # retrieve the project id from the scaleway project dashboard
+    baseURL: "https://api.scaleway.ai/<scaleway-project-id>/v1/chat/completions" # ignored if vllm is enabled
 
   consumers:
     consumerA:
@@ -13,25 +14,9 @@ apisixInitialConfig:
     #  apiKey: "sk-client-v1-xyz987654321"
 
 apisix:
-  apisix:
-    deployment:
-      mode: standalone
-      role: traditional
-      role_traditional:
-        config_provider: yaml
-    admin:
-      credentials:
-        admin: "admin-key"
-      allow:
-        ipList:
-          - 10.42.0.0/16 # other pods
-    prometheus:
-      enabled: true
-  etcd:
-    enabled: false
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
   ingress:
     enabled: true
     hosts:
@@ -41,3 +26,7 @@ apisix:
 
 vllm:
   enabled: false
+
+
+devMonitoring:
+  enabled: true

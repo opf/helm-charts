@@ -12,17 +12,15 @@ maintainers:
   url: https://github.com/opf/helm-charts
 dependencies:
 - name: apisix
-  version: "2.14.1" # Use the latest stable version
+  version: "2.14.1"
   repository: "https://apache.github.io/apisix-helm-chart"
 - name: common
   repository: oci://registry-1.docker.io/bitnamicharts
   version: "^2.2.2"
-#- name: prometheus
-#  version: "26.0.0"
-#  repository: "https://prometheus-community.github.io/helm-charts"
-#- name: grafana
-#  version: "8.5.0"
-#  repository: "https://grafana-community.github.io/helm-charts"
+- name: kube-prometheus-stack
+  version: "86.2.2"
+  repository: oci://ghcr.io/prometheus-community/charts
+  condition: devMonitoring.enabled # only install when enabling dev monitoring
 annotations:
   artifacthub.io/license: GPL-3.0-only
   artifacthub.io/links: |

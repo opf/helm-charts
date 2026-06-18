@@ -13,25 +13,9 @@ apisixInitialConfig:
     #  apiKey: "sk-client-v1-xyz987654321"
 
 apisix:
-  apisix:
-    deployment:
-      mode: standalone
-      role: traditional
-      role_traditional:
-        config_provider: yaml
-    admin:
-      credentials:
-        admin: "admin-key"
-      allow:
-        ipList:
-          - 10.42.0.0/16 # other pods
-    prometheus:
-      enabled: true
-  etcd:
-    enabled: false
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
   ingress:
     enabled: true
     hosts:
@@ -45,7 +29,7 @@ vllm:
     name: "vllm/vllm-openai-cpu"
     tag: "v0.23.0-arm64"
   model: Qwen/Qwen2.5-0.5B-Instruct
-  # setting the memory utilization lower to not use up all memory in the cpu case
+  # setting the memory utilization lower to not use up all system memory in the cpu case
   # setting the dtype to float32 as cpu often cannot deal with other types
   extraArgs:
     - "--gpu-memory-utilization"
@@ -62,3 +46,6 @@ vllm:
       cpu: "4"
       memory: "16Gi"
       nvidia.com/gpu: null
+
+devMonitoring:
+  enabled: true

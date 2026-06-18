@@ -9,10 +9,11 @@ k3d cluster create llm-stack-dev --port "8080:80@loadbalancer"
 
 ### Editing host file for ingress
 
-Add the following line to your `/etc/hosts` file to map the `llm-stack.local` domain to your local machine. 
+Add the following lines to your `/etc/hosts` file to map the `llm-stack.local` and `grafana.local` domain to your local machine. 
 
 ```
 127.0.0.1 llm-stack.local
+127.0.0.1 grafana.local
 ```
 
 ### Installing the chart
@@ -27,7 +28,7 @@ helm install dev-release . -f examples/local-vllm-cpu.yaml
 bash bin/test-request-local-vllm.sh
 ```
 
-#### Using a third party provider instead of vllm
+#### Using scaleway instead of vllm
 
 Adjust the scaleway api path and auth token in `examples/scaleway-qwen-36.yaml` with your own credentials.
 
@@ -37,4 +38,22 @@ helm install dev-release . -f examples/scaleway-qwen-36.yaml
 
 ```bash
 bash bin/test-request-scaleway.sh
+```
+
+### Observability
+
+#### Grafana
+
+Log into grafana at http://grafana.local:8080 using the default credentials (username: admin, password: admin)
+
+##### Useful queries:
+
+Successful requests for apisix grouped by consumer at 1 min interval:
+```promql
+sum(increase(apisix_http_status{code=~"[2].."}[1m])) by (consumer)
+```
+
+Failing requests for apisix grouped by consumer at 1 min interval:
+```promql
+sum(increase(apisix_http_status{code=~"[45].."}[1m])) by (consumer)
 ```
