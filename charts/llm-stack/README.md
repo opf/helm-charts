@@ -40,10 +40,10 @@ bash bin/test-request-local-vllm.sh
 
 #### Using scaleway instead of vllm
 
-Adjust the scaleway api path and auth token in `examples/scaleway-qwen-36.yaml` with your own credentials.
+Adjust the scaleway api path and auth token in `examples/scaleway.yaml` with your own credentials.
 
 ```bash
-helm install dev-release . -f examples/scaleway-qwen-36.yaml
+helm install dev-release . -f examples/scaleway.yaml
 ```
 
 ```bash
