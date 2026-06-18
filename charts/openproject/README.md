@@ -121,12 +121,12 @@ openproject.admin_user.mail="admin@example.com"
 
 ### TMP volume mounts
 
-OpenProject needs some tmp volumes to be mounted in `/app/tmp`  and `/tmp`, if `global.containerSecurityContext.readOnlyRootFilesystem` is set to true.
+OpenProject needs some tmp volumes to be mounted in `/app/tmp`  and `/tmp`, if `containerSecurityContext.readOnlyRootFilesystem` is set to true.
 This is due to the application server storing a non-configurable PID file and some temporary caches or files being put there.
 
-This setting is true by default (to be precise, it follows its configured value or falls back to `develop != true`)
+This setting is true by default (to be precise, it follows its configured value or falls back to `containerSecurityContext.readOnlyRootFilesystem`).
 
-To explicitly disable this, use `openproject.useTmpVolumes=false`. This will fail if `readOnlyRootFilesystem=true`.
+To explicitly disable this, use `openproject.useTmpVolumes=false`. This will fail if `readOnlyRootFilesystem` is `true`.
 
 These volumes do not contain any critical information and can be excluded from backups using the labels/annotations values.
 
@@ -346,10 +346,34 @@ Set `openproject.oidc.extraOidcSealedSecret="openproject-oidc-secret-sealed"` in
 
 ### S3
 
+When using `s3.auth.existingSecret`, the secret is mounted via `envFrom`, so the keys must be the exact OpenProject environment variable names:
+
 ```yaml
 stringData:
-  accessKeyId: AKIAXDF2JNZRBFQIRTKA
-  secretAccessKey: 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
+  OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID: AKIAXDF2JNZRBFQIRTKA
+  OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY: 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
+```
+
+#### Using IAM Roles for Service Accounts (IRSA) on EKS
+
+Instead of static access credentials, you can authenticate with S3 using the IAM role attached to the Pod.
+This is the recommended approach on AWS EKS via [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+
+Set `s3.useIamProfile: true` to enable this mode. The chart will then omit the
+`OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID` and `OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY`
+environment variables entirely, so OpenProject's Fog library falls back to the AWS credential chain
+(instance profile / IRSA token).
+
+```yaml
+s3:
+  enabled: true
+  useIamProfile: true
+  region: eu-central-1
+  bucketName: my-openproject-bucket
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-openproject-s3-role
 ```
 
 ### Incoming E-Mails cron job (IMAP)

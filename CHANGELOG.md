@@ -1,5 +1,32 @@
 # @openproject/helm-charts
 
+## 13.8.1
+
+### Patch Changes
+
+- adc66da: Upgrade OpenProject core version to 17.5.1 (patch update)
+
+## 13.8.0
+
+### Minor Changes
+
+- bfa6e16: Upgrade OpenProject core version to 17.5.0 (minor update)
+
+## 13.7.1
+
+### Patch Changes
+
+- 3237460: Upgrade OpenProject core version to 17.4.1 (patch update)
+- 19b1794: Avoid secret for hocuspocus if disabled
+
+## 13.7.0
+
+### Minor Changes
+
+- 6c7258d: Make `openproject.useTmpVolumes` fall back to `containerSecurityContext.readOnlyRootFilesystem` rather than `not develop`.
+- b02b701: Allow iam credentials for s3 access
+- 2cc6632: Fix Ruby pods crashing on CSI drivers that mount tmp volumes world-writable without the sticky bit. A non-root init container now creates a sticky-bit /tmp/ruby directory and TMPDIR is pointed at it. Can be disabled with openproject.tmpVolumesPermissionFix=false.
+
 ## 13.6.0
 
 ### Minor Changes

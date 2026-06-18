@@ -97,3 +97,8 @@ Default login/password is admin/admin.
 
 You can create your own file adding to and overriding values and pass that with
 an additional `-f` option in the command above. For instance `bin/install-dev -f my-values.yaml`.
+
+### TLS
+
+If you want to use TLS you can use [`bin/install-local-with-tls`](./bin/install-local-with-tls).
+This will generate a self-signed certificate the root CA of which you will have to import into your browser.
