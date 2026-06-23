@@ -20,7 +20,7 @@ apisix:
   ingress:
     enabled: true
     hosts:
-      - host: llm-stack.local
+      - host: llm-stack.localhost
         paths:
           - /v1/chat/completions
 
