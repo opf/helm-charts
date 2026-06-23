@@ -40,7 +40,7 @@ vllm:
   resources:
     limits:
       cpu: "4"
-      memory: "16Gi"
+      memory: "48Gi"
       nvidia.com/gpu: null
     requests:
       cpu: "4"
