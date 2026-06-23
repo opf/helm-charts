@@ -57,7 +57,7 @@ bash bin/test-request-scaleway.sh
 
 #### Grafana
 
-Log into grafana at http://grafana.local:8080 using the default credentials (username: admin, password: admin)
+Log into grafana at http://grafana.localhost using the default credentials (username: admin, password: admin)
 
 ##### Useful queries:
 
