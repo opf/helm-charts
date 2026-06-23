@@ -27,7 +27,7 @@ vllm:
   enabled: true
   image:
     name: "vllm/vllm-openai-cpu"
-    tag: "v0.23.0-arm64"
+    tag: "v0.23.0"
   model: Qwen/Qwen2.5-0.5B-Instruct
   # setting the memory utilization lower to not use up all system memory in the cpu case
   # setting the dtype to float32 as cpu often cannot deal with other types
