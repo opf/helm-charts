@@ -104,5 +104,5 @@ kube-prometheus-stack:
     ingress:
       enabled: true
       hosts:
-        - grafana.local
+        - grafana.localhost
     adminPassword: admin
