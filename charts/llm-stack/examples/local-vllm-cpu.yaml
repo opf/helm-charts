@@ -1,17 +1,3 @@
-apisixInitialConfig:
-  enabled: true
-  route:
-    provider: openai-compatible
-    apiKey: "anykey"
-    baseURL: "" # ignored if vllm is enabled
-
-  consumers:
-    consumerA:
-      apiKey: "sk-client-v1-abcdef123456"
-    # you can define multiple consumers
-    # consumer_B:
-    #  apiKey: "sk-client-v1-xyz987654321"
-
 apisix:
   metrics:
     serviceMonitor:
@@ -19,7 +5,7 @@ apisix:
   ingress:
     enabled: true
     hosts:
-      - host: llm-stack.local
+      - host: llm-stack.localhost
         paths:
           - /v1/chat/completions
 

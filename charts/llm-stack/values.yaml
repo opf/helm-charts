@@ -2,16 +2,12 @@ apisixInitialConfig:
   enabled: true
   route:
     provider: openai-compatible
-    apiKey: "scaleway-api-key"
     # retrieve the project id from the scaleway project dashboard
     baseURL: "https://api.scaleway.ai/<scaleway-project-id>/v1/chat/completions" # ignored if vllm is enabled
-
-  consumers:
-    consumerA:
-      apiKey: "sk-client-v1-abcdef123456"
-    # you can define multiple consumers
-    # consumer_B:
-    #  apiKey: "sk-client-v1-xyz987654321"
+  secrets:
+    name: "llm-stack-apisix-initial-config-secret"
+    providerApiKeyKey: "provider_api_key"
+    consumerKey: "consumers"
 
 apisix:
   apisix:
@@ -22,7 +18,7 @@ apisix:
         config_provider: yaml
     admin:
       credentials:
-        admin: "admin-key"
+        secretName: "llm-stack-apisix-admin-secret"
       allow:
         ipList:
           - 10.42.0.0/16 # other pods

@@ -21,8 +21,24 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: seeder
-          image: "curlimages/curl:latest"
-          command: [ "/bin/sh", "/data/seed.sh" ]
+          image: "python:3.12-slim"
+          command: [ "python3", "/data/seed.py" ]
+          env:
+            - name: PROVIDER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.apisixInitialConfig.secrets.name | quote }}
+                  key: {{ .Values.apisixInitialConfig.secrets.providerApiKeyKey | quote }}
+            - name: API_CONSUMERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.apisixInitialConfig.secrets.name | quote }}
+                  key: {{ .Values.apisixInitialConfig.secrets.consumerKey | quote }}
+            - name: ADMIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.apisix.apisix.admin.credentials.secretName | quote}}
+                  key: {{ .Values.apisix.apisix.admin.credentials.secretAdminKey | default "admin" | quote}}
           volumeMounts:
             - name: data-volume
               mountPath: /data

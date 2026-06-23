@@ -2,16 +2,8 @@ apisixInitialConfig:
   enabled: true
   route:
     provider: openai-compatible
-    apiKey: "scaleway-api-key"
     # retrieve the project id from the scaleway project dashboard
-    baseURL: "https://api.scaleway.ai/<scaleway-project-id>/v1/chat/completions" # ignored if vllm is enabled
-
-  consumers:
-    consumerA:
-      apiKey: "sk-client-v1-abcdef123456"
-    # you can define multiple consumers
-    # consumer_B:
-    #  apiKey: "sk-client-v1-xyz987654321"
+    baseURL: "https://api.scaleway.ai/6b589077-fbb1-4960-8980-06ba38099e21/v1/chat/completions" # ignored if vllm is enabled
 
 apisix:
   metrics:

@@ -14,20 +14,29 @@ A helm chart for a self-hosted llm stack featuring:
 ### Minimum requirements
 
 * 48gb RAM (64gb would be better)
+
 ### Creating the cluster
 
 ```bash
 k3d cluster create llm-stack-dev --port "8080:80@loadbalancer"
 ```
 
-### Editing host file for ingress
+### Creating the Secrets
 
-Add the following lines to your `/etc/hosts` file to map the `llm-stack.local` and `grafana.local` domain to your local machine. 
+**For the apisix initial config:**
+```bash
+kubectl create secret generic llm-stack-apisix-initial-config-secret --from-literal=provider_api_key='abc' --from-literal=consumers='[{"name": "consumerA", "key": "sk-client-v1-abcdef123456"}]'
+```
+* `provider_api_key` is the key of the provider you are forwarding the requests to, e.g. scaleway
+* `consumers` is a stringified json array of consumers
 
+**For the apisix admin API:**
+```bash
+kubectl create secret generic llm-stack-apisix-admin-secret --from-literal=admin='abc' --from-literal=viewer='def'
 ```
-127.0.0.1 llm-stack.local
-127.0.0.1 grafana.local
-```
+
+* `admin` is the admin key for editing
+* `viewer` is the admin key for viewing only
 
 ### Installing the chart
 
