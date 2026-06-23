@@ -11,6 +11,9 @@ A helm chart for a self-hosted llm stack featuring:
 
 ## Local Development
 
+### Minimum requirements
+
+* 48gb RAM (64gb would be better)
 ### Creating the cluster
 
 ```bash
