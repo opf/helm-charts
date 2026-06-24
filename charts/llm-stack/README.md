@@ -8,12 +8,9 @@ A helm chart for a self-hosted llm stack featuring:
 * Optional prometheus and grafana components for local development
 * values.yaml files and basic request scripts for local development in `examples/` and `bin/`
 
+![chart overview](llm-stack-helm-detail.drawio.png)
 
 ## Local Development
-
-### Minimum requirements
-
-* 48gb RAM (64gb would be better)
 
 ### Creating the cluster
 

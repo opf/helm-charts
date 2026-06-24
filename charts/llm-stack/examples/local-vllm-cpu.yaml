@@ -26,11 +26,11 @@ vllm:
   resources:
     limits:
       cpu: "4"
-      memory: "48Gi"
+      memory: "16Gi"
       nvidia.com/gpu: null
     requests:
       cpu: "4"
-      memory: "32Gi"
+      memory: "16Gi"
       nvidia.com/gpu: null
 
 devMonitoring:
