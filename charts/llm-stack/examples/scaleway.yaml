@@ -3,7 +3,7 @@ apisixInitialConfig:
   route:
     provider: openai-compatible
     # retrieve the project id from the scaleway project dashboard
-    baseURL: "https://api.scaleway.ai/6b589077-fbb1-4960-8980-06ba38099e21/v1/chat/completions" # ignored if vllm is enabled
+    baseURL: "https://api.scaleway.ai/<project_id>/v1/chat/completions" # ignored if vllm is enabled
 
 apisix:
   metrics:

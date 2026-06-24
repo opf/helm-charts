@@ -24,7 +24,7 @@ k3d cluster create llm-stack-dev --port "8080:80@loadbalancer"
 ```bash
 kubectl create secret generic llm-stack-apisix-initial-config-secret --from-literal=provider_api_key='abc' --from-literal=consumers='[{"name": "consumerA", "key": "sk-client-v1-abcdef123456"}]'
 ```
-* `provider_api_key` is the key of the provider you are forwarding the requests to, e.g. scaleway
+* `provider_api_key` is the key of the provider you are forwarding the requests to, e.g. scaleway, can be anything when using vllm
 * `consumers` is a stringified json array of consumers
 
 **For the apisix admin API:**
@@ -42,14 +42,14 @@ kubectl create secret generic llm-stack-apisix-admin-secret --from-literal=admin
 ```bash
 helm install dev-release . -f examples/local-vllm-cpu.yaml
 ```
-
+Wait for the vllm liveness probe to start (~4 min) and make a test request:
 ```bash
 bash bin/test-request-local-vllm.sh
 ```
 
 #### Using scaleway instead of vllm
 
-Adjust the scaleway api path and auth token in `examples/scaleway.yaml` with your own credentials.
+Adjust the scaleway project id in the `apisixInitialConfig.base_url` in `examples/scaleway.yaml` with your own credentials.
 
 ```bash
 helm install dev-release . -f examples/scaleway.yaml
