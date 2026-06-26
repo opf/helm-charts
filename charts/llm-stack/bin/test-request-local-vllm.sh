@@ -1,4 +1,4 @@
-PORT=${PORT:-8080}
+PORT=${PORT:-80}
 HOST=${HOST:-llm-stack.localhost}
 
 curl http://$HOST:$PORT/v1/chat/completions \

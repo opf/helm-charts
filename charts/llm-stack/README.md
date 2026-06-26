@@ -18,21 +18,22 @@ A helm chart for a self-hosted llm stack featuring:
 ### Creating the cluster
 
 ```bash
-k3d cluster create llm-stack-dev --port "8080:80@loadbalancer"
+k3d cluster create llm-stack-dev --port "80:80@loadbalancer"
+kubectl create namespace llm-stack
 ```
 
 ### Creating the Secrets
 
 **For the apisix initial config:**
 ```bash
-kubectl create secret generic llm-stack-apisix-initial-config-secret --from-literal=provider_api_key='abc' --from-literal=consumers='[{"name": "consumerA", "key": "sk-client-v1-abcdef123456"}]'
+kubectl create secret generic llm-stack-apisix-initial-config-secret --from-literal=provider_api_key='abc' --from-literal=consumers='[{"name": "consumerA", "key": "sk-client-v1-abcdef123456"}]' -n llm-stack
 ```
 * `provider_api_key` is the key of the provider you are forwarding the requests to, e.g. scaleway, can be anything when using vllm
 * `consumers` is a stringified json array of consumers
 
 **For the apisix admin API:**
 ```bash
-kubectl create secret generic llm-stack-apisix-admin-secret --from-literal=admin='abc' --from-literal=viewer='def'
+kubectl create secret generic llm-stack-apisix-admin-secret --from-literal=admin='abc' --from-literal=viewer='def' -n llm-stack
 ```
 
 * `admin` is the admin key for editing
@@ -43,7 +44,7 @@ kubectl create secret generic llm-stack-apisix-admin-secret --from-literal=admin
 #### With cpu-based VLLM and a tiny model enabled
 
 ```bash
-helm install dev-release . -f examples/local-vllm-cpu.yaml
+helm install dev-release . -f examples/local-vllm-cpu.yaml -n llm-stack
 ```
 Wait for the vllm liveness probe to start (~4 min) and make a test request:
 ```bash
@@ -55,7 +56,7 @@ bash bin/test-request-local-vllm.sh
 Adjust the scaleway project id in the `apisixInitialConfig.base_url` in `examples/scaleway.yaml` with your own credentials.
 
 ```bash
-helm install dev-release . -f examples/scaleway.yaml
+helm install dev-release . -f examples/scaleway.yaml -n llm-stack
 ```
 
 ```bash

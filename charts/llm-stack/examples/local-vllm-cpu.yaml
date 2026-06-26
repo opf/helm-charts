@@ -21,8 +21,11 @@ vllm:
     - "--gpu-memory-utilization"
     - "0.5"
     - "--dtype"
-    - "float32"
+    - "float16"
   # Environment variables (e.g., HF_TOKEN for private models, huggingface hub configurations)
+  env:
+    - name: "VLLM_CPU_KVCACHE_SPACE"
+      value: "1"
   resources:
     limits:
       cpu: "4"
