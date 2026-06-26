@@ -4,6 +4,10 @@ apisixInitialConfig:
     provider: openai-compatible
     # retrieve the project id from the scaleway project dashboard
     baseURL: "https://api.scaleway.ai/<scaleway-project-id>/v1/chat/completions" # ignored if vllm is enabled
+  consumer_usage_limits:
+    num_tokens: 1000000
+    time_window_seconds: 86400 # 24h
+    limit_strategy: total_tokens
   secrets:
     name: "llm-stack-apisix-initial-config-secret"
     providerApiKeyKey: "provider_api_key"

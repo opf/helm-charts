@@ -45,7 +45,12 @@ data:
             "plugins": {
                 "key-auth": {
                     "key": consumer["key"]
-                }
+                },
+                "ai-rate-limiting": {
+                    "limit": {{ .Values.apisixInitialConfig.consumer_usage_limits.num_tokens}},
+                    "time_window": {{ .Values.apisixInitialConfig.consumer_usage_limits.time_window_seconds }},
+                    "limit_strategy": {{ .Values.apisixInitialConfig.consumer_usage_limits.limit_strategy | quote }}
+                },
             }
         } for consumer in consumer_data
     ]
