@@ -16,7 +16,7 @@ This is the OpenProject Helm Charts repository, containing Kubernetes deployment
 ### Release Management
 - `npm run changeset:version` - Update version numbers and generate changelog using changesets
 - `bin/update_from_core_release <version>` - Update chart to track a new OpenProject core release
-- `script/version` - Sync Chart.yaml version with package.json version
+- `script/version` - Sync each chart's Chart.yaml version with its own `charts/<chart>/package.json` version
 
 ### Helm Operations
 - `helm dependency update` - Update chart dependencies (required before testing)
@@ -67,8 +67,9 @@ The `bin/update_from_core_release` script automates updating to new OpenProject 
 
 Uses Changesets for automated release management:
 - `.changeset/` directory contains pending changes
+- Each chart under `charts/*` is its own npm workspace package (see `charts/<chart>/package.json`), versioned independently by changesets. A changeset's frontmatter names the package(s) it bumps (e.g. `"openproject": patch`), so a change scoped to one chart only versions and releases that chart.
 - `npm run changeset:version` processes changesets and updates versions
-- Chart releases are automated via GitHub Actions with chart-releaser
+- Chart releases are automated via GitHub Actions with chart-releaser, which creates one GitHub Release per chart (tagged `<chart-name>-<version>`) and only for charts whose version actually changed
 - Charts are signed using GPG key (fingerprint in `Chart.yaml` annotations)
 
 ## Development Workflow
@@ -83,6 +84,6 @@ Uses Changesets for automated release management:
 ## Key Files
 - `charts/openproject/Chart.yaml:8` - App version (OpenProject core version)
 - `charts/openproject/Chart.yaml:9` - Chart version  
-- `package.json:5` - NPM package version (synced with chart version)
+- `charts/openproject/package.json` - NPM package version for this chart (synced into Chart.yaml by `script/version`)
 - `spec/helm_template.rb` - Test framework for Helm template rendering
 - `bin/update_from_core_release` - Core version update automation
