@@ -7,9 +7,16 @@
 This is a self-contained Helm chart registry for OpenProject based on github pages
 using helm's [chart-releaser](https://github.com/helm/chart-releaser-action) action.
 
+The repository contains the following helm charts:
+
+* **openproject** - the main helm chart most of the docs refer to
+* llm-stack - a helm chart allowing you to install our LLM stack to make use of AI in OpenProject
+
 ## Installation
 
-Please refer to our [documentation](https://www.openproject.org/docs/installation-and-operations/installation/helm-chart/) for instructions on how to install the OpenProject helm chart.
+Please refer to our [documentation](https://www.openproject.org/docs/installation-and-operations/installation/helm-chart/) for instructions on how to install the **OpenProject** helm chart.
+
+Please refer to the [llm-stack README](charts/llm-stack/README.md) for installation instructions.
 
 ### Bitnami charts
 
