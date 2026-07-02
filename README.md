@@ -15,7 +15,7 @@ For more details please refer to our [documentation](https://www.openproject.org
 
 ## Other helm charts
 
-Next to the OpenProject char, this repository also contains the following helm charts
+Next to the OpenProject chart, this repository also contains the following helm charts
 that may be used together with OpenProject.
 
 ### llm-stack
