@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
-name: openproject-llm-stack
+name: llm-stack
 description: A Helm chart for running the LLM stack for Open Project via Kubernetes
 home: https://www.openproject.org/
 icon: https://charts.openproject.org/logo.svg
@@ -20,7 +20,7 @@ dependencies:
 - name: kube-prometheus-stack
   version: "86.2.2"
   repository: oci://ghcr.io/prometheus-community/charts
-  condition: devMonitoring.enabled # only install when enabling dev monitoring
+  condition: devMonitoring.enabled
 annotations:
   artifacthub.io/license: GPL-3.0-only
   artifacthub.io/links: |
