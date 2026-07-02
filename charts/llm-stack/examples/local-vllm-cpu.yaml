@@ -1,0 +1,40 @@
+apisix:
+  metrics:
+    serviceMonitor:
+      enabled: true
+  ingress:
+    enabled: true
+    hosts:
+      - host: llm-stack.localhost
+        paths:
+          - /v1/chat/completions
+
+vllm:
+  enabled: true
+  image:
+    name: "vllm/vllm-openai-cpu"
+    tag: "v0.23.0"
+  model: Qwen/Qwen2.5-0.5B-Instruct
+  # setting the memory utilization lower to not use up all system memory in the cpu case
+  # setting the dtype to float32 as cpu often cannot deal with other types
+  extraArgs:
+    - "--gpu-memory-utilization"
+    - "0.5"
+    - "--dtype"
+    - "float16"
+  # Environment variables (e.g., HF_TOKEN for private models, huggingface hub configurations)
+  env:
+    - name: "VLLM_CPU_KVCACHE_SPACE"
+      value: "1"
+  resources:
+    limits:
+      cpu: "4"
+      memory: "48Gi"
+      nvidia.com/gpu: null
+    requests:
+      cpu: "4"
+      memory: "32Gi"
+      nvidia.com/gpu: null
+
+devMonitoring:
+  enabled: true

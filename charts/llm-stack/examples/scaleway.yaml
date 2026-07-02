@@ -1,0 +1,24 @@
+apisixInitialConfig:
+  enabled: true
+  route:
+    provider: openai-compatible
+    # retrieve the project id from the scaleway project dashboard
+    baseURL: "https://api.scaleway.ai/<project_id>/v1/chat/completions" # ignored if vllm is enabled
+
+apisix:
+  metrics:
+    serviceMonitor:
+      enabled: true
+  ingress:
+    enabled: true
+    hosts:
+      - host: llm-stack.localhost
+        paths:
+          - /v1/chat/completions
+
+vllm:
+  enabled: false
+
+
+devMonitoring:
+  enabled: true

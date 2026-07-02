@@ -1,0 +1,121 @@
+{{- if .Values.apisixInitialConfig.enabled }}
+{{- if and (not .Values.vllm.enabled) (not (hasSuffix "/v1/chat/completions" .Values.apisixInitialConfig.route.baseURL)) }}
+{{- fail "Validation Error: baseURL must end with '/v1/chat/completions'" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.names.fullname" . }}-config-seeder-configmap
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+data:
+  seed.py: |
+    #!/usr/bin/env python3
+    import urllib.request
+    import urllib.error
+    import time
+    import sys
+    import json
+    import os
+
+    url = "http://{{ include "common.names.fullname" . }}-apisix-admin-headless:9180/apisix/admin/configs"
+    headers = {
+        "X-API-KEY": os.getenv("ADMIN_API_KEY", ""),
+        "Content-Type": "application/json",
+        "X-DIGEST": "initial-config"
+    }
+
+    # Wait for APISIX Admin API to be ready
+    print("Waiting for APISIX Admin API...", flush=True)
+    while True:
+        try:
+            req = urllib.request.Request(url, headers={"X-API-KEY": headers["X-API-KEY"]})
+            with urllib.request.urlopen(req) as response:
+                if response.status == 200:
+                    break
+        except Exception as e:
+           print(f"Error: {e}", flush=True)
+        time.sleep(2)
+
+    consumer_data = json.loads(os.getenv("API_CONSUMERS", "[]"))
+    apisix_consumers = [
+        {
+            "username": consumer["name"],
+            "plugins": {
+                "key-auth": {
+                    "key": consumer["key"]
+                },
+                "ai-rate-limiting": {
+                    "limit": {{ .Values.apisixInitialConfig.consumer_usage_limits.num_tokens}},
+                    "time_window": {{ .Values.apisixInitialConfig.consumer_usage_limits.time_window_seconds }},
+                    "limit_strategy": {{ .Values.apisixInitialConfig.consumer_usage_limits.limit_strategy | quote }}
+                },
+            }
+        } for consumer in consumer_data
+    ]
+
+    # the serverless function makes sure the auth headers are the same as when an openai compatible endpoint
+    config = {
+        "routes": [
+            {
+                "id": "completion",
+                "uri": "/v1/chat/completions",
+                "plugins": {
+                    "serverless-pre-function": {
+                        "phase": "rewrite",
+                        "functions": [
+                            "return function(conf, ctx) local auth = ngx.req.get_headers()[\"Authorization\"] if auth then local token = auth:match(\"^[Bb]earer%s+(.+)$\") if token then ngx.req.set_header(\"Authorization\", token) end end end"
+                        ]
+                    },
+                    "prometheus": {},
+                    "key-auth": {
+                        "header": "Authorization",
+                        "hide_credentials": True
+                    },
+                    "ai-proxy": {
+                        "provider": "{{ .Values.apisixInitialConfig.route.provider }}",
+                        "auth": {
+                            "header": {
+                                "Authorization": f"Bearer {os.getenv("PROVIDER_API_KEY", "")}"
+                            }
+                        }
+                        {{- if or .Values.vllm.enabled .Values.apisixInitialConfig.route.baseURL }},
+                        "override": {
+                            "endpoint": "{{ if .Values.vllm.enabled }}http://{{ .Values.vllm.service.name }}:{{ .Values.vllm.service.port | default 8000 }}/v1/chat/completions{{ else }}{{ .Values.apisixInitialConfig.route.baseURL }}{{ end }}"
+                        }
+                        {{- end }}
+                    }
+                },
+                "upstream": {
+                    "type": "roundrobin",
+                    "nodes": {
+                        "main": 1
+                    }
+                }
+            }
+        ],
+        "consumers": apisix_consumers
+    }
+
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(config, ensure_ascii=False).encode("utf-8"),
+        headers=headers,
+        method="PUT"
+    )
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            print(f"HTTP Status: {response.status}", flush=True)
+            print(response.read().decode("utf-8"), flush=True)
+    except urllib.error.HTTPError as e:
+        print(f"HTTP Error: {e.code}", flush=True)
+        print(e.read().decode("utf-8"), flush=True)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}", flush=True)
+        sys.exit(1)
+
+{{ end }}

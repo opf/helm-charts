@@ -1,0 +1,104 @@
+{{- if .Values.vllm.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}-vllm
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+    app.kubernetes.io/component: vllm
+spec:
+  replicas: {{ .Values.vllm.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" (dict "customLabels" .Values.commonLabels "context" $) | nindent 6 }}
+      app.kubernetes.io/component: vllm
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 8 }}
+        app.kubernetes.io/component: vllm
+        {{- with .Values.vllm.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.vllm.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.vllm.schedulerName }}
+      schedulerName: {{ .Values.vllm.schedulerName | quote }}
+      {{- end }}
+      containers:
+        - name: vllm
+          image: "{{ .Values.vllm.image.name }}:{{ .Values.vllm.image.tag }}"
+          imagePullPolicy: {{ .Values.vllm.image.pullPolicy }}
+          args:
+            - "--model"
+            - {{ .Values.vllm.model }}
+            - "--enable-prompt-tokens-details"
+            {{- if .Values.vllm.extraArgs }}
+            {{- toYaml .Values.vllm.extraArgs | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            {{- if .Values.vllm.env }}
+            {{- toYaml .Values.vllm.env | nindent 12 }}
+            {{- end }}
+          {{- if .Values.vllm.resources }}
+          resources:
+            {{- toYaml .Values.vllm.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: cache-volume
+              mountPath: {{ .Values.vllm.persistence.mountPath | default "/root/.cache" }}
+            {{- if .Values.vllm.extraVolumeMounts }}
+            {{- toYaml .Values.vllm.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+          {{- if .Values.vllm.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.vllm.livenessProbe.path | default "/health" }}
+              port: http
+            initialDelaySeconds: {{ .Values.vllm.livenessProbe.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .Values.vllm.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.vllm.livenessProbe.timeoutSeconds | default 5 }}
+            failureThreshold: {{ .Values.vllm.livenessProbe.failureThreshold | default 3 }}
+          {{- end }}
+          {{- if .Values.vllm.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.vllm.readinessProbe.path | default "/health" }}
+              port: http
+            initialDelaySeconds: {{ .Values.vllm.readinessProbe.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .Values.vllm.readinessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.vllm.readinessProbe.timeoutSeconds | default 5 }}
+            failureThreshold: {{ .Values.vllm.readinessProbe.failureThreshold | default 3 }}
+          {{- end }}
+      {{- with .Values.vllm.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.vllm.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.vllm.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: cache-volume
+          {{- if .Values.vllm.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.vllm.persistence.existingClaim }}{{ .Values.vllm.persistence.existingClaim }}{{ else }}{{ include "common.names.fullname" . }}-vllm-cache{{ end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- if .Values.vllm.extraVolumes }}
+        {{- toYaml .Values.vllm.extraVolumes | nindent 8 }}
+        {{- end }}
+{{- end }}

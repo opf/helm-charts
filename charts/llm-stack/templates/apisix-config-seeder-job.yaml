@@ -1,0 +1,50 @@
+{{- if .Values.apisixInitialConfig.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "common.names.fullname" . }}-config-seeder
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+  annotations:
+    # Runs the script after the chart is installed or upgraded
+    "helm.sh/hook": post-install,post-upgrade
+    # Automatically cleans up successful jobs to save cluster resources
+    "helm.sh/hook-delete-policy": hook-succeeded
+    # Ensures the job completes before Helm marks the release as successful
+    "helm.sh/hook-weight": "5"
+spec:
+  template:
+    metadata:
+      name: {{ include "common.names.fullname" . }}-config-seeder
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seeder
+          image: "python:3.12-slim"
+          command: [ "python3", "/data/seed.py" ]
+          env:
+            - name: PROVIDER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.apisixInitialConfig.secrets.name | quote }}
+                  key: {{ .Values.apisixInitialConfig.secrets.providerApiKeyKey | quote }}
+            - name: API_CONSUMERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.apisixInitialConfig.secrets.name | quote }}
+                  key: {{ .Values.apisixInitialConfig.secrets.consumerKey | quote }}
+            - name: ADMIN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.apisix.apisix.admin.credentials.secretName | quote}}
+                  key: {{ .Values.apisix.apisix.admin.credentials.secretAdminKey | default "admin" | quote}}
+          volumeMounts:
+            - name: data-volume
+              mountPath: /data
+      volumes:
+        - name: data-volume
+          configMap:
+            name: {{ include "common.names.fullname" . }}-config-seeder-configmap
+            defaultMode: 0755
+{{ end }}

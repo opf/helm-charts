@@ -1,4 +1,4 @@
-charts/openproject/charts
+charts/*/charts
 charts/*/RELEASE-NOTES.md
 Chart.lock
 node_modules/
@@ -6,3 +6,4 @@ node_modules/
 /demo/.kube
 /demo/config/*.yaml
 !/demo/config/*.example.yaml
+.idea/

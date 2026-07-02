@@ -1,0 +1,108 @@
+apisixInitialConfig:
+  enabled: true
+  route:
+    provider: openai-compatible
+    # retrieve the project id from the scaleway project dashboard
+    baseURL: "https://api.scaleway.ai/<scaleway-project-id>/v1/chat/completions" # ignored if vllm is enabled
+  consumer_usage_limits:
+    num_tokens: 1000000
+    time_window_seconds: 86400 # 24h
+    limit_strategy: total_tokens
+  secrets:
+    name: "llm-stack-apisix-initial-config-secret"
+    providerApiKeyKey: "provider_api_key"
+    consumerKey: "consumers"
+
+apisix:
+  apisix:
+    deployment:
+      mode: standalone
+      role: traditional
+      role_traditional:
+        config_provider: yaml
+    admin:
+      credentials:
+        secretName: "llm-stack-apisix-admin-secret"
+      allow:
+        ipList:
+          - 10.42.0.0/16 # other pods
+    prometheus:
+      enabled: true
+  etcd:
+    enabled: false
+  metrics:
+    serviceMonitor:
+      enabled: false
+  ingress:
+    enabled: true
+
+
+vllm:
+  enabled: false
+  image:
+    name: "vllm/vllm-openai"
+    tag: "v0.23.0-ubuntu2404"
+    pullPolicy: "IfNotPresent"
+  replicaCount: 1
+  service:
+    # Do not name this service simply "vllm" as kubernetes env variables it will clash with vllm ones.
+    name: vllm-service
+    type: ClusterIP
+    port: 8000
+    annotations: {}
+  model: Qwen/Qwen3.6-35B-A3B-FP8
+  extraArgs:
+    - "--reasoning-parser"
+    - "qwen3"
+  # Environment variables (e.g., HF_TOKEN for private models, huggingface hub configurations)
+  env: []
+    # - name: HF_TOKEN
+    #   value: "your_huggingface_token_here"
+  # Resources request/limit including GPUs
+  resources:
+    limits:
+      cpu: "8"
+      memory: "64Gi"
+      nvidia.com/gpu: "1"
+    requests:
+      cpu: "8"
+      memory: "64Gi"
+      nvidia.com/gpu: "1"
+  # Persistence settings to cache HuggingFace/Model files locally
+  persistence:
+    enabled: false
+    size: "50Gi"
+    accessModes:
+      - ReadWriteOnce
+    # storageClass: ""
+    # existingClaim: ""
+  # Node scheduling and placement configs
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations: {}
+  podLabels: {}
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 240
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 240
+
+# disables entire kube-prometheus-stack
+devMonitoring:
+  enabled: false
+
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      # Tell Prometheus to discover ALL ServiceMonitors in the cluster
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelector: {}
+      serviceMonitorNamespaceSelector: {}
+  grafana:
+    ingress:
+      enabled: true
+      hosts:
+        - grafana.localhost
+    adminPassword: admin
