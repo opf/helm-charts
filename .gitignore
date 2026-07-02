@@ -1,6 +1,5 @@
-charts/openproject/charts
-charts/llm-stack/charts
-charts/openproject/RELEASE-NOTES.md
+charts/*/charts
+charts/*/RELEASE-NOTES.md
 Chart.lock
 node_modules/
 .cr-gpg/

@@ -34,6 +34,9 @@ jobs:
           if [[ -n "$changed" ]]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
+          if grep -qx 'charts/openproject' <<< "$changed"; then
+            echo "openproject-changed=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Run chart-testing (lint) WITHOUT version check
         if: github.event.pull_request.title != 'Release Tracking'
@@ -45,12 +48,13 @@ jobs:
 
       - name: Create kind cluster
         uses: helm/kind-action@v1.5.0
-        if: steps.list-changed.outputs.changed == 'true'
+        if: steps.list-changed.outputs.openproject-changed == 'true'
 
-      - name: Run chart-testing (install)
+      - name: Run chart-testing (install) for OpenProject
+        if: steps.list-changed.outputs.openproject-changed == 'true'
         run: |
           ct install \
-            --target-branch ${{ github.event.repository.default_branch }} \
+            --charts charts/openproject \
             --chart-repos bitnami=https://charts.bitnami.com/bitnami \
             --helm-extra-set-args "\
               --set environment.OPENPROJECT_HTTPS=false \

@@ -1,4 +1,4 @@
-# @openproject/helm-charts
+# openproject
 
 ## 13.8.1
 
