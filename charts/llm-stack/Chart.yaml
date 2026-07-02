@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
-name: openproject-llm-stack
+name: llm-stack
 description: A Helm chart for running the LLM stack for Open Project via Kubernetes
 home: https://www.openproject.org/
 icon: https://charts.openproject.org/logo.svg
