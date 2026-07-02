@@ -16,7 +16,7 @@ The repository contains the following helm charts:
 
 Please refer to our [documentation](https://www.openproject.org/docs/installation-and-operations/installation/helm-chart/) for instructions on how to install the **OpenProject** helm chart.
 
-Please refer to the [llm-stack README](charts/llm-stack/README.md) for installation instructions.
+Please refer to the [llm-stack README](charts/llm-stack/README.md) for installation instructions for the llm-stack helm chart.
 
 ### Bitnami charts
 
