@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
@@ -21,8 +23,55 @@ jobs:
           # runs 'bundle install' and caches installed gems automatically
           bundler-cache: true
 
+      - name: Determine charts to test
+        id: changed
+        run: |
+          changed_files=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")
+
+          echo "Changed files:"
+          echo "$changed_files"
+
+          all_charts=$(ls -d charts/*/ | sed 's#charts/##; s#/##')
+
+          # Shared spec framework/tooling files affect every chart's tests, so test everything.
+          if echo "$changed_files" | grep -qE '^(Gemfile|Gemfile\.lock|\.rspec)$|^spec/[^/]+$'; then
+            charts="$all_charts"
+          else
+            charts=$(echo "$changed_files" \
+              | grep -oE '^(charts/[^/]+|spec/charts/[^/]+)' \
+              | sed -E 's#^charts/##; s#^spec/charts/##' \
+              | sort -u)
+          fi
+
+          echo "Charts to test:"
+          echo "$charts"
+
+          echo "charts<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$charts" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
       - name: Prepare environment
-        run: cd charts/openproject && helm dependency update
+        if: steps.changed.outputs.charts != ''
+        run: |
+          while IFS= read -r chart; do
+            [ -z "$chart" ] && continue
+            (cd "charts/$chart" && helm dependency update)
+          done <<< "${{ steps.changed.outputs.charts }}"
 
       - name: Run tests
-        run: bundle exec rspec
+        if: steps.changed.outputs.charts != ''
+        run: |
+          spec_dirs=""
+          while IFS= read -r chart; do
+            [ -z "$chart" ] && continue
+            if [ -d "spec/charts/$chart" ]; then
+              spec_dirs="$spec_dirs spec/charts/$chart"
+            fi
+          done <<< "${{ steps.changed.outputs.charts }}"
+
+          if [ -z "$spec_dirs" ]; then
+            echo "No chart changes with matching specs; nothing to test."
+            exit 0
+          fi
+
+          bundle exec rspec $spec_dirs

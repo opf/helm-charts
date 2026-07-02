@@ -59,7 +59,7 @@ changeset_name = "#{next_version.to_s.gsub('.', '-')}_#{bump_type}.md"
 File.open(File.expand_path("../.changeset/#{changeset_name}", __dir__), 'w') do |f|
   f.write <<~CHANGE
     ---
-    "@openproject/helm-charts": #{bump_type}
+    "openproject": #{bump_type}
     ---
 
     Upgrade OpenProject core version to #{next_version} (#{bump_type} update)
