@@ -21,3 +21,9 @@
 .idea/
 *.tmproj
 .vscode/
+
+# Do not publish Helm test hooks in released chart packages.
+templates/tests/
+
+# Keep development/example values in source only.
+examples/
