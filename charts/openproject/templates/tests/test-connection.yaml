@@ -10,8 +10,10 @@ metadata:
     "helm.sh/hook": test
 spec:
   serviceAccountName: {{ include "common.names.fullname" . }}
+  {{- include "openproject.podSecurityContext" . | trim | nindent 2 }}
   containers:
     - name: "wget"
+      {{- include "openproject.containerSecurityContext" . | trim | nindent 6 }}
       image: "busybox"
       imagePullPolicy: Always
       command: ['wget']
