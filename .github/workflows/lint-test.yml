@@ -50,11 +50,29 @@ jobs:
         uses: helm/kind-action@v1.5.0
         if: steps.list-changed.outputs.openproject-changed == 'true'
 
+      - name: Create restricted namespace for OpenProject
+        if: steps.list-changed.outputs.openproject-changed == 'true'
+        run: |
+          kubectl apply -f - <<'YAML'
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: openproject-ct
+            labels:
+              pod-security.kubernetes.io/enforce: restricted
+              pod-security.kubernetes.io/enforce-version: latest
+              pod-security.kubernetes.io/audit: restricted
+              pod-security.kubernetes.io/audit-version: latest
+              pod-security.kubernetes.io/warn: restricted
+              pod-security.kubernetes.io/warn-version: latest
+          YAML
+
       - name: Run chart-testing (install) for OpenProject
         if: steps.list-changed.outputs.openproject-changed == 'true'
         run: |
           ct install \
             --charts charts/openproject \
+            --namespace openproject-ct \
             --chart-repos bitnami=https://charts.bitnami.com/bitnami \
             --helm-extra-set-args "\
               --set environment.OPENPROJECT_HTTPS=false \
