@@ -130,6 +130,19 @@ To explicitly disable this, use `openproject.useTmpVolumes=false`. This will fai
 
 These volumes do not contain any critical information and can be excluded from backups using the labels/annotations values.
 
+### Kubernetes Pod Security Standards
+
+With the default values, the rendered chart is compatible with the Kubernetes Pod Security Standards `restricted` profile. This includes the OpenProject web, worker, cron, seeder, hocuspocus, and Helm test pods, including their init containers.
+
+Pod Security Admission enforcement is configured by the cluster operator on the namespace, not by the chart. For example:
+
+```yaml
+pod-security.kubernetes.io/enforce: restricted
+pod-security.kubernetes.io/enforce-version: latest
+```
+
+The bundled PostgreSQL and memcached subcharts also render with restricted-compatible security contexts at the pinned chart versions. If you enable Bitnami's PostgreSQL `volumePermissions` init container, that pod may fail restricted enforcement because it runs as root.
+
 ### ReadWriteMany volumes
 
 By default and when using filesystem-based attachments, OpenProject requires the Kubernetes cluster to support `ReadWriteMany` (rwx) volumes. This is due to the fact that multiple container instances need access to write to the attachment storage.
