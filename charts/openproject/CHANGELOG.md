@@ -1,5 +1,15 @@
 # openproject
 
+## 13.9.0
+
+### Minor Changes
+
+- bf3cebf: Upgrade OpenProject core version to 17.6.0 (minor update)
+
+### Patch Changes
+
+- ad12ec6: ignore test-connection and tests folder from build chart
+
 ## 13.8.1
 
 ### Patch Changes
