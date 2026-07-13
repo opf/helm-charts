@@ -1,5 +1,11 @@
 # openproject
 
+## 13.9.1
+
+### Patch Changes
+
+- 9cc6da0: Ensure tls configMap for seeder job is added
+
 ## 13.9.0
 
 ### Minor Changes
