@@ -41,6 +41,11 @@ spec:
       {{- end }}
       volumes:
         {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
+        {{- if .Values.egress.tls.rootCA.fileName }}
+        - name: ca-pemstore
+          configMap:
+            name: "{{- .Values.egress.tls.rootCA.configMap }}"
+        {{- end }}
         {{- if .Values.persistence.enabled }}
         - name: "data"
           persistentVolumeClaim:
@@ -94,6 +99,12 @@ spec:
             {{- if .Values.persistence.enabled }}
             - name: "data"
               mountPath: "/var/openproject/assets"
+            {{- end }}
+            {{- if .Values.egress.tls.rootCA.fileName }}
+            - name: ca-pemstore
+              mountPath: /etc/ssl/certs/custom-ca.pem
+              subPath: {{ .Values.egress.tls.rootCA.fileName }}
+              readOnly: false
             {{- end }}
             {{- include "openproject.extraVolumeMounts" . | indent 12 }}
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
