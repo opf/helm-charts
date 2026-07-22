@@ -38,6 +38,19 @@ data:
            print(f"Error: {e}", flush=True)
         time.sleep(2)
 
+
+    auth_rewrite_function = "return function(conf, ctx) local auth = ngx.req.get_headers()[\"Authorization\"] if auth then local token = auth:match(\"^[Bb]earer%s+(.+)$\") if token then ngx.req.set_header(\"Authorization\", token) end end end"
+    auth_plugins = {
+         "serverless-pre-function": {
+             "phase": "rewrite",
+             "functions": [auth_rewrite_function]
+         },
+         "key-auth": {
+             "header": "Authorization",
+             "hide_credentials": True
+         },
+      }
+
     consumer_data = json.loads(os.getenv("API_CONSUMERS", "[]"))
     apisix_consumers = [
         {
@@ -61,18 +74,15 @@ data:
             {
                 "id": "completion",
                 "uri": "/v1/chat/completions",
+                "priority": 10,
+                {{- if .Values.apisixInitialConfig.route.models }}
+                "vars": [
+                    ["post_arg.model", "~~", "^({{- range $index, $model := .Values.apisixInitialConfig.route.models }}{{ if $index }}|{{ end }}{{ $model.name }}{{ end }})$"]
+                ],
+                {{- end }}
                 "plugins": {
-                    "serverless-pre-function": {
-                        "phase": "rewrite",
-                        "functions": [
-                            "return function(conf, ctx) local auth = ngx.req.get_headers()[\"Authorization\"] if auth then local token = auth:match(\"^[Bb]earer%s+(.+)$\") if token then ngx.req.set_header(\"Authorization\", token) end end end"
-                        ]
-                    },
+                    **auth_plugins,
                     "prometheus": {},
-                    "key-auth": {
-                        "header": "Authorization",
-                        "hide_credentials": True
-                    },
                     "ai-proxy": {
                         "provider": "{{ .Values.apisixInitialConfig.route.provider }}",
                         "auth": {
@@ -93,7 +103,43 @@ data:
                         "main": 1
                     }
                 }
+            },
+            {{- if .Values.apisixInitialConfig.route.models }}
+            {
+                "id": "completion-unallowed-model",
+                "uri": "/v1/chat/completions",
+                "priority": 1,
+                "plugins": {
+                    **auth_plugins,
+                    "mocking": {
+                        "with_mock_header": False,
+                        "response_status": 404,
+                        "response_example":  json.dumps(json.loads("""{"error_msg": "model not found", "description": "Please check the /v1/models endpoint to get the available models."}"""))
+                    }
+                }
+            },
+            {
+                "id": "models",
+                "uri": "/v1/models",
+                "plugins": {
+                    **auth_plugins,
+                    "mocking": {
+                        "with_mock_header": False,
+                        "response_example":  json.dumps(json.loads("""[
+                                {{- range $index, $model := .Values.apisixInitialConfig.route.models }}
+                                    {{- if $index}},{{end}}
+                                    {
+                                        "id": "{{ $model.name }}",
+                                        "object": "model",
+                                        "created": {{ now.Unix }},
+                                        "owned_by": "{{ $model.provider }}"
+                                    }
+                                {{- end }}
+                            ]"""))
+                    }
+                }
             }
+            {{- end }}
         ],
         "consumers": apisix_consumers
     }
