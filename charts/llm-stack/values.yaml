@@ -11,10 +11,10 @@ apisixInitialConfig:
         provider: scaleway
       - name: gemma-4-26b-a4b-it
         provider: scaleway
-  consumer_usage_limits:
-    num_tokens: 1000000
-    time_window_seconds: 86400  # 24h
-    limit_strategy: total_tokens
+  consumerUsageLimits:
+    numTokens: 10000000
+    timeWindowSeconds: 86400  # 24h
+    limitStrategy: total_tokens
   secrets:
     name: "llm-stack-apisix-initial-config-secret"
     providerApiKeyKey: "provider_api_key"
