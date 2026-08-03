@@ -60,9 +60,9 @@ data:
                     "key": consumer["key"]
                 },
                 "ai-rate-limiting": {
-                    "limit": {{ .Values.apisixInitialConfig.consumer_usage_limits.num_tokens}},
-                    "time_window": {{ .Values.apisixInitialConfig.consumer_usage_limits.time_window_seconds }},
-                    "limit_strategy": {{ .Values.apisixInitialConfig.consumer_usage_limits.limit_strategy | quote }}
+                    "limit": {{ .Values.apisixInitialConfig.consumerUsageLimits.numTokens}},
+                    "time_window": {{ .Values.apisixInitialConfig.consumerUsageLimits.timeWindowSeconds }},
+                    "limit_strategy": {{ .Values.apisixInitialConfig.consumerUsageLimits.limitStrategy | quote }}
                 },
             }
         } for consumer in consumer_data
