@@ -1,5 +1,11 @@
 # openproject
 
+## 13.10.0
+
+### Minor Changes
+
+- 805922c: Upgrade OpenProject core version to 17.7.0 (minor update)
+
 ## 13.9.1
 
 ### Patch Changes
