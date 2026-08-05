@@ -91,6 +91,45 @@ entries:
         fingerprint: CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
         url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
     apiVersion: v2
+    appVersion: 17.7.0
+    created: "2026-08-05T11:10:13.254758782Z"
+    dependencies:
+    - condition: postgresql.bundled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^12.1.6
+    - condition: memcached.bundled
+      name: memcached
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^6.3.2
+    - name: common
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^2.2.2
+    description: A Helm chart for running OpenProject via Kubernetes
+    digest: 78f7931ff7a9a80b80c6f7fcae5bf89beea6227ba27c5dba3102c3c095b3bbd7
+    home: https://www.openproject.org/
+    icon: https://charts.openproject.org/logo.svg
+    maintainers:
+    - name: OpenProject
+      url: https://github.com/opf/helm-charts
+    name: openproject
+    type: application
+    urls:
+    - https://github.com/opf/helm-charts/releases/download/openproject-13.10.0/openproject-13.10.0.tgz
+    version: 13.10.0
+  - annotations:
+      artifacthub.io/license: GPL-3.0-only
+      artifacthub.io/links: |
+        - name: Homepage
+          url: https://www.openproject.org/
+        - name: OpenProject Community
+          url: https://community.openproject.org
+        - name: support
+          url: https://www.openproject.org/docs/development/report-a-bug/
+      artifacthub.io/signKey: |
+        fingerprint: CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+        url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+    apiVersion: v2
     appVersion: 17.6.0
     created: "2026-07-13T13:24:58.084959215Z"
     dependencies:
@@ -5346,4 +5385,4 @@ entries:
     urls:
     - https://github.com/opf/helm-charts/releases/download/openproject-llm-stack-1.0.0/openproject-llm-stack-1.0.0.tgz
     version: 1.0.0
-generated: "2026-08-04T16:45:58.40315215Z"
+generated: "2026-08-05T11:10:13.255108677Z"
