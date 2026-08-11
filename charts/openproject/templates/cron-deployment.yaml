@@ -5,6 +5,9 @@ metadata:
   name: {{ include "common.names.fullname" . }}-cron
   namespace: {{ include "common.names.namespace" . | quote }}
   labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- range $key, $value := .Values.cron.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
     openproject/process: cron
     app.kubernetes.io/component: cron
   {{- if or .Values.cron.annotations .Values.commonAnnotations }}
