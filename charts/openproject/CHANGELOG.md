@@ -1,5 +1,11 @@
 # openproject
 
+## 13.10.2
+
+### Patch Changes
+
+- 828ce6e: Upgrade OpenProject core version to 17.7.2 (patch update)
+
 ## 13.10.1
 
 ### Patch Changes
