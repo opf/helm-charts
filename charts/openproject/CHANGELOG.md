@@ -1,5 +1,11 @@
 # openproject
 
+## 13.11.0
+
+### Minor Changes
+
+- a157d43: Upgrade OpenProject core version to 17.8.0 (minor update)
+
 ## 13.10.2
 
 ### Patch Changes
