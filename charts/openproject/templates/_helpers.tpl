@@ -138,6 +138,13 @@ TMPDIR is pointed at this directory in "openproject.env".
 {{- end }}
 {{- end -}}
 
+{{/*
+Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3 API service.
+*/}}
+{{- define "openproject.rustfsServiceHost" -}}
+{{- printf "%s-svc" (include "common.names.dependency.fullname" (dict "chartName" "rustfs" "chartValues" .Values.rustfs "context" .)) -}}
+{{- end -}}
+
 {{- define "openproject.tmpVolumeMounts" -}}
 {{- if eq (include "openproject.useTmpVolumes" .) "true" }}
 - mountPath: /tmp
@@ -212,11 +219,14 @@ TMPDIR is pointed at this directory in "openproject.env".
 - secretRef:
     name: {{ include "common.names.fullname" . }}-oidc
 {{- end }}
-{{- if .Values.s3.enabled }}
+{{- if or .Values.s3.enabled .Values.rustfs.bundled }}
 - secretRef:
     name: {{ include "common.names.fullname" . }}-s3
 {{- end }}
-{{- if .Values.s3.auth.existingSecret }}
+{{- if .Values.rustfs.bundled }}
+- secretRef:
+    name: {{ .Values.rustfs.secret.existingSecret }}
+{{- else if .Values.s3.auth.existingSecret }}
 - secretRef:
     name: {{ .Values.s3.auth.existingSecret }}
 {{- end }}

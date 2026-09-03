@@ -9,3 +9,4 @@ Summary:
 OpenProject: {{ .Values.image.tag }}
 PostgreSQL: {{ if .Values.postgresql.bundled }}{{ .Values.postgresql.image.tag }}{{ else }}external{{ end }}
 Memcached: {{ if .Values.memcached.bundled }}{{ .Values.memcached.image.tag }}{{ else }}external{{ end }}
+Attachment storage: {{ if .Values.rustfs.bundled }}bundled RustFS (S3-compatible, quick-start only){{ else if .Values.s3.enabled }}S3{{ else }}local volume{{ end }}

@@ -1,0 +1,77 @@
+# Helper for installing the OpenProject helm chart locally on a single-node development cluster
+# (e.g. k3d) with TLS and a bundled RustFS S3 instance (including its web console) for attachments.
+#
+# RustFS's S3 API needs a hostname that resolves to the same thing from both your browser and from
+# inside the cluster -- "*.localhost" hostnames can't do that (see README.md for why). This script
+# works around it with nip.io (https://nip.io, a wildcard DNS service resolving
+# "<anything>.<ip>.nip.io" to <ip>), pointed at the k3d load balancer container's docker-network IP,
+# which is reachable both from your machine and from inside the cluster.
+#
+# It will automatically try to create a single TLS certificate covering all three hostnames used by
+# this example, but you can skip that if you create the secret yourself. Since the OpenProject
+# backend itself also talks to RustFS's S3 API directly (not just your browser), it also needs to
+# trust that self-signed certificate -- this script configures that too, via the chart's
+# `egress.tls.rootCA` option (see README.md's "Root CA" section for the general mechanism).
+
+DEV_NAMESPACE=openproject
+LB_CONTAINER=k3d-dev-serverlb
+TLS_SECRET=openproject-rustfs-local-tls
+CA_CONFIGMAP=mkcert-rootca
+
+if ! which mkcert &>/dev/null; then
+  echo "Please install mkcert so we can generate a TLS certificate"
+  exit 1
+fi
+
+LB_IP=$(docker inspect "$LB_CONTAINER" --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
+if [ -z "$LB_IP" ]; then
+  echo "Could not determine the IP of the $LB_CONTAINER container. Is your k3d cluster ('k3d cluster create dev ...') running?"
+  exit 1
+fi
+
+OPENPROJECT_DOMAIN="openproject.$LB_IP.nip.io"
+S3_DOMAIN="s3.$LB_IP.nip.io"
+CONSOLE_DOMAIN="rustfs.$LB_IP.nip.io"
+
+echo "Using k3d load balancer IP $LB_IP for all hostnames below."
+echo "(If this ever changes -- e.g. after recreating the cluster -- just re-run this script.)"
+
+if ! kubectl get namespace $DEV_NAMESPACE &>/dev/null; then
+  kubectl create namespace $DEV_NAMESPACE
+fi
+
+if ! kubectl get secret -n $DEV_NAMESPACE $TLS_SECRET &>/dev/null; then
+  echo "Creating self-signed TLS certificate for $OPENPROJECT_DOMAIN, $S3_DOMAIN and $CONSOLE_DOMAIN"
+  mkcert -install -cert-file $TLS_SECRET.pem -key-file $TLS_SECRET-key.pem $OPENPROJECT_DOMAIN $S3_DOMAIN $CONSOLE_DOMAIN
+  echo "Creating secret for TLS certificate"
+  kubectl -n $DEV_NAMESPACE create secret tls $TLS_SECRET --key=$TLS_SECRET-key.pem --cert=$TLS_SECRET.pem
+  rm $TLS_SECRET.pem $TLS_SECRET-key.pem
+
+  echo -e "\n  \033[0;33mPlease import `echo $(mkcert -CAROOT)/rootCA.pem` into your browser certificate store if you haven't done so already.\033[0m\n"
+else
+  echo -e "\n  Found tls secret.\n"
+fi
+
+if ! kubectl get configmap -n $DEV_NAMESPACE $CA_CONFIGMAP &>/dev/null; then
+  echo "Creating configmap with mkcert's root CA, so OpenProject trusts it for its own S3 calls"
+  kubectl -n $DEV_NAMESPACE create configmap $CA_CONFIGMAP --from-file=rootCA.pem="$(mkcert -CAROOT)/rootCA.pem"
+else
+  echo -e "\n  Found root CA configmap.\n"
+fi
+
+helm upgrade \
+  --namespace openproject \
+  --install openproject . \
+  -f examples/local-with-rustfs-values.yaml \
+  --set ingress.host=$OPENPROJECT_DOMAIN \
+  --set ingress.tls.secretName=$TLS_SECRET \
+  --set rustfs.s3Ingress.host=$S3_DOMAIN \
+  --set rustfs.s3Ingress.tls.secretName=$TLS_SECRET \
+  --set rustfs.ingress.hosts[0].host=$CONSOLE_DOMAIN \
+  --set rustfs.ingress.tls.existingSecret.name=$TLS_SECRET \
+  --set egress.tls.rootCA.configMap=$CA_CONFIGMAP \
+  --set egress.tls.rootCA.fileName=rootCA.pem
+
+echo -e "\nOnce ready:"
+echo "  OpenProject:    https://$OPENPROJECT_DOMAIN"
+echo "  RustFS console: https://$CONSOLE_DOMAIN"

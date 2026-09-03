@@ -791,6 +791,176 @@ s3:
   ##
   ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/#attachments-storage
 
+## Configure a bundled RustFS instance as a quick-start S3-compatible object store for attachments.
+##
+## RustFS (https://rustfs.com) is a lightweight, MinIO-alternative, S3-compatible object store. When
+## `rustfs.bundled` is set to `true`, a single-node RustFS instance is deployed into the current
+## namespace and OpenProject is automatically configured to store attachments in it (equivalent to
+## setting `s3.*` above by hand, so you do not need to touch `s3.*` yourself in that case).
+##
+## IMPORTANT: this is meant to get you started quickly, NOT as a production setup.
+## Either adjust the rustfs values for production (using distributed mode), or use an external S3 storage
+## (configured via s3.*).
+##
+rustfs:
+  ## When set to true, a single-node RustFS instance is deployed and OpenProject is configured to
+  ## use it as S3 storage for attachments.
+  #
+  bundled: false
+
+  image:
+    rustfs:
+      repository: "rustfs/rustfs"
+      tag: "1.0.0-rc.6"
+      pullPolicy: "IfNotPresent"
+
+    initImage:
+      repository: "busybox"
+      tag: "stable"
+      pullPolicy: "IfNotPresent"
+
+  ## The rustfs chart's own defaults are already sensible (non-root, capabilities dropped, read-only
+  ## root filesystem) -- we only add a seccompProfile on top, matching the rest of this chart's own
+  ## pods, so it also satisfies the Pod Security Standards "restricted" profile.
+  #
+  containerSecurityContext:
+    seccompProfile:
+      type: "RuntimeDefault"
+
+  ## Name of the S3 bucket used for attachments. Created automatically after install/upgrade.
+  #
+  bucketName: "openproject"
+
+  ## RustFS access credentials.
+  ##
+  ## By default, random credentials are generated on first install and kept across upgrades
+  ## (stored in a Secret named "rustfs-credentials-auto-generated").
+  ##
+  ## To use your own credentials instead, point `secret.existingSecret` at your own Secret
+  ## containing the keys RUSTFS_ACCESS_KEY, RUSTFS_SECRET_KEY,
+  ## OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID and
+  ## OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY.
+  #
+  secret:
+    existingSecret: "rustfs-credentials-auto-generated"
+
+  ## Run a single, non-HA instance instead of RustFS's default distributed/erasure-coded cluster.
+  #
+  mode:
+    standalone:
+      enabled: true
+    distributed:
+      enabled: false
+
+  ## The rustfs chart's own bundled ingress always targets its web console, not its S3 API, so it
+  ## is of no use for OpenProject itself and is kept disabled here. See `s3Ingress` below for the
+  ## (required) ingress that exposes the S3 API OpenProject actually talks to.
+  ##
+  ## If you'd also like to reach the RustFS web console (e.g. to browse the bucket by hand), you
+  ## can enable this bundled ingress yourself, entirely optionally, e.g.:
+  ##
+  ## ingress:
+  ##   enabled: true
+  ##   className: "nginx"
+  ##   hosts:
+  ##     - host: rustfs-console.openproject.example.com
+  ##       paths:
+  ##         - path: /
+  ##           pathType: Prefix
+  ##   tls:
+  ##     enabled: true
+  ##     existingSecret:
+  ##       enabled: true
+  ##       name: rustfs-console-tls
+  ##
+  ## To log into the console, use the same access key / secret key as the S3 credentials (see
+  ## `secret` above): by default these are randomly generated and stored in the
+  ## "rustfs-credentials-auto-generated" Secret, under the keys RUSTFS_ACCESS_KEY /
+  ## RUSTFS_SECRET_KEY. Retrieve them with:
+  ##
+  ## ```
+  ## kubectl get secret -n <namespace> rustfs-credentials-auto-generated -o yaml | grep RUSTFS_ | awk '{print $1, $2}'
+  ## echo '<base64 value>' | base64 -d
+  ## ```
+  ##
+  ## (If you configured `secret.existingSecret` yourself instead, read the credentials from
+  ## that Secret's RUSTFS_ACCESS_KEY / RUSTFS_SECRET_KEY keys the same way.)
+  #
+  ingress:
+    enabled: false
+
+  ## OpenProject generates pre-signed URLs that point directly at the S3 endpoint for attachment
+  ## downloads (and uploads, if `s3.directUploads` is enabled). Those URLs are opened directly by
+  ## the user's browser, so the bundled RustFS instance's S3 API must be reachable from outside the
+  ## cluster under a real hostname -- a ClusterIP Service alone is not enough for this to work.
+  ##
+  ## This configures a dedicated Ingress for RustFS's S3 API port. It is unrelated to the `ingress`
+  ## block above (which only ever targets RustFS's web console, not its S3 API).
+  #
+  s3Ingress:
+    ## Public hostname under which the RustFS S3 API should be reachable, e.g.
+    ## "s3.openproject.example.com". Required when rustfs.bundled is true.
+    #
+    host: ""
+
+    ## Define the name of the ingress class. If left empty, the cluster default is used.
+    #
+    ingressClassName: ""
+
+    ## Define custom ingress annotations, e.g. for cert-manager.
+    #
+    annotations: {}
+
+    path: /
+    pathType: "Prefix"
+
+    tls:
+      ## Whether to enable TLS on the ingress. Note that TLS is only actually terminated -- and
+      ## the pre-signed URLs OpenProject generates only use https:// rather than http:// -- once
+      ## `secretName` below is also set.
+      #
+      enabled: true
+
+      ## The name of the kubernetes secret which contains a TLS private key and certificate.
+      ## Hint: This secret is not created by this chart (unless managed by a cert-manager
+      ## annotation above) and must be provided. Leaving this empty serves plain HTTP, regardless
+      ## of `enabled` above.
+      #
+      secretName: ""
+
+  ## Since attachment downloads and uploads happen directly between the user's browser and the S3
+  ## API (see `s3Ingress` above), the browser sends cross-origin requests to it, which RustFS must
+  ## answer with CORS headers, or the browser blocks them.
+  ##
+  ## RustFS controls this via the RUSTFS_CORS_ALLOWED_ORIGINS env var on the server itself (there is
+  ## no per-bucket CORS policy API yet), which we set here via `extraEnv`. It defaults to "*"
+  ## (allow any origin): pre-signed S3 requests authenticate via their signature, not cookies, so
+  ## allowing any origin does not expose the bucket to anyone who couldn't already reach it directly.
+  ## Narrow this to your OpenProject origin(s) (comma-separated) if you'd rather be explicit, e.g.
+  ## "https://openproject.example.com".
+  #
+  extraEnv:
+    - name: RUSTFS_CORS_ALLOWED_ORIGINS
+      value: "*"
+
+  ## Storage for the bundled RustFS instance. Leave storageclass.name empty to use the cluster's
+  ## default StorageClass.
+  #
+  storageclass:
+    name: ""
+    dataStorageSize: "10Gi"
+    logStorageSize: "1Gi"
+
+  ## The post-install/upgrade job that creates `rustfs.bucketName` uses rclone, which supports the
+  ## S3 API RustFS speaks.
+  #
+  bucketInitJob:
+    image:
+      registry: "docker.io"
+      repository: "rclone/rclone"
+      tag: "1.75.0"
+      imagePullPolicy: "IfNotPresent"
+
 ## Define custom pod annotations.
 #
 podAnnotations: {}

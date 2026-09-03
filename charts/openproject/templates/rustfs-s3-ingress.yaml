@@ -1,0 +1,33 @@
+{{- if .Values.rustfs.bundled }}
+{{- $host := required "rustfs.s3Ingress.host is required when rustfs.bundled is true, so OpenProject's pre-signed attachment URLs are reachable from users' browsers" .Values.rustfs.s3Ingress.host }}
+---
+apiVersion: {{ include "common.capabilities.ingress.apiVersion" . }}
+kind: Ingress
+metadata:
+  name: {{ include "common.names.fullname" . }}-rustfs
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: rustfs
+  {{- if or .Values.rustfs.s3Ingress.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" ( dict "values" ( list .Values.rustfs.s3Ingress.annotations .Values.commonAnnotations ) "context" . ) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.rustfs.s3Ingress.ingressClassName }}
+  ingressClassName: {{ .Values.rustfs.s3Ingress.ingressClassName }}
+  {{- end }}
+  {{- if and .Values.rustfs.s3Ingress.tls.enabled .Values.rustfs.s3Ingress.tls.secretName }}
+  tls:
+    - hosts:
+        - {{ $host | quote }}
+      secretName: "{{ .Values.rustfs.s3Ingress.tls.secretName }}"
+  {{- end }}
+  rules:
+    - host: {{ $host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.rustfs.s3Ingress.path }}
+            pathType: {{ .Values.rustfs.s3Ingress.pathType }}
+            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "openproject.rustfsServiceHost" $) "servicePort" "endpoint" "context" $) | nindent 14 }}
+...
+{{- end }}

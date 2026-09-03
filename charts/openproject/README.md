@@ -141,7 +141,7 @@ pod-security.kubernetes.io/enforce: restricted
 pod-security.kubernetes.io/enforce-version: latest
 ```
 
-The bundled PostgreSQL and memcached subcharts also render with restricted-compatible security contexts at the pinned chart versions. If you enable Bitnami's PostgreSQL `volumePermissions` init container, that pod may fail restricted enforcement because it runs as root.
+The bundled PostgreSQL and memcached subcharts also render with restricted-compatible security contexts at the pinned chart versions. If you enable Bitnami's PostgreSQL `volumePermissions` init container, that pod may fail restricted enforcement because it runs as root. The same applies to the bundled RustFS subchart (see `rustfs.bundled`) — its own defaults are already non-root with capabilities dropped, and this chart additionally sets a `seccompProfile` on it to match.
 
 ### ReadWriteMany volumes
 
@@ -388,6 +388,77 @@ serviceAccount:
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-openproject-s3-role
 ```
+
+#### Bundled RustFS (quick-start S3 storage)
+
+If you don't have an S3-compatible object store handy, the chart can deploy a minimal
+[RustFS](https://rustfs.com) instance for you and wire it up for attachment storage automatically:
+
+```yaml
+rustfs:
+  bundled: true
+  s3Ingress:
+    host: s3.openproject.example.com
+```
+
+This runs a single, non-highly-available RustFS pod with a small default volume, and sets `s3.*`
+accordingly. **This is meant to get you started quickly and is not a production-grade setup** — it
+has no redundancy or backups of its own. For production, configure RustFS with proper
+HA/persistence, or configure `s3.*` with an external service instead.
+
+**`rustfs.s3Ingress.host` must resolve to the same thing from both the end user's browser and from
+inside the cluster.**
+
+TLS is on by default (`rustfs.s3Ingress.tls.enabled: true`), and requires you to set
+`rustfs.s3Ingress.tls.secretName` to a Secret containing your certificate, unless you want to use http.
+
+If that certificate is self-signed, remember that the OpenProject **backend** connects to
+`rustfs.s3Ingress.host` too, not just the browser. Use the chart's [Root CA](#root-ca) option
+(`egress.tls.rootCA`) for this.
+
+Access credentials are randomly generated on first install and kept across upgrades (in a Secret
+named `rustfs-credentials-auto-generated`). The bucket named by `rustfs.bucketName` (default
+`openproject`) is created automatically via a post-install/upgrade hook job. To use your own
+credentials, set `rustfs.secret.existingSecret` to a Secret you control containing the keys
+`OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID` and `OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY`.
+
+##### RustFS web console
+
+The bundled RustFS instance also ships a web console (separate from the S3 API), which is useful for
+browsing the bucket by hand. It is not exposed by default. To reach it, enable the rustfs chart's own
+ingress via `rustfs.ingress.*` (see the commented-out example next to `rustfs.ingress` in
+`values.yaml`), e.g.:
+
+```yaml
+rustfs:
+  bundled: true
+  s3Ingress:
+    host: s3.openproject.example.com
+  ingress:
+    enabled: true
+    className: "nginx"
+    hosts:
+      - host: rustfs-console.openproject.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      enabled: true
+      existingSecret:
+        enabled: true
+        name: rustfs-console-tls
+```
+
+To log in, use the same access key / secret key as the S3 credentials described above. By default
+these are randomly generated; retrieve them with:
+
+```bash
+kubectl get secret -n <namespace> rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_ACCESS_KEY}' | base64 -d; echo
+kubectl get secret -n <namespace> rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_SECRET_KEY}' | base64 -d; echo
+```
+
+If you configured `rustfs.secret.existingSecret` yourself instead, read the credentials from that
+Secret's `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` keys the same way.
 
 ### Incoming E-Mails cron job (IMAP)
 

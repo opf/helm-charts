@@ -48,65 +48,98 @@ describe 'security context' do
     pod_spec.fetch('securityContext', {}).merge(container.fetch('securityContext', {}))
   end
 
-  it 'renders pod specs and containers to check' do
-    expect(rendered_pod_specs).not_to be_empty
+  # Shared across every rendered set of pod specs we check (the chart's own defaults, and any
+  # additional bundled-feature contexts below) so the restricted-profile assertions live in one
+  # place instead of being copy-pasted per context.
+  shared_examples 'a Pod Security Standards "restricted"-compatible workload' do
+    it 'renders pod specs and containers to check' do
+      expect(rendered_pod_specs).not_to be_empty
 
-    rendered_pod_specs.each do |resource_name, pod_spec|
-      expect(containers_for(pod_spec)).not_to be_empty, "expected #{resource_name} to render at least one container"
-    end
-  end
-
-  it 'sets the restricted security context on every container', :aggregate_failures do
-    rendered_pod_specs.each do |resource_name, pod_spec|
-      containers_for(pod_spec).each do |container|
-        security_context = effective_security_context(pod_spec, container)
-        container_name = "#{resource_name}/#{container['name']}"
-
-        expect(security_context['allowPrivilegeEscalation']).to be(false), container_name
-        expect(security_context['runAsNonRoot']).to be(true), container_name
-        expect(security_context['runAsUser']).not_to be_nil, container_name
-        expect(security_context['runAsUser']).not_to eq(0), container_name
-        expect(allowed_seccomp_types).to include(security_context.dig('seccompProfile', 'type')), container_name
-        expect(security_context.dig('capabilities', 'drop')).to include('ALL'), container_name
-        expect(Array(security_context.dig('capabilities', 'add'))).to all(eq('NET_BIND_SERVICE')), container_name
+      rendered_pod_specs.each do |resource_name, pod_spec|
+        expect(containers_for(pod_spec)).not_to be_empty, "expected #{resource_name} to render at least one container"
       end
     end
-  end
 
-  it 'does not render baseline-prohibited pod and container settings', :aggregate_failures do
-    rendered_pod_specs.each do |resource_name, pod_spec|
-      expect(pod_spec['hostNetwork']).not_to be(true), resource_name
-      expect(pod_spec['hostPID']).not_to be(true), resource_name
-      expect(pod_spec['hostIPC']).not_to be(true), resource_name
-      expect(allowed_selinux_types).to include(pod_spec.dig('securityContext', 'seLinuxOptions', 'type')), resource_name
-      expect(pod_spec.dig('securityContext', 'seLinuxOptions', 'user')).to be_nil, resource_name
-      expect(pod_spec.dig('securityContext', 'seLinuxOptions', 'role')).to be_nil, resource_name
+    it 'sets the restricted security context on every container', :aggregate_failures do
+      rendered_pod_specs.each do |resource_name, pod_spec|
+        containers_for(pod_spec).each do |container|
+          security_context = effective_security_context(pod_spec, container)
+          container_name = "#{resource_name}/#{container['name']}"
 
-      containers_for(pod_spec).each do |container|
-        container_name = "#{resource_name}/#{container['name']}"
+          expect(security_context['allowPrivilegeEscalation']).to be(false), container_name
+          expect(security_context['runAsNonRoot']).to be(true), container_name
+          expect(security_context['runAsUser']).not_to be_nil, container_name
+          expect(security_context['runAsUser']).not_to eq(0), container_name
+          expect(allowed_seccomp_types).to include(security_context.dig('seccompProfile', 'type')), container_name
+          expect(security_context.dig('capabilities', 'drop')).to include('ALL'), container_name
+          expect(Array(security_context.dig('capabilities', 'add'))).to all(eq('NET_BIND_SERVICE')), container_name
+        end
+      end
+    end
 
-        expect(container.dig('securityContext', 'privileged')).not_to be(true), container_name
-        expect(container.dig('securityContext', 'procMount')).to satisfy { |value| value.nil? || value == 'Default' }, container_name
-        expect(allowed_selinux_types).to include(container.dig('securityContext', 'seLinuxOptions', 'type')), container_name
-        expect(container.dig('securityContext', 'seLinuxOptions', 'user')).to be_nil, container_name
-        expect(container.dig('securityContext', 'seLinuxOptions', 'role')).to be_nil, container_name
+    it 'does not render baseline-prohibited pod and container settings', :aggregate_failures do
+      rendered_pod_specs.each do |resource_name, pod_spec|
+        expect(pod_spec['hostNetwork']).not_to be(true), resource_name
+        expect(pod_spec['hostPID']).not_to be(true), resource_name
+        expect(pod_spec['hostIPC']).not_to be(true), resource_name
+        expect(allowed_selinux_types).to include(pod_spec.dig('securityContext', 'seLinuxOptions', 'type')), resource_name
+        expect(pod_spec.dig('securityContext', 'seLinuxOptions', 'user')).to be_nil, resource_name
+        expect(pod_spec.dig('securityContext', 'seLinuxOptions', 'role')).to be_nil, resource_name
 
-        container.fetch('ports', []).each do |port|
-          expect(port['hostPort']).to satisfy { |value| value.nil? || value.zero? }, container_name
+        containers_for(pod_spec).each do |container|
+          container_name = "#{resource_name}/#{container['name']}"
+
+          expect(container.dig('securityContext', 'privileged')).not_to be(true), container_name
+          expect(container.dig('securityContext', 'procMount')).to satisfy { |value| value.nil? || value == 'Default' }, container_name
+          expect(allowed_selinux_types).to include(container.dig('securityContext', 'seLinuxOptions', 'type')), container_name
+          expect(container.dig('securityContext', 'seLinuxOptions', 'user')).to be_nil, container_name
+          expect(container.dig('securityContext', 'seLinuxOptions', 'role')).to be_nil, container_name
+
+          container.fetch('ports', []).each do |port|
+            expect(port['hostPort']).to satisfy { |value| value.nil? || value.zero? }, container_name
+          end
+        end
+      end
+    end
+
+    it 'uses only restricted volume types', :aggregate_failures do
+      rendered_pod_specs.each do |resource_name, pod_spec|
+        pod_spec.fetch('volumes', []).each do |volume|
+          volume_types = volume.reject { |key, value| key == 'name' || value.nil? }.keys
+
+          expect(volume_types).not_to include('hostPath'), "#{resource_name}/#{volume['name']}"
+          expect(volume_types).not_to be_empty, "#{resource_name}/#{volume['name']}"
+          expect(volume_types - restricted_volume_types).to be_empty, "#{resource_name}/#{volume['name']}"
         end
       end
     end
   end
 
-  it 'uses only restricted volume types', :aggregate_failures do
-    rendered_pod_specs.each do |resource_name, pod_spec|
-      pod_spec.fetch('volumes', []).each do |volume|
-        volume_types = volume.reject { |key, value| key == 'name' || value.nil? }.keys
+  include_examples 'a Pod Security Standards "restricted"-compatible workload'
 
-        expect(volume_types).not_to include('hostPath'), "#{resource_name}/#{volume['name']}"
-        expect(volume_types).not_to be_empty, "#{resource_name}/#{volume['name']}"
-        expect(volume_types - restricted_volume_types).to be_empty, "#{resource_name}/#{volume['name']}"
-      end
+  context 'with the bundled rustfs bucket-init job' do
+    let(:template) do
+      HelmTemplate.new(
+        HelmTemplate.with_defaults(
+          <<~YAML
+            rustfs:
+              bundled: true
+              s3Ingress:
+                host: s3.example.com
+          YAML
+        )
+      )
     end
+
+    # Scoped to Jobs only: the bundled rustfs subchart also renders its own Helm test-hook Pod
+    # (a "helm test" connectivity check, not part of the real deployment), which isn't covered by
+    # this chart's security contexts and would otherwise be swept in and fail here.
+    let(:pod_spec_paths) { { 'Job' => %w[spec template spec] } }
+
+    it 'renders the rustfs bucket-init job' do
+      expect(template.dig('Job/optest-openproject-rustfs-init-bucket')).not_to be_nil
+    end
+
+    include_examples 'a Pod Security Standards "restricted"-compatible workload'
   end
 end

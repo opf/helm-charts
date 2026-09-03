@@ -1,0 +1,61 @@
+{{- if .Values.rustfs.bundled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "common.names.fullname" . }}-rustfs-init-bucket
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: rustfs
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 8 }}
+        app.kubernetes.io/component: rustfs
+    spec:
+      {{- include "openproject.podSecurityContext" . | indent 6 }}
+      restartPolicy: Never
+      {{- include "openproject.imagePullSecrets" . | indent 6 }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      containers:
+        - name: create-bucket
+          image: "{{ .Values.rustfs.bucketInitJob.image.registry }}/{{ .Values.rustfs.bucketInitJob.image.repository }}:{{ .Values.rustfs.bucketInitJob.image.tag }}"
+          imagePullPolicy: {{ .Values.rustfs.bucketInitJob.image.imagePullPolicy }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.rustfs.secret.existingSecret }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              RUSTFS_URL="http://{{ include "openproject.rustfsServiceHost" $ }}:{{ .Values.rustfs.service.endpoint.port | default 9000 }}"
+              RCLONE_REMOTE=":s3,provider=Other,env_auth=false,access_key_id=${OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID},secret_access_key=${OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY},endpoint='${RUSTFS_URL}',force_path_style=true:{{ .Values.rustfs.bucketName }}"
+              echo "Waiting for RustFS at ${RUSTFS_URL} to become reachable and creating the bucket..."
+              i=0
+              until rclone mkdir "${RCLONE_REMOTE}" --retries=1 --low-level-retries=1 --contimeout=3s --timeout=5s; do
+                i=$((i + 1))
+                if [ "$i" -ge 60 ]; then
+                  echo "Timed out waiting for RustFS to become reachable." >&2
+                  exit 1
+                fi
+                sleep 5
+              done
+              echo "Bucket '{{ .Values.rustfs.bucketName }}' is ready."
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
+{{- end }}
