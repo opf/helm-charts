@@ -97,7 +97,8 @@ data:
                             "endpoint": "{{ if .Values.vllm.enabled }}http://{{ .Values.vllm.service.name }}:{{ .Values.vllm.service.port | default 8000 }}/v1/chat/completions{{ else }}{{ .Values.apisixInitialConfig.route.baseURL }}{{ end }}"
                         }
                         {{- end }}
-                    }
+                    },
+                    "ai-loop-guard": {}
                 },
                 "upstream": {
                     "type": "roundrobin",

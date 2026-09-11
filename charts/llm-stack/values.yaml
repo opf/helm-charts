@@ -43,6 +43,23 @@ apisix:
           - 10.42.0.0/16  # other pods
     prometheus:
       enabled: true
+    customPlugins:
+      enabled: true
+      plugins:
+        - name: ai-loop-guard
+          configMap:
+            name: apisix-ai-loop-guard-plugin-configmap
+            mounts:
+              - key: ai_loop_guard.lua
+                path: /opts/custom_plugins/apisix/plugins/ai-loop-guard.lua
+    plugins:
+      - key-auth
+      - ai-proxy
+      - ai-rate-limiting
+      - ai-loop-guard
+      - prometheus
+      - serverless-pre-function
+      - mocking
   etcd:
     enabled: false
   metrics:

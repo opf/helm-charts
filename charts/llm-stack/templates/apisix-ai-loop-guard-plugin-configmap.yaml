@@ -1,0 +1,13 @@
+{{- if .Values.apisix.apisix.customPlugins.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apisix-ai-loop-guard-plugin-configmap
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+data:
+  ai_loop_guard.lua: |
+{{ .Files.Get "apisix-plugins/ai-loop-guard.lua" | indent 4 }}
+
+{{ end }}

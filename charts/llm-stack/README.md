@@ -48,7 +48,8 @@ helm install dev-release . -f examples/local-vllm-cpu.yaml -n llm-stack
 ```
 Wait for the vllm liveness probe to start (~4 min) and make a test request:
 ```bash
-bash bin/test-request-local-vllm.sh
+export LLM_STACK_MODEL=Qwen/Qwen2.5-0.5B-Instruct
+bash bin/test-request-llm-gen.sh
 ```
 
 #### Using scaleway instead of vllm
@@ -60,7 +61,7 @@ helm install dev-release . -f examples/scaleway.yaml -n llm-stack
 ```
 
 ```bash
-bash bin/test-request-scaleway.sh
+bash bin/test-request-llm-gen.sh
 ```
 
 ### Observability
@@ -79,4 +80,14 @@ sum(increase(apisix_http_status{code=~"[2].."}[1m])) by (consumer)
 Failing requests for apisix grouped by consumer at 1 min interval:
 ```promql
 sum(increase(apisix_http_status{code=~"[45].."}[1m])) by (consumer)
+```
+
+Triggerings of ai-loop-guard
+```promql
+sum(increase(apisix_ai_loop_guard_trigger_count[1m])) by (consumer)
+```
+
+Byte lengths of the loops detected by ai loop guard 
+```promql
+sum(increase(apisix_ai_loop_guard_detected_period_bucket[1m])) by (le)
 ```
