@@ -45,7 +45,7 @@ spec:
             - |
               set -e
               RUSTFS_URL="http://{{ include "openproject.rustfsServiceHost" $ }}:{{ .Values.rustfs.service.endpoint.port | default 9000 }}"
-              RCLONE_REMOTE=":s3,provider=Other,env_auth=false,access_key_id=${OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID},secret_access_key=${OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY},endpoint='${RUSTFS_URL}',force_path_style=true:{{ .Values.rustfs.bucketName }}"
+              RCLONE_REMOTE=":s3,provider=Other,env_auth=false,access_key_id=${RUSTFS_ACCESS_KEY},secret_access_key=${RUSTFS_SECRET_KEY},endpoint='${RUSTFS_URL}',force_path_style=true:{{ .Values.rustfs.bucketName }}"
               echo "Waiting for RustFS at ${RUSTFS_URL} to become reachable and creating the bucket..."
               i=0
               until rclone mkdir "${RCLONE_REMOTE}" --retries=1 --low-level-retries=1 --contimeout=3s --timeout=5s; do

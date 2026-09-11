@@ -142,7 +142,11 @@ TMPDIR is pointed at this directory in "openproject.env".
 Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3 API service.
 */}}
 {{- define "openproject.rustfsServiceHost" -}}
-{{- printf "%s-svc" (include "common.names.dependency.fullname" (dict "chartName" "rustfs" "chartValues" .Values.rustfs "context" .)) -}}
+{{- printf "%s-rustfs-svc" (include "common.names.fullname" .) -}}
+{{- end -}}
+
+{{- define "openproject.rustfsFullname" -}}
+{{- printf "%s-rustfs" (include "common.names.fullname" .) -}}
 {{- end -}}
 
 {{- define "openproject.tmpVolumeMounts" -}}
@@ -223,10 +227,7 @@ Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3
 - secretRef:
     name: {{ include "common.names.fullname" . }}-s3
 {{- end }}
-{{- if .Values.rustfs.bundled }}
-- secretRef:
-    name: {{ .Values.rustfs.secret.existingSecret }}
-{{- else if .Values.s3.auth.existingSecret }}
+{{- if and (not .Values.rustfs.bundled) .Values.s3.auth.existingSecret }}
 - secretRef:
     name: {{ .Values.s3.auth.existingSecret }}
 {{- end }}
@@ -260,6 +261,21 @@ Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3
 {{- if .Values.egress.tls.rootCA.fileName }}
 - name: SSL_CERT_FILE
   value: "/etc/ssl/certs/custom-ca.pem"
+{{- end }}
+{{- if .Values.rustfs.bundled }}
+{{/* The credentials secret (auto-generated or user-provided) stores these under RustFS's own
+     RUSTFS_ACCESS_KEY/RUSTFS_SECRET_KEY names, not duplicated under OpenProject's own env var
+     names too -- mapped in explicitly here instead. */}}
+- name: OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.rustfs.secret.existingSecret }}
+      key: RUSTFS_ACCESS_KEY
+- name: OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.rustfs.secret.existingSecret }}
+      key: RUSTFS_SECRET_KEY
 {{- end }}
 {{- if .Values.postgresql.auth.existingSecret }}
 - name: OPENPROJECT_DB_PASSWORD

@@ -67,8 +67,8 @@ helm upgrade \
   --set ingress.tls.secretName=$TLS_SECRET \
   --set rustfs.s3Ingress.host=$S3_DOMAIN \
   --set rustfs.s3Ingress.tls.secretName=$TLS_SECRET \
-  --set rustfs.ingress.hosts[0].host=$CONSOLE_DOMAIN \
-  --set rustfs.ingress.tls.existingSecret.name=$TLS_SECRET \
+  --set rustfs.consoleIngress.host=$CONSOLE_DOMAIN \
+  --set rustfs.consoleIngress.tls.secretName=$TLS_SECRET \
   --set egress.tls.rootCA.configMap=$CA_CONFIGMAP \
   --set egress.tls.rootCA.fileName=rootCA.pem
 

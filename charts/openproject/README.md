@@ -141,7 +141,7 @@ pod-security.kubernetes.io/enforce: restricted
 pod-security.kubernetes.io/enforce-version: latest
 ```
 
-The bundled PostgreSQL and memcached subcharts also render with restricted-compatible security contexts at the pinned chart versions. If you enable Bitnami's PostgreSQL `volumePermissions` init container, that pod may fail restricted enforcement because it runs as root. The same applies to the bundled RustFS subchart (see `rustfs.bundled`) — its own defaults are already non-root with capabilities dropped, and this chart additionally sets a `seccompProfile` on it to match.
+The bundled PostgreSQL and memcached subcharts also render with restricted-compatible security contexts at the pinned chart versions. If you enable Bitnami's PostgreSQL `volumePermissions` init container, that pod may fail restricted enforcement because it runs as root. The bundled RustFS Deployment (see `rustfs.bundled`) uses this chart's own restricted-compatible security context too.
 
 ### ReadWriteMany volumes
 
@@ -401,10 +401,15 @@ rustfs:
     host: s3.openproject.example.com
 ```
 
-This runs a single, non-highly-available RustFS pod with a small default volume, and sets `s3.*`
-accordingly. **This is meant to get you started quickly and is not a production-grade setup** — it
-has no redundancy or backups of its own. For production, configure RustFS with proper
-HA/persistence, or configure `s3.*` with an external service instead.
+This is a single, hand-rolled RustFS Deployment (one pod, one small PVC) maintained directly by this
+chart — **not** the [official RustFS Helm chart](https://charts.rustfs.com). It's kept intentionally
+minimal since it only ever runs RustFS in standalone (single-node) mode. **This is meant to get you
+started quickly and is not a production-grade setup** — it has no redundancy or backups of its own,
+and pulling in a whole separate chart dependency (and its own transitive chart-repo availability) for
+what amounts to one container felt like the wrong tradeoff for a "just get me started" feature. For a
+real production RustFS deployment (clustering, HA, proper storage sizing, etc.), install the
+[official RustFS Helm chart](https://charts.rustfs.com) separately and point `s3.*` at it directly
+instead of using `rustfs.bundled`.
 
 **`rustfs.s3Ingress.host` must resolve to the same thing from both the end user's browser and from
 inside the cluster.**
@@ -417,36 +422,33 @@ If that certificate is self-signed, remember that the OpenProject **backend** co
 (`egress.tls.rootCA`) for this.
 
 Access credentials are randomly generated on first install and kept across upgrades (in a Secret
-named `rustfs-credentials-auto-generated`). The bucket named by `rustfs.bucketName` (default
-`openproject`) is created automatically via a post-install/upgrade hook job. To use your own
-credentials, set `rustfs.secret.existingSecret` to a Secret you control containing the keys
-`OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID` and `OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY`.
+named `rustfs-credentials-auto-generated`, under the keys `RUSTFS_ACCESS_KEY` /
+`RUSTFS_SECRET_KEY` — RustFS's own native env var names). The bucket named by `rustfs.bucketName`
+(default `openproject`) is created automatically via a post-install/upgrade hook job. To use your
+own credentials, set `rustfs.secret.existingSecret` to a Secret you control containing those same
+two keys; the chart maps them into `OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID` /
+`OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY` for OpenProject itself, so you don't need to
+duplicate the values under both sets of names.
 
 ##### RustFS web console
 
 The bundled RustFS instance also ships a web console (separate from the S3 API), which is useful for
-browsing the bucket by hand. It is not exposed by default. To reach it, enable the rustfs chart's own
-ingress via `rustfs.ingress.*` (see the commented-out example next to `rustfs.ingress` in
-`values.yaml`), e.g.:
+browsing the bucket by hand. It is not exposed by default. Enable it via `rustfs.consoleIngress`.
+Once reachable, the console itself lives under the `/rustfs/console/` path, not `/` (which returns a
+plain 403 from the S3 API instead) — e.g. `https://rustfs-console.openproject.example.com/rustfs/console/`.
 
 ```yaml
 rustfs:
   bundled: true
   s3Ingress:
     host: s3.openproject.example.com
-  ingress:
+  consoleIngress:
     enabled: true
-    className: "nginx"
-    hosts:
-      - host: rustfs-console.openproject.example.com
-        paths:
-          - path: /
-            pathType: Prefix
+    host: rustfs-console.openproject.example.com
+    ingressClassName: "nginx"
     tls:
       enabled: true
-      existingSecret:
-        enabled: true
-        name: rustfs-console-tls
+      secretName: rustfs-console-tls
 ```
 
 To log in, use the same access key / secret key as the S3 credentials described above. By default
@@ -458,7 +460,7 @@ kubectl get secret -n <namespace> rustfs-credentials-auto-generated -o jsonpath=
 ```
 
 If you configured `rustfs.secret.existingSecret` yourself instead, read the credentials from that
-Secret's `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` keys the same way.
+Secret's same two keys.
 
 ### Incoming E-Mails cron job (IMAP)
 

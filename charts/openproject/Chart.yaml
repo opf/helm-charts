@@ -22,10 +22,6 @@ dependencies:
 - name: common
   repository: oci://registry-1.docker.io/bitnamicharts
   version: "^2.2.2"
-- name: rustfs
-  repository: https://charts.rustfs.com
-  version: "1.0.0-rc.6"
-  condition: rustfs.bundled
 annotations:
   artifacthub.io/license: GPL-3.0-only
   artifacthub.io/links: |

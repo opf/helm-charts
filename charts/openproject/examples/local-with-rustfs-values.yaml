@@ -30,23 +30,17 @@ rustfs:
     host: s3.example.com # replaced by bin/install-local-with-rustfs-tls
     tls:
       enabled: true
-      secretName: openproject-rustfs-local-tls # same cert as above, also covers s3.* and rustfs.*
+      secretName: openproject-rustfs-local-tls # same cert as above, also covers s3.* and rustfs-console.*
 
   # Also expose the RustFS web console, so you can browse the bucket by hand. Log in with the access
   # key / secret key from the auto-generated "rustfs-credentials-auto-generated" secret, e.g.:
   #
   #   kubectl get secret -n openproject rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_ACCESS_KEY}' | base64 -d; echo
   #   kubectl get secret -n openproject rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_SECRET_KEY}' | base64 -d; echo
-  ingress:
+  consoleIngress:
     enabled: true
-    className: "traefik"
-    hosts:
-      - host: rustfs.example.com # replaced by bin/install-local-with-rustfs-tls
-        paths:
-          - path: /
-            pathType: Prefix
+    host: rustfs.example.com # replaced by bin/install-local-with-rustfs-tls
+    ingressClassName: "traefik"
     tls:
       enabled: true
-      existingSecret:
-        enabled: true
-        name: openproject-rustfs-local-tls # same cert as above, also covers openproject.* and s3.*
+      secretName: openproject-rustfs-local-tls # same cert as above, also covers openproject.* and s3.*

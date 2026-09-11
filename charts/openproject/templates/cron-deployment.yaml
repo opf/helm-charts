@@ -57,7 +57,7 @@ spec:
           configMap:
             name: "{{- .Values.egress.tls.rootCA.configMap }}"
         {{- end }}
-        {{- if .Values.persistence.enabled }}
+        {{- if and .Values.persistence.enabled (not .Values.s3.enabled) (not .Values.rustfs.bundled) }}
         - name: "data"
           persistentVolumeClaim:
             claimName: {{ include "common.names.fullname" . }}
@@ -103,7 +103,7 @@ spec:
             {{- include "openproject.env" . | nindent 12 }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
-            {{- if .Values.persistence.enabled }}
+            {{- if and .Values.persistence.enabled (not .Values.s3.enabled) (not .Values.rustfs.bundled) }}
             - name: "data"
               mountPath: "/var/openproject/assets"
             {{- end }}
