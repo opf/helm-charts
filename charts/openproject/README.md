@@ -401,15 +401,11 @@ rustfs:
     host: s3.openproject.example.com
 ```
 
-This is a single, hand-rolled RustFS Deployment (one pod, one small PVC) maintained directly by this
-chart — **not** the [official RustFS Helm chart](https://charts.rustfs.com). It's kept intentionally
-minimal since it only ever runs RustFS in standalone (single-node) mode. **This is meant to get you
-started quickly and is not a production-grade setup** — it has no redundancy or backups of its own,
-and pulling in a whole separate chart dependency (and its own transitive chart-repo availability) for
-what amounts to one container felt like the wrong tradeoff for a "just get me started" feature. For a
-real production RustFS deployment (clustering, HA, proper storage sizing, etc.), install the
+It runs RustFS in standalone (single-node) mode. **This is meant to get you
+started quickly and is not a production-grade setup** — it has no redundancy or backups of its own.
+For a real production RustFS deployment (clustering, HA, proper storage sizing, etc.), install the
 [official RustFS Helm chart](https://charts.rustfs.com) separately and point `s3.*` at it directly
-instead of using `rustfs.bundled`.
+instead of using `rustfs.bundled`. Or use an external S3 service.
 
 **`rustfs.s3Ingress.host` must resolve to the same thing from both the end user's browser and from
 inside the cluster.**
@@ -426,9 +422,7 @@ named `rustfs-credentials-auto-generated`, under the keys `RUSTFS_ACCESS_KEY` /
 `RUSTFS_SECRET_KEY` — RustFS's own native env var names). The bucket named by `rustfs.bucketName`
 (default `openproject`) is created automatically via a post-install/upgrade hook job. To use your
 own credentials, set `rustfs.secret.existingSecret` to a Secret you control containing those same
-two keys; the chart maps them into `OPENPROJECT_FOG_CREDENTIALS_AWS__ACCESS__KEY__ID` /
-`OPENPROJECT_FOG_CREDENTIALS_AWS__SECRET__ACCESS__KEY` for OpenProject itself, so you don't need to
-duplicate the values under both sets of names.
+two keys.
 
 ##### RustFS web console
 
