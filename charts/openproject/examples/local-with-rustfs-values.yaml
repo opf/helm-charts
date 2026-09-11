@@ -1,0 +1,41 @@
+# Quickstart: Install via bin/install-local-with-rustfs-tls.
+#
+# Precondition: A local kubernetes cluster. We recommend simply using k3d (https://k3d.io)
+#               and creating a cluster accessible on port 80 and 443 locally (localhost)
+#               by running:
+#
+#                 k3d cluster create dev --port 80:80@loadbalancer --port 443:443@loadbalancer
+#
+#               Unlike the plain local-with-tls-values.yaml example, this one does NOT actually use
+#               *.localhost hostnames. The hostnames below are placeholders
+#               -- bin/install-local-with-rustfs-tls replaces them with real ones derived
+#               from your k3d load balancer container's address before installing.
+environment:
+  OPENPROJECT_SEED__ADMIN__USER__PASSWORD__RESET: false # so we can just keep logging in with admin:admin
+
+ingress:
+  enabled: true
+  host: openproject.example.com # replaced by bin/install-local-with-rustfs-tls
+
+  tls:
+    enabled: true
+    secretName: openproject-rustfs-local-tls # let bin/install-local-with-rustfs-tls create this for you or do it yourself
+
+# Deploy a minimal, single-node RustFS instance and use it as S3 storage for attachments. This is a
+# quick-start setup only, not meant for production use — see README.md for details.
+rustfs:
+  bundled: true
+
+  s3Ingress:
+    host: s3.example.com # replaced by bin/install-local-with-rustfs-tls
+    tls:
+      enabled: true
+      secretName: openproject-rustfs-local-tls # same cert as above, also covers openproject.*
+
+    # Also expose the RustFS web console (under /rustfs/console) on this same ingress, so you can
+    # browse the bucket by hand. Log in with the access key / secret key from the auto-generated
+    # "rustfs-credentials-auto-generated" secret, e.g.:
+    #
+    #   kubectl get secret -n openproject rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_ACCESS_KEY}' | base64 -d; echo
+    #   kubectl get secret -n openproject rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_SECRET_KEY}' | base64 -d; echo
+    consoleEnabled: true

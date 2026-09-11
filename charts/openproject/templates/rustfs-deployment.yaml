@@ -1,0 +1,96 @@
+{{- if .Values.rustfs.bundled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openproject.rustfsFullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: rustfs
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: rustfs
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 8 }}
+        app.kubernetes.io/component: rustfs
+    spec:
+      {{- include "openproject.podSecurityContext" . | indent 6 }}
+      {{- include "openproject.imagePullSecrets" . | indent 6 }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      containers:
+        - name: rustfs
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
+          image: "{{ .Values.rustfs.image.registry }}/{{ .Values.rustfs.image.repository }}:{{ .Values.rustfs.image.tag }}"
+          imagePullPolicy: {{ .Values.rustfs.image.pullPolicy }}
+          command: ["/usr/bin/rustfs"]
+          ports:
+            - name: endpoint
+              containerPort: {{ .Values.rustfs.service.endpoint.port }}
+            - name: console
+              containerPort: {{ .Values.rustfs.service.console.port }}
+          # The credentials secret (auto-generated or user-provided) already stores
+          # RUSTFS_ACCESS_KEY/RUSTFS_SECRET_KEY under RustFS's own expected names.
+          envFrom:
+            - secretRef:
+                name: {{ .Values.rustfs.secret.existingSecret }}
+          env:
+            - name: RUSTFS_ADDRESS
+              value: ":{{ .Values.rustfs.service.endpoint.port }}"
+            - name: RUSTFS_CONSOLE_ADDRESS
+              value: ":{{ .Values.rustfs.service.console.port }}"
+            - name: RUSTFS_CONSOLE_ENABLE
+              value: "true"
+            # Single data volume, single drive -- standalone mode, no erasure coding/clustering.
+            - name: RUSTFS_VOLUMES
+              value: "/data"
+            - name: RUSTFS_REGION
+              value: "us-east-1"
+            {{- with .Values.rustfs.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.rustfs.service.endpoint.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: {{ .Values.rustfs.service.endpoint.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.rustfs.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "openproject.rustfsFullname" . }}-data
+...
+{{- end }}

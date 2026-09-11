@@ -1,0 +1,22 @@
+{{- if .Values.rustfs.bundled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "openproject.rustfsFullname" . }}-data
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: rustfs
+  annotations:
+    "helm.sh/resource-policy": "keep"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.rustfs.storage.storageClassName }}
+  storageClassName: {{ .Values.rustfs.storage.storageClassName }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.rustfs.storage.size }}
+...
+{{- end }}

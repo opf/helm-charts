@@ -1,0 +1,25 @@
+{{- if .Values.rustfs.bundled }}
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: {{ include "openproject.rustfsServiceHost" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: rustfs
+spec:
+  type: ClusterIP
+  ports:
+    - name: endpoint
+      port: {{ .Values.rustfs.service.endpoint.port }}
+      targetPort: endpoint
+      protocol: TCP
+    - name: console
+      port: {{ .Values.rustfs.service.console.port }}
+      targetPort: console
+      protocol: TCP
+  selector:
+    {{- include "common.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: rustfs
+...
+{{- end }}
