@@ -1,5 +1,13 @@
 # llm-stack
 
+## 1.1.0
+
+### Minor Changes
+
+- 7cbea02: Added the ai-loop-guard plugin for early detection of upstream LLMs getting stuck in a request.
+  The plugin terminates such generation streams early and informs the client using `finish_reason=ai-loop-guard`
+  in the final chunk.
+
 ## 1.0.2
 
 ### Patch Changes
