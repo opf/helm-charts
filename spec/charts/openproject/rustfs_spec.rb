@@ -206,8 +206,10 @@ describe 'rustfs configuration' do
       expect(backend.dig('service', 'port', 'name')).to eq('endpoint')
     end
 
-    it 'does not render the console ingress unless explicitly enabled', :aggregate_failures do
-      expect(template.dig('Ingress/optest-openproject-rustfs-console')).to be_nil
+    it 'does not add a console path to the ingress unless explicitly enabled', :aggregate_failures do
+      ingress = template.dig('Ingress/optest-openproject-rustfs')
+      paths = ingress.dig('spec', 'rules', 0, 'http', 'paths')
+      expect(paths.map { |p| p['path'] }).not_to include('/rustfs/console')
     end
 
     it 'does not set TLS on the ingress when no tls secretName is configured', :aggregate_failures do
@@ -216,7 +218,7 @@ describe 'rustfs configuration' do
     end
   end
 
-  context 'when rustfs is bundled with the console ingress enabled' do
+  context 'when rustfs is bundled with the console enabled' do
     let(:default_values) do
       HelmTemplate.with_defaults(
         <<~YAML
@@ -224,30 +226,31 @@ describe 'rustfs configuration' do
             bundled: true
             s3Ingress:
               host: s3.example.com
-            consoleIngress:
-              enabled: true
-              host: rustfs-console.example.com
               ingressClassName: "nginx"
+              consoleEnabled: true
               tls:
-                secretName: console-tls
+                secretName: shared-tls
         YAML
       )
     end
 
-    it 'renders a dedicated ingress targeting the rustfs console port', :aggregate_failures do
-      ingress = template.dig('Ingress/optest-openproject-rustfs-console')
+    it 'adds the console as an extra path on the same s3 ingress, sharing host/tls/ingressClassName', :aggregate_failures do
+      expect(template.dig('Ingress/optest-openproject-rustfs-console')).to be_nil
+
+      ingress = template.dig('Ingress/optest-openproject-rustfs')
       expect(ingress).not_to be_nil
       expect(ingress.dig('spec', 'ingressClassName')).to eq('nginx')
 
-      rule = ingress.dig('spec', 'rules', 0)
-      expect(rule['host']).to eq('rustfs-console.example.com')
+      paths = ingress.dig('spec', 'rules', 0, 'http', 'paths')
+      console_path = paths.find { |p| p['path'] == '/rustfs/console' }
+      expect(console_path.dig('backend', 'service', 'name')).to eq('optest-openproject-rustfs-svc')
+      expect(console_path.dig('backend', 'service', 'port', 'name')).to eq('console')
 
-      backend = rule.dig('http', 'paths', 0, 'backend')
-      expect(backend.dig('service', 'name')).to eq('optest-openproject-rustfs-svc')
-      expect(backend.dig('service', 'port', 'name')).to eq('console')
+      endpoint_path = paths.find { |p| p.dig('backend', 'service', 'port', 'name') == 'endpoint' }
+      expect(endpoint_path['path']).to eq('/')
 
       expect(ingress.dig('spec', 'tls')).to contain_exactly(
-        { 'hosts' => ['rustfs-console.example.com'], 'secretName' => 'console-tls' }
+        { 'hosts' => ['s3.example.com'], 'secretName' => 'shared-tls' }
       )
     end
   end

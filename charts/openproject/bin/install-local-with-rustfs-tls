@@ -7,7 +7,7 @@
 # "<anything>.<ip>.nip.io" to <ip>), pointed at the k3d load balancer container's docker-network IP,
 # which is reachable both from your machine and from inside the cluster.
 #
-# It will automatically try to create a single TLS certificate covering all three hostnames used by
+# It will automatically try to create a single TLS certificate covering both hostnames used by
 # this example, but you can skip that if you create the secret yourself. Since the OpenProject
 # backend itself also talks to RustFS's S3 API directly (not just your browser), it also needs to
 # trust that self-signed certificate -- this script configures that too, via the chart's
@@ -31,7 +31,6 @@ fi
 
 OPENPROJECT_DOMAIN="openproject.$LB_IP.nip.io"
 S3_DOMAIN="s3.$LB_IP.nip.io"
-CONSOLE_DOMAIN="rustfs.$LB_IP.nip.io"
 
 echo "Using k3d load balancer IP $LB_IP for all hostnames below."
 echo "(If this ever changes -- e.g. after recreating the cluster -- just re-run this script.)"
@@ -41,8 +40,8 @@ if ! kubectl get namespace $DEV_NAMESPACE &>/dev/null; then
 fi
 
 if ! kubectl get secret -n $DEV_NAMESPACE $TLS_SECRET &>/dev/null; then
-  echo "Creating self-signed TLS certificate for $OPENPROJECT_DOMAIN, $S3_DOMAIN and $CONSOLE_DOMAIN"
-  mkcert -install -cert-file $TLS_SECRET.pem -key-file $TLS_SECRET-key.pem $OPENPROJECT_DOMAIN $S3_DOMAIN $CONSOLE_DOMAIN
+  echo "Creating self-signed TLS certificate for $OPENPROJECT_DOMAIN and $S3_DOMAIN"
+  mkcert -install -cert-file $TLS_SECRET.pem -key-file $TLS_SECRET-key.pem $OPENPROJECT_DOMAIN $S3_DOMAIN
   echo "Creating secret for TLS certificate"
   kubectl -n $DEV_NAMESPACE create secret tls $TLS_SECRET --key=$TLS_SECRET-key.pem --cert=$TLS_SECRET.pem
   rm $TLS_SECRET.pem $TLS_SECRET-key.pem
@@ -67,11 +66,9 @@ helm upgrade \
   --set ingress.tls.secretName=$TLS_SECRET \
   --set rustfs.s3Ingress.host=$S3_DOMAIN \
   --set rustfs.s3Ingress.tls.secretName=$TLS_SECRET \
-  --set rustfs.consoleIngress.host=$CONSOLE_DOMAIN \
-  --set rustfs.consoleIngress.tls.secretName=$TLS_SECRET \
   --set egress.tls.rootCA.configMap=$CA_CONFIGMAP \
   --set egress.tls.rootCA.fileName=rootCA.pem
 
 echo -e "\nOnce ready:"
 echo "  OpenProject:    https://$OPENPROJECT_DOMAIN"
-echo "  RustFS console: https://$CONSOLE_DOMAIN"
+echo "  RustFS console: https://$S3_DOMAIN/rustfs/console/"

@@ -426,23 +426,15 @@ two keys.
 
 ##### RustFS web console
 
-The bundled RustFS instance also ships a web console (separate from the S3 API), which is useful for
-browsing the bucket by hand. It is not exposed by default. Enable it via `rustfs.consoleIngress`.
-Once reachable, the console itself lives under the `/rustfs/console/` path, not `/` (which returns a
-plain 403 from the S3 API instead) — e.g. `https://rustfs-console.openproject.example.com/rustfs/console/`.
+The bundled RustFS instance also ships a web console under `/rustfs/console/` (e.g.
+`https://s3.openproject.example.com/rustfs/console/`), if enabled (default false).
 
 ```yaml
 rustfs:
   bundled: true
   s3Ingress:
     host: s3.openproject.example.com
-  consoleIngress:
-    enabled: true
-    host: rustfs-console.openproject.example.com
-    ingressClassName: "nginx"
-    tls:
-      enabled: true
-      secretName: rustfs-console-tls
+    consoleEnabled: true
 ```
 
 To log in, use the same access key / secret key as the S3 credentials described above. By default

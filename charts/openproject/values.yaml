@@ -854,42 +854,6 @@ rustfs:
   #
   resources: {}
 
-  ## Also expose the RustFS web console, so you can browse the bucket by hand. Disabled by default.
-  ## Once reachable, the console itself lives under the "/rustfs/console/" path, not "/" (which
-  ## returns a plain 403 from the S3 API instead) -- e.g. https://<host>/rustfs/console/.
-  ##
-  ## consoleIngress:
-  ##   enabled: true
-  ##   host: rustfs-console.openproject.example.com
-  ##   ingressClassName: "nginx"
-  ##   tls:
-  ##     enabled: true
-  ##     secretName: rustfs-console-tls
-  ##
-  ## To log into the console, use the same access key / secret key as the S3 credentials (see
-  ## `secret` above): by default these are randomly generated and stored in the
-  ## "rustfs-credentials-auto-generated" Secret, under the keys RUSTFS_ACCESS_KEY /
-  ## RUSTFS_SECRET_KEY. Retrieve them with:
-  ##
-  ## ```
-  ## kubectl get secret -n <namespace> rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_ACCESS_KEY}' | base64 -d; echo
-  ## kubectl get secret -n <namespace> rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_SECRET_KEY}' | base64 -d; echo
-  ## ```
-  ##
-  ## (If you configured `secret.existingSecret` yourself instead, read the credentials from that
-  ## Secret's same two keys.)
-  #
-  consoleIngress:
-    enabled: false
-    host: ""
-    ingressClassName: ""
-    annotations: {}
-    path: /
-    pathType: "Prefix"
-    tls:
-      enabled: true
-      secretName: ""
-
   ## OpenProject generates pre-signed URLs that point directly at the S3 endpoint for attachment
   ## downloads (and uploads, if `s3.directUploads` is enabled). Those URLs are opened directly by
   ## the user's browser, so the bundled RustFS instance's S3 API must be reachable from outside the
@@ -925,6 +889,24 @@ rustfs:
       ## of `enabled` above.
       #
       secretName: ""
+
+    ## Also expose the RustFS web console under this same ingress (host, TLS, ingress class,
+    ## annotations all shared with the S3 API above), at the "/rustfs/console" path -- useful for
+    ## browsing the bucket by hand. Disabled by default.
+    ##
+    ## To log in, use the same access key / secret key as the S3 credentials (see `secret` above):
+    ## by default these are randomly generated and stored in the "rustfs-credentials-auto-generated"
+    ## Secret, under the keys RUSTFS_ACCESS_KEY / RUSTFS_SECRET_KEY. Retrieve them with:
+    ##
+    ## ```
+    ## kubectl get secret -n <namespace> rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_ACCESS_KEY}' | base64 -d; echo
+    ## kubectl get secret -n <namespace> rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_SECRET_KEY}' | base64 -d; echo
+    ## ```
+    ##
+    ## (If you configured `secret.existingSecret` yourself instead, read the credentials from that
+    ## Secret's same two keys.)
+    #
+    consoleEnabled: false
 
   ## Since attachment downloads and uploads happen directly between the user's browser and the S3
   ## API (see `s3Ingress` above), the browser sends cross-origin requests to it, which RustFS must

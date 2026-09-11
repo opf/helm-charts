@@ -30,17 +30,12 @@ rustfs:
     host: s3.example.com # replaced by bin/install-local-with-rustfs-tls
     tls:
       enabled: true
-      secretName: openproject-rustfs-local-tls # same cert as above, also covers s3.* and rustfs-console.*
+      secretName: openproject-rustfs-local-tls # same cert as above, also covers openproject.*
 
-  # Also expose the RustFS web console, so you can browse the bucket by hand. Log in with the access
-  # key / secret key from the auto-generated "rustfs-credentials-auto-generated" secret, e.g.:
-  #
-  #   kubectl get secret -n openproject rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_ACCESS_KEY}' | base64 -d; echo
-  #   kubectl get secret -n openproject rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_SECRET_KEY}' | base64 -d; echo
-  consoleIngress:
-    enabled: true
-    host: rustfs.example.com # replaced by bin/install-local-with-rustfs-tls
-    ingressClassName: "traefik"
-    tls:
-      enabled: true
-      secretName: openproject-rustfs-local-tls # same cert as above, also covers openproject.* and s3.*
+    # Also expose the RustFS web console (under /rustfs/console) on this same ingress, so you can
+    # browse the bucket by hand. Log in with the access key / secret key from the auto-generated
+    # "rustfs-credentials-auto-generated" secret, e.g.:
+    #
+    #   kubectl get secret -n openproject rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_ACCESS_KEY}' | base64 -d; echo
+    #   kubectl get secret -n openproject rustfs-credentials-auto-generated -o jsonpath='{.data.RUSTFS_SECRET_KEY}' | base64 -d; echo
+    consoleEnabled: true
