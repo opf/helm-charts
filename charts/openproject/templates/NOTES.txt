@@ -7,6 +7,6 @@ You can access it via http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.in
 Summary:
 --------
 OpenProject: {{ .Values.image.tag }}
-PostgreSQL: {{ if .Values.postgresql.bundled }}{{ .Values.postgresql.image.tag }}{{ else }}external{{ end }}
-Memcached: {{ if .Values.memcached.bundled }}{{ .Values.memcached.image.tag }}{{ else }}external{{ end }}
-Attachment storage: {{ if .Values.rustfs.bundled }}bundled RustFS (S3-compatible, quick-start only){{ else if .Values.s3.enabled }}S3{{ else }}local volume{{ end }}
+PostgreSQL: {{ if .Values.postgresql.bundled }}{{ .Values.postgresql.image.tag }} (bundled){{ else }}external{{ end }}
+Memcached: {{ if .Values.memcached.bundled }}{{ .Values.memcached.image.tag }} (bundled){{ else }}external{{ end }}
+Attachment storage: {{ if .Values.rustfs.bundled }}S3, RustFS {{ .Values.rustfs.image.tag }} (bundled){{ else if .Values.s3.enabled }}external S3{{ else }}local volume{{ end }}
