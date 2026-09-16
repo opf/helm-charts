@@ -1225,7 +1225,7 @@ probes:
 
 ## Number of OpenProject web process replicas.
 #
-replicaCount: 1
+replicaCount: 2
 
 ## Number of OpenProject background worker process replicas.
 #
