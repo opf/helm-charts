@@ -1,4 +1,5 @@
-{{- if .Values.persistence.enabled }}
+# Only create PVC for attachments if we're not using an external (.s3) or bundled (.rustfs) object store.
+{{- if and .Values.persistence.enabled (not .Values.s3.enabled) (not .Values.rustfs.bundled) }}
 {{- if not .Values.persistence.existingClaim }}
 ---
 apiVersion: "v1"

@@ -70,7 +70,7 @@ spec:
           configMap:
             name: "{{- .Values.egress.tls.rootCA.configMap }}"
         {{- end }}
-        {{- if .Values.persistence.enabled }}
+        {{- if and .Values.persistence.enabled (not .Values.s3.enabled) (not .Values.rustfs.bundled) }}
         - name: "data"
           persistentVolumeClaim:
             claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "common.names.fullname" . }}{{- end }}
@@ -110,7 +110,7 @@ spec:
             - /app/docker/prod/web
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
-            {{- if .Values.persistence.enabled }}
+            {{- if and .Values.persistence.enabled (not .Values.s3.enabled) (not .Values.rustfs.bundled) }}
             - name: "data"
               mountPath: "/var/openproject/assets"
             {{- end }}
