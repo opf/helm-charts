@@ -31,7 +31,7 @@ describe 'rustfs configuration' do
     end
   end
 
-  context 'when rustfs is bundled without an s3Ingress host' do
+  context 'when rustfs is bundled without an ingress host' do
     let(:default_values) do
       HelmTemplate.with_defaults(
         <<~YAML
@@ -43,7 +43,7 @@ describe 'rustfs configuration' do
 
     it 'fails to render with a helpful error message', :aggregate_failures do
       expect(template.exit_code).not_to eq(0)
-      expect(template.stderr).to include('rustfs.s3Ingress.host is required')
+      expect(template.stderr).to include('rustfs.ingress.host is required')
     end
   end
 
@@ -53,7 +53,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
         YAML
       )
@@ -224,7 +224,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
               ingressClassName: "nginx"
               consoleEnabled: true
@@ -261,7 +261,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
               tls:
                 secretName: s3-tls
@@ -286,7 +286,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
         YAML
       )
@@ -309,7 +309,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
               tls:
                 enabled: false
@@ -329,7 +329,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
             extraEnv:
               - name: RUSTFS_CORS_ALLOWED_ORIGINS
@@ -353,7 +353,7 @@ describe 'rustfs configuration' do
           rustfs:
             bundled: true
             bucketName: my-attachments
-            s3Ingress:
+            ingress:
               host: s3.example.com
         YAML
       )
@@ -375,7 +375,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
             storage:
               size: 25Gi
@@ -397,7 +397,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
             secret:
               existingSecret: my-own-rustfs-secret

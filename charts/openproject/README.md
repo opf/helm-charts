@@ -397,7 +397,7 @@ If you don't have an S3-compatible object store handy, the chart can deploy a mi
 ```yaml
 rustfs:
   bundled: true
-  s3Ingress:
+  ingress:
     host: s3.openproject.example.com
 ```
 
@@ -407,14 +407,14 @@ For a real production RustFS deployment (clustering, HA, proper storage sizing, 
 [official RustFS Helm chart](https://charts.rustfs.com) separately and point `s3.*` at it directly
 instead of using `rustfs.bundled`. Or use an external S3 service.
 
-**`rustfs.s3Ingress.host` must resolve to the same thing from both the end user's browser and from
+**`rustfs.ingress.host` must resolve to the same thing from both the end user's browser and from
 inside the cluster.**
 
-TLS is on by default (`rustfs.s3Ingress.tls.enabled: true`), and requires you to set
-`rustfs.s3Ingress.tls.secretName` to a Secret containing your certificate, unless you want to use http.
+TLS is on by default (`rustfs.ingress.tls.enabled: true`), and requires you to set
+`rustfs.ingress.tls.secretName` to a Secret containing your certificate, unless you want to use http.
 
 If that certificate is self-signed, remember that the OpenProject **backend** connects to
-`rustfs.s3Ingress.host` too, not just the browser. Use the chart's [Root CA](#root-ca) option
+`rustfs.ingress.host` too, not just the browser. Use the chart's [Root CA](#root-ca) option
 (`egress.tls.rootCA`) for this.
 
 Access credentials are randomly generated on first install and kept across upgrades (in a Secret
@@ -432,7 +432,7 @@ The bundled RustFS instance also ships a web console under `/rustfs/console/` (e
 ```yaml
 rustfs:
   bundled: true
-  s3Ingress:
+  ingress:
     host: s3.openproject.example.com
     consoleEnabled: true
 ```
