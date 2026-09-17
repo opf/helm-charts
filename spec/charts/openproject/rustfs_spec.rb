@@ -497,5 +497,33 @@ describe 'rustfs configuration' do
       annotations = template.dig('Deployment/optest-openproject-rustfs', 'spec', 'template', 'metadata', 'annotations')
       expect(annotations).to include('foo' => 'bar', 'prometheus.io/scrape' => 'true')
     end
+
+    it 'renders the global affinity on the bucket init job pod too', :aggregate_failures do
+      template_spec = template.dig('Job/optest-openproject-rustfs-init-bucket', 'spec', 'template', 'spec')
+      term = template_spec.dig('affinity', 'nodeAffinity', 'requiredDuringSchedulingIgnoredDuringExecution', 'nodeSelectorTerms', 0)
+      expect(term.dig('matchExpressions', 0, 'key')).to eq('disktype')
+      expect(term.dig('matchExpressions', 0, 'values')).to eq(['ssd'])
+    end
+  end
+
+  context 'when rustfs is bundled with bucket init job annotations' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          rustfs:
+            bundled: true
+            ingress:
+              host: s3.example.com
+            bucketInitJob:
+              annotations:
+                foo: bar
+        YAML
+      )
+    end
+
+    it 'renders the annotations on the bucket init job pod template', :aggregate_failures do
+      annotations = template.dig('Job/optest-openproject-rustfs-init-bucket', 'spec', 'template', 'metadata', 'annotations')
+      expect(annotations).to include('foo' => 'bar')
+    end
   end
 end
