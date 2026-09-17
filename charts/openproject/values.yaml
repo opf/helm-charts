@@ -932,6 +932,9 @@ rustfs:
       repository: "rclone/rclone"
       tag: "1.75.0"
       imagePullPolicy: "IfNotPresent"
+    ## Container resources for the bucket init job's rclone container.
+    #
+    resources: {}
 
 ## Define custom pod annotations.
 #

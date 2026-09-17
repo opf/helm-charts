@@ -58,4 +58,6 @@ spec:
               done
               echo "Bucket '{{ .Values.rustfs.bucketName }}' is ready."
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
+          resources:
+            {{- toYaml .Values.rustfs.bucketInitJob.resources | nindent 12 }}
 {{- end }}
