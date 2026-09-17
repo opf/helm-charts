@@ -64,8 +64,8 @@ helm upgrade \
   -f examples/local-with-rustfs-values.yaml \
   --set ingress.host=$OPENPROJECT_DOMAIN \
   --set ingress.tls.secretName=$TLS_SECRET \
-  --set rustfs.s3Ingress.host=$S3_DOMAIN \
-  --set rustfs.s3Ingress.tls.secretName=$TLS_SECRET \
+  --set rustfs.ingress.host=$S3_DOMAIN \
+  --set rustfs.ingress.tls.secretName=$TLS_SECRET \
   --set egress.tls.rootCA.configMap=$CA_CONFIGMAP \
   --set egress.tls.rootCA.fileName=rootCA.pem
 

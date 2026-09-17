@@ -859,7 +859,7 @@ rustfs:
   ## the user's browser, so the bundled RustFS instance's S3 API must be reachable from outside the
   ## cluster under a real hostname -- a ClusterIP Service alone is not enough for this to work.
   #
-  s3Ingress:
+  ingress:
     ## Public hostname under which the RustFS S3 API should be reachable, e.g.
     ## "s3.openproject.example.com". Required when rustfs.bundled is true.
     #
@@ -909,7 +909,7 @@ rustfs:
     consoleEnabled: false
 
   ## Since attachment downloads and uploads happen directly between the user's browser and the S3
-  ## API (see `s3Ingress` above), the browser sends cross-origin requests to it, which RustFS must
+  ## API (see `ingress` above), the browser sends cross-origin requests to it, which RustFS must
   ## answer with CORS headers, or the browser blocks them.
   ##
   ## RustFS controls this via the RUSTFS_CORS_ALLOWED_ORIGINS env var on the server itself (there is
@@ -932,6 +932,12 @@ rustfs:
       repository: "rclone/rclone"
       tag: "1.75.0"
       imagePullPolicy: "IfNotPresent"
+    ## Define custom annotations for the bucket init job pod.
+    #
+    annotations: {}
+    ## Container resources for the bucket init job's rclone container.
+    #
+    resources: {}
 
 ## Define custom pod annotations.
 #
