@@ -1,25 +1,26 @@
-{{- if .Values.vllm.enabled }}
+{{- range $id, $config := .Values.vllmConfigs }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.vllm.service.name | quote }}
-  namespace: {{ .Release.Namespace | quote }}
+  name: {{ $id | kebabcase | lower | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
   labels:
-    {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
-    app.kubernetes.io/component: vllm
+    {{- include "common.labels.standard" (dict "customLabels" $.Values.commonLabels "context" $) | nindent 4 }}
+    app.kubernetes.io/component: vllm-{{ $id | kebabcase | lower }}
   annotations:
-    {{ toYaml .Values.vllm.service.annotations | nindent 4 }}
+    {{ toYaml $config.service.annotations | nindent 4 }}
 spec:
-  type: {{ .Values.vllm.service.type | default "ClusterIP" }}
+  type: {{ $config.service.type | default "ClusterIP" }}
   ports:
     - name: http
-      port: {{ .Values.vllm.service.port | default 8000 }}
+      port: {{ $config.service.port | default 8000 }}
       targetPort: http
       protocol: TCP
-      {{- if and (eq .Values.vllm.service.type "NodePort") .Values.vllm.service.nodePort }}
-      nodePort: {{ .Values.vllm.service.nodePort }}
+      {{- if and (eq $config.service.type "NodePort") $config.service.nodePort }}
+      nodePort: {{ $config.service.nodePort }}
       {{- end }}
   selector:
-    {{- include "common.labels.matchLabels" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
-    app.kubernetes.io/component: vllm
+    {{- include "common.labels.matchLabels" (dict "customLabels" $.Values.commonLabels "context" $) | nindent 4 }}
+    app.kubernetes.io/component: vllm-{{ $id | kebabcase | lower }}
+---
 {{- end }}
