@@ -2,18 +2,54 @@
 A helm chart for a self-hosted llm stack featuring:
 
 * Apisix as the AI gateway
-  * running in api-based standalone mode (allowing only full config updates via api)
-  * having a config seeder job that pushes the route and consumer configs initially using a headless service for pod discovery
-* An optional VLLM deployment for hosting an LLM in the cluster
+  * with configurable routes to a mix of locally hosted or 3rd party provided LLM and embedding models
 * Optional prometheus and grafana components for local development
 * values.yaml files and basic request scripts for local development in `examples/` and `bin/`
 
 ![chart overview](llm-stack-helm-detail.drawio.png)
 
+The main feature is the ability to configure routes like the following while having key-based auth and spending limits 
+for multiple consumers across these different providers: 
+
+```yaml
+apisixConfig:
+  routes:
+    scalewayCompletion:
+      type: completion
+      provider: scaleway
+      providerFormat: openai-compatible
+      apiKeySecretKey: scaleway_api_key
+      # retrieve the project id from the scaleway project dashboard
+      baseURL: "https://api.scaleway.ai/<project_id>/v1/chat/completions"
+      models:   # model whitelist 
+        - name: qwen3.6-35b-a3b
+        - name: gemma-4-26b-a4b-it
+        - name: glm-5.2
+        - name: deepseek-v4-flash-0731
+        - name: qwen3.5-397b-a17b
+        - name: mistral-medium-3.5-128b
+    scalewayEmbedding:
+      type: embedding
+      provider: scaleway
+      providerFormat: openai-compatible
+      apiKeySecretKey: scaleway_api_key
+      baseURL: "https://api.scaleway.ai/<project_id>/v1/embeddings"
+      models:
+        - name: qwen3-embedding-8b
+        - name: bge-multilingual-gemma2
+    selfHostedEmbedding:
+      type: embedding
+      provider: selfHosted # means hosted using vllm
+      providerFormat: openai-compatible
+      vllmConfigId: embeddingHarrier
+      models:
+        - name: harrier-270
+```
+
 ## Local Development
 
 ### Minimum requirements for local vllm
-* 48gb RAM (64gb would be better)
+* 24gb RAM
 
 ### Creating the cluster
 
@@ -22,16 +58,23 @@ k3d cluster create llm-stack-dev --port "80:80@loadbalancer"
 kubectl create namespace llm-stack
 ```
 
-### Creating the Secrets
+### Creating the Apisix Secrets
 
-**For the apisix initial config:**
+**Creating the Apisix initial config secret:**
 ```bash
 kubectl create secret generic llm-stack-apisix-initial-config-secret --from-literal=provider_api_key='abc' --from-literal=consumers='[{"name": "consumerA", "key": "sk-client-v1-abcdef123456"}]' -n llm-stack
 ```
-* `provider_api_key` is the key of the provider you are forwarding the requests to, e.g. scaleway, can be anything when using vllm
+* `provider_api_key` is the key of a provider you are forwarding the requests to, e.g. scaleway. These keys are referenced in your values.yaml
 * `consumers` is a stringified json array of consumers
 
-**For the apisix admin API:**
+**Updating the Apisix initial config secret**
+
+To add a consumer or provider, this is closest to the original creation:
+```bash
+kubectl patch secret llm-stack-apisix-initial-config-secret --patch "$(kubectl create secret generic llm-stack-apisix-initial-config-secret --from-literal=provider_api_key='abc' --from-literal=scaleway_api_key='xyz' --from-literal=consumers='[{"name": "consumerA", "key": "sk-client-v1-abcdef123456"}, {"name": "def", "key": "abc"}]' --dry-run=client -o json )" -n llm-stack
+```
+
+**Creating the apisix admin API:**
 ```bash
 kubectl create secret generic llm-stack-apisix-admin-secret --from-literal=admin='abc' --from-literal=viewer='def' -n llm-stack
 ```
@@ -50,6 +93,8 @@ Wait for the vllm liveness probe to start (~4 min) and make a test request:
 ```bash
 export LLM_STACK_MODEL=Qwen/Qwen2.5-0.5B-Instruct
 bash bin/test-request-llm-gen.sh
+export LLM_STACK_EMBEDDING_MODEL="harrier-270"
+bash bin/test-request-embed.sh
 ```
 
 #### Using scaleway instead of vllm
@@ -62,6 +107,23 @@ helm install dev-release . -f examples/scaleway.yaml -n llm-stack
 
 ```bash
 bash bin/test-request-llm-gen.sh
+bash bin/test-request-embed.sh
+```
+
+#### Combining scaleway and vllm
+
+The example provides one LLM model and embedding model from scaleway and a locally hosted embedding model.
+Adjust the scaleway project id in the `apisixInitialConfig.base_url` in `examples/scaleway-vllm-combined.yaml` with your own credentials.
+
+```bash
+helm install dev-release . -f examples/scaleway-vllm-combined.yaml -n llm-stack
+```
+
+```bash
+bash bin/test-request-llm-gen.sh
+bash bin/test-request-embed.sh
+export LLM_STACK_EMBEDDING_MODEL="harrier-270"
+bash bin/test-request-embed.sh
 ```
 
 ### Observability
@@ -80,6 +142,16 @@ sum(increase(apisix_http_status{code=~"[2].."}[1m])) by (consumer)
 Failing requests for apisix grouped by consumer at 1 min interval:
 ```promql
 sum(increase(apisix_http_status{code=~"[45].."}[1m])) by (consumer)
+```
+
+Number of requests for apisix on across all generation models and endpoints
+```promql
+sum(increase(apisix_http_status{matched_uri="/v1/chat/completions"}[1m])) by (consumer)
+```
+
+Number of requests for apisix on across all embedding models and endpoints
+```promql
+sum(increase(apisix_http_status{matched_uri="/v1/embeddings"}[1m])) by (consumer)
 ```
 
 Triggerings of ai-loop-guard

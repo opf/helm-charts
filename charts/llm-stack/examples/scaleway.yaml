@@ -1,9 +1,28 @@
-apisixInitialConfig:
-  enabled: true
-  route:
-    provider: openai-compatible
-    # retrieve the project id from the scaleway project dashboard
-    baseURL: "https://api.scaleway.ai/<project_id>/v1/chat/completions" # ignored if vllm is enabled
+apisixConfig:
+  routes:
+    scalewayCompletion:
+      type: completion
+      provider: scaleway
+      providerFormat: openai-compatible
+      apiKeySecretKey: scaleway_api_key
+      # retrieve the project id from the scaleway project dashboard
+      baseURL: "https://api.scaleway.ai/<project_id>/v1/chat/completions"
+      models:
+        - name: qwen3.6-35b-a3b
+        - name: gemma-4-26b-a4b-it
+        - name: glm-5.2
+        - name: deepseek-v4-flash-0731
+        - name: qwen3.5-397b-a17b
+        - name: mistral-medium-3.5-128b
+    scalewayEmbedding:
+      type: embedding
+      provider: scaleway
+      providerFormat: openai-compatible
+      apiKeySecretKey: scaleway_api_key
+      baseURL: "https://api.scaleway.ai/<project_id>/v1/embeddings"
+      models:
+        - name: qwen3-embedding-8b
+        - name: bge-multilingual-gemma2
 
 apisix:
   metrics:
@@ -15,10 +34,8 @@ apisix:
       - host: llm-stack.localhost
         paths:
           - /v1/chat/completions
+          - /v1/embeddings
           - /v1/models
-
-vllm:
-  enabled: false
 
 
 devMonitoring:
