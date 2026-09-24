@@ -31,7 +31,7 @@ describe 'rustfs configuration' do
     end
   end
 
-  context 'when rustfs is bundled without an s3Ingress host' do
+  context 'when rustfs is bundled without an ingress host' do
     let(:default_values) do
       HelmTemplate.with_defaults(
         <<~YAML
@@ -43,7 +43,7 @@ describe 'rustfs configuration' do
 
     it 'fails to render with a helpful error message', :aggregate_failures do
       expect(template.exit_code).not_to eq(0)
-      expect(template.stderr).to include('rustfs.s3Ingress.host is required')
+      expect(template.stderr).to include('rustfs.ingress.host is required')
     end
   end
 
@@ -53,7 +53,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
         YAML
       )
@@ -194,6 +194,14 @@ describe 'rustfs configuration' do
       end
     end
 
+    it 'does not render pod annotations or affinity by default', :aggregate_failures do
+      template_spec = template.dig('Deployment/optest-openproject-rustfs', 'spec', 'template', 'spec')
+      expect(template_spec).not_to have_key('affinity')
+
+      metadata = template.dig('Deployment/optest-openproject-rustfs', 'spec', 'template', 'metadata')
+      expect(metadata).not_to have_key('annotations')
+    end
+
     it 'renders a dedicated ingress targeting the rustfs S3 API (endpoint) port', :aggregate_failures do
       ingress = template.dig('Ingress/optest-openproject-rustfs')
       expect(ingress).not_to be_nil
@@ -224,7 +232,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
               ingressClassName: "nginx"
               consoleEnabled: true
@@ -261,7 +269,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
               tls:
                 secretName: s3-tls
@@ -286,7 +294,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
         YAML
       )
@@ -309,7 +317,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
               tls:
                 enabled: false
@@ -329,7 +337,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
             extraEnv:
               - name: RUSTFS_CORS_ALLOWED_ORIGINS
@@ -353,7 +361,7 @@ describe 'rustfs configuration' do
           rustfs:
             bundled: true
             bucketName: my-attachments
-            s3Ingress:
+            ingress:
               host: s3.example.com
         YAML
       )
@@ -375,7 +383,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
             storage:
               size: 25Gi
@@ -397,7 +405,7 @@ describe 'rustfs configuration' do
         <<~YAML
           rustfs:
             bundled: true
-            s3Ingress:
+            ingress:
               host: s3.example.com
             secret:
               existingSecret: my-own-rustfs-secret
@@ -425,6 +433,97 @@ describe 'rustfs configuration' do
       job = template.dig('Job/optest-openproject-rustfs-init-bucket')
       container = job.dig('spec', 'template', 'spec', 'containers', 0)
       expect(container.dig('envFrom', 0, 'secretRef', 'name')).to eq('my-own-rustfs-secret')
+    end
+  end
+
+  context 'when rustfs is bundled with bucket init job resources' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          rustfs:
+            bundled: true
+            ingress:
+              host: s3.example.com
+            bucketInitJob:
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+        YAML
+      )
+    end
+
+    it 'renders the configured resources on the rclone init container', :aggregate_failures do
+      container = template.dig('Job/optest-openproject-rustfs-init-bucket', 'spec', 'template', 'spec', 'containers', 0)
+      expect(container.dig('resources', 'requests')).to eq('cpu' => '100m', 'memory' => '64Mi')
+      expect(container.dig('resources', 'limits')).to eq('memory' => '128Mi')
+    end
+  end
+
+  context 'when rustfs is bundled with pod affinity and annotations' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          rustfs:
+            bundled: true
+            ingress:
+              host: s3.example.com
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: disktype
+                        operator: In
+                        values:
+                          - ssd
+          podAnnotations:
+            foo: bar
+            prometheus.io/scrape: "true"
+        YAML
+      )
+    end
+
+    it 'renders the global affinity on the rustfs pod', :aggregate_failures do
+      template_spec = template.dig('Deployment/optest-openproject-rustfs', 'spec', 'template', 'spec')
+      term = template_spec.dig('affinity', 'nodeAffinity', 'requiredDuringSchedulingIgnoredDuringExecution', 'nodeSelectorTerms', 0)
+      expect(term.dig('matchExpressions', 0, 'key')).to eq('disktype')
+      expect(term.dig('matchExpressions', 0, 'values')).to eq(['ssd'])
+    end
+
+    it 'renders the pod annotations on the rustfs pod template', :aggregate_failures do
+      annotations = template.dig('Deployment/optest-openproject-rustfs', 'spec', 'template', 'metadata', 'annotations')
+      expect(annotations).to include('foo' => 'bar', 'prometheus.io/scrape' => 'true')
+    end
+
+    it 'renders the global affinity on the bucket init job pod too', :aggregate_failures do
+      template_spec = template.dig('Job/optest-openproject-rustfs-init-bucket', 'spec', 'template', 'spec')
+      term = template_spec.dig('affinity', 'nodeAffinity', 'requiredDuringSchedulingIgnoredDuringExecution', 'nodeSelectorTerms', 0)
+      expect(term.dig('matchExpressions', 0, 'key')).to eq('disktype')
+      expect(term.dig('matchExpressions', 0, 'values')).to eq(['ssd'])
+    end
+  end
+
+  context 'when rustfs is bundled with bucket init job annotations' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          rustfs:
+            bundled: true
+            ingress:
+              host: s3.example.com
+            bucketInitJob:
+              annotations:
+                foo: bar
+        YAML
+      )
+    end
+
+    it 'renders the annotations on the bucket init job pod template', :aggregate_failures do
+      annotations = template.dig('Job/optest-openproject-rustfs-init-bucket', 'spec', 'template', 'metadata', 'annotations')
+      expect(annotations).to include('foo' => 'bar')
     end
   end
 end

@@ -20,12 +20,22 @@ spec:
       app.kubernetes.io/component: rustfs
   template:
     metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- range $key, $val := . }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+      {{- end }}
       labels:
         {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 8 }}
         app.kubernetes.io/component: rustfs
     spec:
       {{- include "openproject.podSecurityContext" . | indent 6 }}
       {{- include "openproject.imagePullSecrets" . | indent 6 }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
         {{ toYaml . | nindent 8 | trim }}

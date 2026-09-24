@@ -124,7 +124,7 @@ describe 'security context' do
           <<~YAML
             rustfs:
               bundled: true
-              s3Ingress:
+              ingress:
                 host: s3.example.com
           YAML
         )
