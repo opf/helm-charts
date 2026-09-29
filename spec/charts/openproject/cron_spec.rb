@@ -92,4 +92,39 @@ describe 'oidc configuration' do
       end
     end
   end
+
+  describe 'attachments volume' do
+    let(:claim_name) do
+      volumes = template.dig('Deployment/optest-openproject-cron', 'spec', 'template', 'spec', 'volumes')
+      volumes.find { |v| v['name'] == 'data' }.dig('persistentVolumeClaim', 'claimName')
+    end
+
+    context 'without persistence.existingClaim' do
+      let(:default_values) do
+        HelmTemplate.with_defaults('
+          cron:
+            enabled: true
+        ')
+      end
+
+      it 'mounts the chart-managed PVC' do
+        expect(claim_name).to eq 'optest-openproject'
+      end
+    end
+
+    context 'with persistence.existingClaim' do
+      let(:default_values) do
+        HelmTemplate.with_defaults('
+          cron:
+            enabled: true
+          persistence:
+            existingClaim: my-claim
+        ')
+      end
+
+      it 'mounts the existing claim' do
+        expect(claim_name).to eq 'my-claim'
+      end
+    end
+  end
 end
