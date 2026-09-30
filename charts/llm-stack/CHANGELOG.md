@@ -1,5 +1,11 @@
 # llm-stack
 
+## 2.0.0
+
+### Major Changes
+
+- b76f6c1: Rewrote the routing generation logic of the LLM Stack to merge multiple routes for LLMs and embedding models into their respective openai-compatible uris.
+
 ## 1.1.0
 
 ### Minor Changes
