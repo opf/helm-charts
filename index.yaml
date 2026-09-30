@@ -15,6 +15,44 @@ entries:
         url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
     apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-09-30T07:57:48.272670395Z"
+    dependencies:
+    - name: apisix
+      repository: https://apache.github.io/apisix-helm-chart
+      version: 2.14.1
+    - name: common
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^2.2.2
+    - condition: devMonitoring.enabled
+      name: kube-prometheus-stack
+      repository: oci://ghcr.io/prometheus-community/charts
+      version: 86.2.2
+    description: A Helm chart for running the LLM stack for Open Project via Kubernetes
+    digest: ded9e3a7d43e7288554e3e7053785b0ac1f11da566dcb8fe29746217ee2a110c
+    home: https://www.openproject.org/
+    icon: https://charts.openproject.org/logo.svg
+    maintainers:
+    - name: OpenProject
+      url: https://github.com/opf/helm-charts
+    name: llm-stack
+    type: application
+    urls:
+    - https://github.com/opf/helm-charts/releases/download/llm-stack-2.0.0/llm-stack-2.0.0.tgz
+    version: 2.0.0
+  - annotations:
+      artifacthub.io/license: GPL-3.0-only
+      artifacthub.io/links: |
+        - name: Homepage
+          url: https://www.openproject.org/
+        - name: OpenProject Community
+          url: https://community.openproject.org
+        - name: support
+          url: https://www.openproject.org/docs/development/report-a-bug/
+      artifacthub.io/signKey: |
+        fingerprint: CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+        url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+    apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-09-11T09:51:56.516518136Z"
     dependencies:
     - name: apisix
@@ -154,6 +192,45 @@ entries:
     - https://github.com/opf/helm-charts/releases/download/llm-stack-1.0.0/llm-stack-1.0.0.tgz
     version: 1.0.0
   openproject:
+  - annotations:
+      artifacthub.io/license: GPL-3.0-only
+      artifacthub.io/links: |
+        - name: Homepage
+          url: https://www.openproject.org/
+        - name: OpenProject Community
+          url: https://community.openproject.org
+        - name: support
+          url: https://www.openproject.org/docs/development/report-a-bug/
+      artifacthub.io/signKey: |
+        fingerprint: CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+        url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+    apiVersion: v2
+    appVersion: 17.9.0
+    created: "2026-09-30T07:57:48.542434325Z"
+    dependencies:
+    - condition: postgresql.bundled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^12.1.6
+    - condition: memcached.bundled
+      name: memcached
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^6.3.2
+    - name: common
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^2.2.2
+    description: A Helm chart for running OpenProject via Kubernetes
+    digest: 5d0522d32b1c58c10ff2c46aea8d86ddfe2e00aee2f91e70fca7e084767934ad
+    home: https://www.openproject.org/
+    icon: https://charts.openproject.org/logo.svg
+    maintainers:
+    - name: OpenProject
+      url: https://github.com/opf/helm-charts
+    name: openproject
+    type: application
+    urls:
+    - https://github.com/opf/helm-charts/releases/download/openproject-13.13.0/openproject-13.13.0.tgz
+    version: 13.13.0
   - annotations:
       artifacthub.io/license: GPL-3.0-only
       artifacthub.io/links: |
@@ -5617,4 +5694,4 @@ entries:
     urls:
     - https://github.com/opf/helm-charts/releases/download/openproject-llm-stack-1.0.0/openproject-llm-stack-1.0.0.tgz
     version: 1.0.0
-generated: "2026-09-16T08:19:58.128232328Z"
+generated: "2026-09-30T07:57:48.542780832Z"
