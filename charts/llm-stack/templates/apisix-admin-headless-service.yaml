@@ -1,4 +1,3 @@
-{{- if .Values.apisixInitialConfig.enabled }}
 # Helps the config seeder script identify the apisix pod before it passes it's readiness check to configure it
 apiVersion: v1
 kind: Service
@@ -14,4 +13,3 @@ spec:
   selector:
     app.kubernetes.io/name: apisix
     app.kubernetes.io/instance: {{ .Release.Name }}
-{{ end }}

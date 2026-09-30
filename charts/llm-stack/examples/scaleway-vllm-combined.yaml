@@ -1,12 +1,28 @@
 apisixConfig:
   routes:
-    selfHostedQwen:
+    scalewayCompletion:
       type: completion
-      provider: selfHosted
+      provider: scaleway
       providerFormat: openai-compatible
-      vllmConfigId: completionQwen
+      apiKeySecretKey: scaleway_api_key
+      # retrieve the project id from the scaleway project dashboard
+      baseURL: "https://api.scaleway.ai/<project_id>/v1/chat/completions"
       models:
-        - name: Qwen/Qwen2.5-0.5B-Instruct
+        - name: qwen3.6-35b-a3b
+        - name: gemma-4-26b-a4b-it
+        - name: glm-5.2
+        - name: deepseek-v4-flash-0731
+        - name: qwen3.5-397b-a17b
+        - name: mistral-medium-3.5-128b
+    scalewayEmbedding:
+      type: embedding
+      provider: scaleway
+      providerFormat: openai-compatible
+      apiKeySecretKey: scaleway_api_key
+      baseURL: "https://api.scaleway.ai/<project_id>/v1/embeddings"
+      models:
+        - name: qwen3-embedding-8b
+        - name: bge-multilingual-gemma2
     selfHostedEmbedding:
       type: embedding
       provider: selfHosted
@@ -29,70 +45,6 @@ apisix:
           - /v1/models
 
 vllmConfigs:
-  completionQwen:
-    image:
-      name: "vllm/vllm-openai-cpu"
-      tag: "v0.29.0"
-      pullPolicy: "IfNotPresent"
-    replicaCount: 1
-    service:
-      type: ClusterIP
-      port: 8000
-      annotations: {}
-    model: Qwen/Qwen2.5-0.5B-Instruct
-    extraArgs:
-      - "--gpu-memory-utilization"
-      - "0.25"
-      - "--dtype"
-      - "float32"
-      - "--max-model-len"
-      - "1024"
-      - "--max-num-seqs"
-      - "4"
-    # Environment variables (e.g., HF_TOKEN for private models, huggingface hub configurations)
-    env:
-      - name: OMP_NUM_THREADS
-        value: "4"
-      - name: VLLM_CPU_KVCACHE_SPACE
-        value: "1"
-    # Resources request/limit including GPUs
-    resources:
-      limits:
-        cpu: "2"
-        memory: "8Gi"
-        nvidia.com/gpu: null
-      requests:
-        cpu: "2"
-        memory: "8Gi"
-        nvidia.com/gpu: null
-    # Persistence settings to cache HuggingFace/Model files locally
-    persistence:
-      enabled: false
-      size: "50Gi"
-      accessModes:
-        - ReadWriteOnce
-      # storageClass: ""
-      # existingClaim: ""
-    # Node scheduling and placement configs
-    nodeSelector: {}
-    tolerations: []
-    affinity: {}
-    podAnnotations: {}
-    podLabels: {}
-    livenessProbe:
-      enabled: true
-      initialDelaySeconds: 240
-    readinessProbe:
-      enabled: true
-      initialDelaySeconds: 240
-    extraVolumes:
-      - name: dshm
-        emptyDir:
-          medium: Memory
-          sizeLimit: "2Gi" # Adjust this to your needed size limit
-    extraVolumeMounts:
-      - mountPath: /dev/shm
-        name: dshm
   embeddingHarrier:
     image:
       name: "vllm/vllm-openai-cpu"
@@ -100,6 +52,7 @@ vllmConfigs:
       pullPolicy: "IfNotPresent"
     replicaCount: 1
     service:
+      # Do not name this service simply "vllm" as kubernetes env variables it will clash with vllm ones.
       type: ClusterIP
       port: 8000
       annotations: { }
@@ -114,7 +67,7 @@ vllmConfigs:
       - "--dtype"
       - "float32"
       - "--max-model-len"
-      - "1024"
+      - "1048"
       - "--max-num-seqs"
       - "4"
     # Environment variables (e.g., HF_TOKEN for private models, huggingface hub configurations)
@@ -128,7 +81,7 @@ vllmConfigs:
     # Resources request/limit including GPUs
     resources:
       limits:
-        cpu: "1"
+        cpu: "2"
         memory: "8Gi"
         nvidia.com/gpu: null
       requests:
@@ -163,6 +116,7 @@ vllmConfigs:
     extraVolumeMounts:
       - mountPath: /dev/shm
         name: dshm
+
 
 devMonitoring:
   enabled: true

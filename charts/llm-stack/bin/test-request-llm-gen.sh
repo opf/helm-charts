@@ -12,7 +12,7 @@ curl http://$LLM_STACK_HOST:$LLM_STACK_PORT/v1/chat/completions \
     "messages": [
       {
         "role": "user",
-        "content": "'?"${LLM_STACK_MESSAGE}"'"
+        "content": "'"${LLM_STACK_MESSAGE}"'"
       }
     ],
     "model": "'"${LLM_STACK_MODEL}"'",

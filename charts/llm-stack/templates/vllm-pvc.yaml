@@ -1,19 +1,22 @@
-{{- if and .Values.vllm.enabled .Values.vllm.persistence.enabled (not .Values.vllm.persistence.existingClaim) }}
+{{- range $id, $config := .Values.vllmConfigs }}
+{{- if and $config.persistence.enabled (not $config.persistence.existingClaim) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "common.names.fullname" . }}-vllm-cache
-  namespace: {{ .Release.Namespace | quote }}
+  name: {{ include "common.names.fullname" $ }}-vllm-{{ $id | kebabcase | lower }}-cache
+  namespace: {{ $.Release.Namespace | quote }}
   labels:
-    {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
-    app.kubernetes.io/component: vllm
+    {{- include "common.labels.standard" (dict "customLabels" $.Values.commonLabels "context" $) | nindent 4 }}
+    app.kubernetes.io/component: vllm-{{ $id | kebabcase | lower }}
 spec:
   accessModes:
-    {{- toYaml .Values.vllm.persistence.accessModes | nindent 4 }}
-  {{- if .Values.vllm.persistence.storageClass }}
-  storageClassName: {{ .Values.vllm.persistence.storageClass | quote }}
+    {{- toYaml $config.persistence.accessModes | nindent 4 }}
+  {{- if $config.persistence.storageClass }}
+  storageClassName: {{ $config.persistence.storageClass | quote }}
   {{- end }}
   resources:
     requests:
-      storage: {{ .Values.vllm.persistence.size | quote }}
+      storage: {{ $config.persistence.size | quote }}
+---
+{{- end }}
 {{- end }}

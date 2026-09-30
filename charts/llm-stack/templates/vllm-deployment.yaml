@@ -1,104 +1,104 @@
-{{- if .Values.vllm.enabled }}
+{{- range $id, $config := .Values.vllmConfigs }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.names.fullname" . }}-vllm
-  namespace: {{ .Release.Namespace | quote }}
+  name: {{ include "common.names.fullname" $ }}-vllm-{{ $id | kebabcase | lower}}
+  namespace: {{ $.Release.Namespace | quote }}
   labels:
-    {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
-    app.kubernetes.io/component: vllm
+    {{- include "common.labels.standard" (dict "customLabels" $.Values.commonLabels "context" $) | nindent 4 }}
+    app.kubernetes.io/component: vllm-{{ $id | kebabcase | lower }}
 spec:
-  replicas: {{ .Values.vllm.replicaCount | default 1 }}
+  replicas: {{ $config.replicaCount | default 1 }}
   selector:
     matchLabels:
-      {{- include "common.labels.matchLabels" (dict "customLabels" .Values.commonLabels "context" $) | nindent 6 }}
-      app.kubernetes.io/component: vllm
+      {{- include "common.labels.matchLabels" (dict "customLabels" $.Values.commonLabels "context" $) | nindent 6 }}
+      app.kubernetes.io/component: vllm-{{ $id | kebabcase | lower }}
   template:
     metadata:
       labels:
-        {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 8 }}
-        app.kubernetes.io/component: vllm
-        {{- with .Values.vllm.podLabels }}
+        {{- include "common.labels.standard" (dict "customLabels" $.Values.commonLabels "context" $) | nindent 8 }}
+        app.kubernetes.io/component: vllm-{{ $id | kebabcase | lower }}
+        {{- with $config.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.vllm.podAnnotations }}
+      {{- with $config.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      {{- if .Values.vllm.schedulerName }}
-      schedulerName: {{ .Values.vllm.schedulerName | quote }}
+      {{- if $config.schedulerName }}
+      schedulerName: {{ $config.schedulerName | quote }}
       {{- end }}
       containers:
-        - name: vllm
-          image: "{{ .Values.vllm.image.name }}:{{ .Values.vllm.image.tag }}"
-          imagePullPolicy: {{ .Values.vllm.image.pullPolicy }}
+        - name: vllm-{{ $id | kebabcase | lower }}
+          image: "{{ $config.image.name }}:{{ $config.image.tag }}"
+          imagePullPolicy: {{ $config.image.pullPolicy }}
           args:
-            - "--model"
-            - {{ .Values.vllm.model }}
+            - {{ $config.model }}
             - "--enable-prompt-tokens-details"
-            {{- if .Values.vllm.extraArgs }}
-            {{- toYaml .Values.vllm.extraArgs | nindent 12 }}
+            {{- if $config.extraArgs }}
+            {{- toYaml $config.extraArgs | nindent 12 }}
             {{- end }}
           ports:
             - name: http
               containerPort: 8000
               protocol: TCP
           env:
-            {{- if .Values.vllm.env }}
-            {{- toYaml .Values.vllm.env | nindent 12 }}
+            {{- if $config.env }}
+            {{- toYaml $config.env | nindent 12 }}
             {{- end }}
-          {{- if .Values.vllm.resources }}
+          {{- if $config.resources }}
           resources:
-            {{- toYaml .Values.vllm.resources | nindent 12 }}
+            {{- toYaml $config.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: cache-volume
-              mountPath: {{ .Values.vllm.persistence.mountPath | default "/root/.cache" }}
-            {{- if .Values.vllm.extraVolumeMounts }}
-            {{- toYaml .Values.vllm.extraVolumeMounts | nindent 12 }}
+              mountPath: {{ $config.persistence.mountPath | default "/root/.cache" }}
+            {{- if $config.extraVolumeMounts }}
+            {{- toYaml $config.extraVolumeMounts | nindent 12 }}
             {{- end }}
-          {{- if .Values.vllm.livenessProbe.enabled }}
+          {{- if $config.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
-              path: {{ .Values.vllm.livenessProbe.path | default "/health" }}
+              path: {{ $config.livenessProbe.path | default "/health" }}
               port: http
-            initialDelaySeconds: {{ .Values.vllm.livenessProbe.initialDelaySeconds | default 30 }}
-            periodSeconds: {{ .Values.vllm.livenessProbe.periodSeconds | default 10 }}
-            timeoutSeconds: {{ .Values.vllm.livenessProbe.timeoutSeconds | default 5 }}
-            failureThreshold: {{ .Values.vllm.livenessProbe.failureThreshold | default 3 }}
+            initialDelaySeconds: {{ $config.livenessProbe.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ $config.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ $config.livenessProbe.timeoutSeconds | default 5 }}
+            failureThreshold: {{ $config.livenessProbe.failureThreshold | default 3 }}
           {{- end }}
-          {{- if .Values.vllm.readinessProbe.enabled }}
+          {{- if $config.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
-              path: {{ .Values.vllm.readinessProbe.path | default "/health" }}
+              path: {{ $config.readinessProbe.path | default "/health" }}
               port: http
-            initialDelaySeconds: {{ .Values.vllm.readinessProbe.initialDelaySeconds | default 30 }}
-            periodSeconds: {{ .Values.vllm.readinessProbe.periodSeconds | default 10 }}
-            timeoutSeconds: {{ .Values.vllm.readinessProbe.timeoutSeconds | default 5 }}
-            failureThreshold: {{ .Values.vllm.readinessProbe.failureThreshold | default 3 }}
+            initialDelaySeconds: {{ $config.readinessProbe.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ $config.readinessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ $config.readinessProbe.timeoutSeconds | default 5 }}
+            failureThreshold: {{ $config.readinessProbe.failureThreshold | default 3 }}
           {{- end }}
-      {{- with .Values.vllm.nodeSelector }}
+      {{- with $config.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.vllm.affinity }}
+      {{- with $config.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.vllm.tolerations }}
+      {{- with $config.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
         - name: cache-volume
-          {{- if .Values.vllm.persistence.enabled }}
+          {{- if $config.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: {{ if .Values.vllm.persistence.existingClaim }}{{ .Values.vllm.persistence.existingClaim }}{{ else }}{{ include "common.names.fullname" . }}-vllm-cache{{ end }}
+            claimName: {{ if $config.persistence.existingClaim }}{{ $config.persistence.existingClaim }}{{ else }}{{ include "common.names.fullname" $ }}-vllm-{{ $id | kebabcase | lower}}-cache{{ end }}
           {{- else }}
           emptyDir: {}
           {{- end }}
-        {{- if .Values.vllm.extraVolumes }}
-        {{- toYaml .Values.vllm.extraVolumes | nindent 8 }}
+        {{- if $config.extraVolumes }}
+        {{- toYaml $config.extraVolumes | nindent 8 }}
         {{- end }}
+---
 {{- end }}
