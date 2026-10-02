@@ -1,5 +1,12 @@
 # openproject
 
+## 13.13.1
+
+### Patch Changes
+
+- b2d2f78: Upgrade OpenProject core version to 17.9.1 (patch update)
+- 828830e: Run the database migration in its own `migrate` init container in the seeder job, ahead of the `seeder` container, instead of relying on `docker/prod/seeder` to run both steps implicitly.
+
 ## 13.13.0
 
 ### Minor Changes
