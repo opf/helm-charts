@@ -277,21 +277,24 @@ Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3
       name: {{ .Values.rustfs.secret.existingSecret }}
       key: RUSTFS_SECRET_KEY
 {{- end }}
-{{- if .Values.postgresql.auth.existingSecret }}
-- name: OPENPROJECT_DB_PASSWORD
+{{/* PGPASSWORD too: DATABASE_URL carries no password, but docker/prod/migrate probes the DB with psql. */}}
+{{- range $envName := list "OPENPROJECT_DB_PASSWORD" "PGPASSWORD" }}
+{{- if $.Values.postgresql.auth.existingSecret }}
+- name: {{ $envName }}
   valueFrom:
     secretKeyRef:
-      name: {{ .Values.postgresql.auth.existingSecret }}
-      key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
-{{- else if .Values.postgresql.auth.password }}
-- name: OPENPROJECT_DB_PASSWORD
-  value: {{ .Values.postgresql.auth.password }}
+      name: {{ $.Values.postgresql.auth.existingSecret }}
+      key: {{ $.Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- else if $.Values.postgresql.auth.password }}
+- name: {{ $envName }}
+  value: {{ $.Values.postgresql.auth.password }}
 {{- else }}
-- name: OPENPROJECT_DB_PASSWORD
+- name: {{ $envName }}
   valueFrom:
     secretKeyRef:
-      name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" .Values.postgresql "context" $) }}
-      key: {{ .Values.postgresql.auth.secretKeys.userPasswordKey }}
+      name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" $.Values.postgresql "context" $) }}
+      key: {{ $.Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- end }}
 {{- end }}
 {{- if .Values.openproject.realtime_collaboration.enabled }}
 # External backend: we are using an external hocuspocus backend with an existing secret containing the password
