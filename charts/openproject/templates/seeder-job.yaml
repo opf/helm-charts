@@ -76,6 +76,26 @@ spec:
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
+        - name: migrate
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          args:
+            - bash
+            - /app/docker/prod/migrate
+          envFrom:
+            {{- include "openproject.envFrom" . | nindent 12 }}
+          env:
+            {{- include "openproject.env" . | nindent 12 }}
+          {{- if .Values.seederJob.resources }}
+          resources:
+            {{- toYaml .Values.seederJob.resources | nindent 12 }}
+          {{- else if ne .Values.seederJob.resourcesPreset "none" }}
+          resources:
+            {{- include "common.resources.preset" (dict "type" .Values.seederJob.resourcesPreset) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
       containers:
         - name: seeder
           image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}{{ if .Values.image.sha256 }}@sha256:{{ .Values.image.sha256 }}{{ else }}:{{ .Values.image.tag }}{{ end }}"
@@ -83,6 +103,7 @@ spec:
           args:
             - bash
             - /app/docker/prod/seeder
+            - --skip-migrate
           envFrom:
             {{- include "openproject.envFrom" . | nindent 12 }}
           env:
