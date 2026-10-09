@@ -443,6 +443,10 @@ cron:
   ##
   annotations: {}
 
+  ## Define custom cron deployment labels:
+  ##
+  labels: {}
+
   ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
   ## use an existing secret containing the IMAP credentials.
   ## Specify the name of this existing secret here.
