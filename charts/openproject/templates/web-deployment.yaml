@@ -141,11 +141,7 @@ spec:
                 # required otherwise health check will return 404 because health check is done using the Pod IP, which may cause issues with downstream variants
                 - name: Host
                   value: localhost
-            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
-            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
-            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
-            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
-            successThreshold: {{ .Values.probes.liveness.successThreshold }}
+          {{- include "openproject.probeSettings" .Values.probes.liveness | nindent 12 }}
           {{- end }}
           {{- if .Values.probes.readiness.enabled }}
           readinessProbe:
@@ -156,11 +152,7 @@ spec:
                 # required otherwise health check will return 404 because health check is done using the Pod IP, which may cause issues with downstream variants
                 - name: Host
                   value: localhost
-            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
-            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
-            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
-            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
-            successThreshold: {{ .Values.probes.readiness.successThreshold }}
+          {{- include "openproject.probeSettings" .Values.probes.readiness | nindent 12 }}
           {{- end }}
           {{- if .Values.probes.startup.enabled }}
           startupProbe:
@@ -171,11 +163,7 @@ spec:
                 # required otherwise health check will return 404 because health check is done using the Pod IP, which may cause issues with downstream variants
                 - name: Host
                   value: localhost
-            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds }}
-            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
-            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
-            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
-            successThreshold: {{ .Values.probes.startup.successThreshold }}
+          {{- include "openproject.probeSettings" .Values.probes.startup | nindent 12 }}
           {{- end }}
           {{- if .Values.resources }}
           resources:

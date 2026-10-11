@@ -135,22 +135,14 @@ spec:
             httpGet:
               path: "/status/connected"
               port: {{ $workerValues.probes.port }}
-            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
-            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
-            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
-            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
-            successThreshold: {{ .Values.probes.liveness.successThreshold }}
+          {{- include "openproject.probeSettings" .Values.probes.liveness | nindent 12 }}
           {{- end }}
           {{- if and .Values.probes.readiness.enabled $workerValues.probes.enabled }}
           readinessProbe:
             httpGet:
               path: "/status"
               port: {{ $workerValues.probes.port }}
-            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
-            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
-            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
-            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
-            successThreshold: {{ .Values.probes.readiness.successThreshold }}
+          {{- include "openproject.probeSettings" .Values.probes.readiness | nindent 12 }}
           {{- end }}
           {{- if (coalesce $workerValues.resources .Values.resources) }}
           resources:
