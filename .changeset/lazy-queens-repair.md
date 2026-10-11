@@ -1,5 +1,5 @@
 ---
-"@openproject/helm-charts": major
+"openproject": minor
 ---
 
 Add good_job background worker livenessProbe and readinessProbe
