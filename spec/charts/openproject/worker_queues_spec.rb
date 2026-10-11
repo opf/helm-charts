@@ -11,17 +11,23 @@ describe 'imagePullSecrets configuration' do
           default:
             queues: ""
             replicaCount: 2
+            probes:
+              enabled: false
             strategy:
               type: "Recreate"
           multitenancy:
             maxThreads: 4
             queues: "multitenancy"
             replicaCount: 1
+            probes:
+              enabled: false
             strategy:
               type: "Recreate"
           bim:
             queues: "bim,ifc_conversion"
             replicaCount: 0
+            probes:
+              enabled: false
             strategy:
               type: "Recreate"
               YAML

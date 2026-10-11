@@ -471,6 +471,12 @@ workers:
     # It needs to be an integer greater than 0.
     maxThreads:
     replicaCount: 1
+
+    # Enable monitoring probe for background workers
+    probes:
+      enabled: true
+      port: 7001
+
     strategy:
       type: "Recreate"
     ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).

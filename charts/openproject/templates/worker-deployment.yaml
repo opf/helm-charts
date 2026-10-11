@@ -113,6 +113,10 @@ spec:
             - name: "RAILS_MAX_THREADS"
               value: "{{ add $workerValues.maxThreads 3 }}" # worker threads + NOTIFY listener + 2 cron threads
             {{- end }}
+            {{- if $workerValues.probes.enabled }}
+            - name: "GOOD_JOB_PROBE_PORT"
+              value: "{{ $workerValues.probes.port }}"
+            {{- end }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
             {{- if and .Values.persistence.enabled (not .Values.s3.enabled) (not .Values.rustfs.bundled) }}
@@ -126,6 +130,20 @@ spec:
               readOnly: false
             {{- end }}
             {{- include "openproject.extraVolumeMounts" . | indent 12 }}
+          {{- if and .Values.probes.liveness.enabled $workerValues.probes.enabled }}
+          livenessProbe:
+            httpGet:
+              path: "/status/connected"
+              port: {{ $workerValues.probes.port }}
+          {{- include "openproject.probeSettings" .Values.probes.liveness | nindent 12 }}
+          {{- end }}
+          {{- if and .Values.probes.readiness.enabled $workerValues.probes.enabled }}
+          readinessProbe:
+            httpGet:
+              path: "/status"
+              port: {{ $workerValues.probes.port }}
+          {{- include "openproject.probeSettings" .Values.probes.readiness | nindent 12 }}
+          {{- end }}
           {{- if (coalesce $workerValues.resources .Values.resources) }}
           resources:
             {{- coalesce $workerValues.resources .Values.resources | toYaml | nindent 12 }}

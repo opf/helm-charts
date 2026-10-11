@@ -360,3 +360,10 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Renders the shared timing settings of a probe from .Values.probes.<liveness|readiness|startup>.
+*/}}
+{{- define "openproject.probeSettings" -}}
+{{- pick . "initialDelaySeconds" "timeoutSeconds" "periodSeconds" "failureThreshold" "successThreshold" | toYaml }}
+{{- end }}
