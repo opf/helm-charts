@@ -114,6 +114,26 @@ spec:
               readOnly: false
             {{- end }}
             {{- include "openproject.extraVolumeMounts" . | indent 12 }}
+          {{- $liveness := include "openproject.mergedProbe" (dict "probe" .Values.probes.liveness "overrides" .Values.cron.probes.liveness) | fromYaml }}
+          {{- $readiness := include "openproject.mergedProbe" (dict "probe" .Values.probes.readiness "overrides" .Values.cron.probes.readiness) | fromYaml }}
+          {{- if and $liveness.enabled .Values.cron.probes.enabled }}
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - kill -0 1
+          {{- include "openproject.probeSettings" $liveness | nindent 12 }}
+          {{- end }}
+          {{- if and $readiness.enabled .Values.cron.probes.enabled }}
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - kill -0 1
+          {{- include "openproject.probeSettings" $readiness | nindent 12 }}
+          {{- end }}
           {{- if (coalesce .Values.cron.resources .Values.resources) }}
           resources:
             {{- coalesce .Values.cron.resources .Values.resources | toYaml | nindent 12 }}

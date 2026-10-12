@@ -130,19 +130,21 @@ spec:
               readOnly: false
             {{- end }}
             {{- include "openproject.extraVolumeMounts" . | indent 12 }}
-          {{- if and .Values.probes.liveness.enabled $workerValues.probes.enabled }}
+          {{- $liveness := include "openproject.mergedProbe" (dict "probe" .Values.probes.liveness "overrides" $workerValues.probes.liveness) | fromYaml }}
+          {{- $readiness := include "openproject.mergedProbe" (dict "probe" .Values.probes.readiness "overrides" $workerValues.probes.readiness) | fromYaml }}
+          {{- if and $liveness.enabled $workerValues.probes.enabled }}
           livenessProbe:
             httpGet:
               path: "/status/connected"
               port: {{ $workerValues.probes.port }}
-          {{- include "openproject.probeSettings" .Values.probes.liveness | nindent 12 }}
+          {{- include "openproject.probeSettings" $liveness | nindent 12 }}
           {{- end }}
-          {{- if and .Values.probes.readiness.enabled $workerValues.probes.enabled }}
+          {{- if and $readiness.enabled $workerValues.probes.enabled }}
           readinessProbe:
             httpGet:
               path: "/status"
               port: {{ $workerValues.probes.port }}
-          {{- include "openproject.probeSettings" .Values.probes.readiness | nindent 12 }}
+          {{- include "openproject.probeSettings" $readiness | nindent 12 }}
           {{- end }}
           {{- if (coalesce $workerValues.resources .Values.resources) }}
           resources:
