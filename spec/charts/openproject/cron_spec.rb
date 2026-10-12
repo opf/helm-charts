@@ -127,4 +127,60 @@ describe 'oidc configuration' do
       end
     end
   end
+
+  describe 'probes' do
+    let(:cron) { 'Deployment/optest-openproject-cron' }
+
+    context 'with default configuration' do
+      it 'defines liveness and readiness probes', :aggregate_failures do
+        spec = template.find_container(cron, 'cron')
+        %w[livenessProbe readinessProbe].each do |probe|
+          expect(spec[probe]['exec']['command']).to eq ['bash', '-c', 'kill -0 1']
+          expect(spec[probe]['timeoutSeconds']).to eq 5
+        end
+        expect(spec['livenessProbe']['periodSeconds']).to eq 15
+        expect(spec['readinessProbe']['periodSeconds']).to eq 10
+      end
+    end
+
+    context 'when disabling cron probes' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          cron:
+            probes:
+              enabled: false
+        YAML
+        )
+      end
+
+      it 'does not define probes', :aggregate_failures do
+        spec = template.find_container(cron, 'cron')
+        expect(spec['livenessProbe']).to be_nil
+        expect(spec['readinessProbe']).to be_nil
+      end
+    end
+
+    context 'when overriding probe settings for cron' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          cron:
+            probes:
+              liveness:
+                initialDelaySeconds: 0
+                failureThreshold: 5
+              readiness:
+                enabled: false
+        YAML
+        )
+      end
+
+      it 'merges the overrides over the global settings', :aggregate_failures do
+        spec = template.find_container(cron, 'cron')
+        expect(spec['livenessProbe']['initialDelaySeconds']).to eq 0
+        expect(spec['livenessProbe']['failureThreshold']).to eq 5
+        expect(spec['livenessProbe']['periodSeconds']).to eq 15
+        expect(spec['readinessProbe']).to be_nil
+      end
+    end
+  end
 end
