@@ -91,19 +91,21 @@ spec:
               containerPort: 1234
               protocol: "TCP"
           {{- /* hocuspocus answers any plain (non-websocket) HTTP request with 200 "Welcome to Hocuspocus!" */}}
-          {{- if and .Values.probes.liveness.enabled .Values.hocuspocus.probes.enabled }}
+          {{- $liveness := include "openproject.mergedProbe" (dict "probe" .Values.probes.liveness "overrides" .Values.hocuspocus.probes.liveness) | fromYaml }}
+          {{- $readiness := include "openproject.mergedProbe" (dict "probe" .Values.probes.readiness "overrides" .Values.hocuspocus.probes.readiness) | fromYaml }}
+          {{- if and $liveness.enabled .Values.hocuspocus.probes.enabled }}
           livenessProbe:
             httpGet:
               path: "/"
               port: http
-          {{- include "openproject.probeSettings" .Values.probes.liveness | nindent 12 }}
+          {{- include "openproject.probeSettings" $liveness | nindent 12 }}
           {{- end }}
-          {{- if and .Values.probes.readiness.enabled .Values.hocuspocus.probes.enabled }}
+          {{- if and $readiness.enabled .Values.hocuspocus.probes.enabled }}
           readinessProbe:
             httpGet:
               path: "/"
               port: http
-          {{- include "openproject.probeSettings" .Values.probes.readiness | nindent 12 }}
+          {{- include "openproject.probeSettings" $readiness | nindent 12 }}
           {{- end }}
           {{- if .Values.hocuspocus.resources }}
           resources:
