@@ -1,5 +1,16 @@
 # openproject
 
+## 13.14.0
+
+### Minor Changes
+
+- 1cd5ad6: Add good_job background worker livenessProbe and readinessProbe
+
+### Patch Changes
+
+- 6ad5a38: Upgrade OpenProject core version to 17.9.2 (patch update)
+- d58046c: Set `PGPASSWORD` alongside `OPENPROJECT_DB_PASSWORD` on all OpenProject containers. `DATABASE_URL` carries no password, so the `psql` probe in `docker/prod/migrate` could not authenticate.
+
 ## 13.13.1
 
 ### Patch Changes
