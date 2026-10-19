@@ -443,6 +443,15 @@ cron:
   ##
   annotations: {}
 
+  ## Enable liveness and readiness probes for the cron process.
+  ## The exec probe verifies that the container's main process is still running.
+  ## Settings default to the global `probes.liveness` and `probes.readiness` (see below).
+  ## Any global probe setting can be overridden for cron only.
+  probes:
+    enabled: true
+    liveness: {}
+    readiness: {}
+
   ## To avoid having sensitive credentials in your values.yaml, the preferred way is to
   ## use an existing secret containing the IMAP credentials.
   ## Specify the name of this existing secret here.
@@ -476,6 +485,10 @@ workers:
     probes:
       enabled: true
       port: 7001
+      ## Settings default to the global `probes.liveness` and `probes.readiness` (see below).
+      ## Any global probe setting can be overridden for this worker only.
+      liveness: {}
+      readiness: {}
 
     strategy:
       type: "Recreate"
@@ -533,6 +546,14 @@ hocuspocus:
 
   service:
     port: 1234
+
+  ## Enable liveness and readiness probes for the hocuspocus server.
+  ## Settings default to the global `probes.liveness` and `probes.readiness` (see below).
+  ## Any global probe setting can be overridden for hocuspocus only.
+  probes:
+    enabled: true
+    liveness: {}
+    readiness: {}
 
   ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
   ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15

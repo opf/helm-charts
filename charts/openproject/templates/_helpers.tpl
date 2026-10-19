@@ -367,3 +367,18 @@ Renders the shared timing settings of a probe from .Values.probes.<liveness|read
 {{- define "openproject.probeSettings" -}}
 {{- pick . "initialDelaySeconds" "timeoutSeconds" "periodSeconds" "failureThreshold" "successThreshold" | toYaml }}
 {{- end }}
+
+{{/*
+Merges component-specific probe overrides over the global probe settings and returns the result as YAML.
+Every key set in "overrides" wins, including zero values like `0` or `false` (unlike sprig's `merge`).
+
+Usage:
+  {{- $liveness := include "openproject.mergedProbe" (dict "probe" .Values.probes.liveness "overrides" .Values.hocuspocus.probes.liveness) | fromYaml }}
+*/}}
+{{- define "openproject.mergedProbe" -}}
+{{- $probe := deepCopy .probe }}
+{{- range $key, $value := (.overrides | default dict) }}
+{{- $_ := set $probe $key $value }}
+{{- end }}
+{{- $probe | toYaml }}
+{{- end }}
