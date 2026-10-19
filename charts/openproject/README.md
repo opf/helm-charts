@@ -132,7 +132,7 @@ These volumes do not contain any critical information and can be excluded from b
 
 ### Kubernetes Pod Security Standards
 
-With the default values, the rendered chart is compatible with the Kubernetes Pod Security Standards `restricted` profile. This includes the OpenProject web, worker, cron, seeder, hocuspocus, and Helm test pods, including their init containers.
+With the default values, the rendered chart is compatible with the Kubernetes Pod Security Standards `restricted` profile. This includes the OpenProject web, worker, cron, seeder, hocuspocus, anycable, and Helm test pods, including their init containers.
 
 Pod Security Admission enforcement is configured by the cluster operator on the namespace, not by the chart. For example:
 

@@ -546,6 +546,76 @@ hocuspocus:
       memory: "1Gi"
       cpu: "2"
 
+## AnyCable server pushing live updates to the browser (requires OpenProject 18.0 or newer).
+## Enable it together with openproject.live_updates.enabled.
+##
+## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/#live-updates
+#
+anycable:
+  enabled: false
+  ## The WebSocket and server-sent events paths are routed to the AnyCable server, prefixed with
+  ## openproject.railsRelativeUrlRoot. So is /_anycable, keeping OpenProject's RPC endpoint off the public ingress.
+  ## Server-sent events are a fallback for clients without WebSockets and need response buffering disabled
+  ## (e.g. `nginx.ingress.kubernetes.io/proxy-buffering: "off"` in ingress.annotations).
+  ingress:
+    ## The AnyCable server serves these on the same paths, and openproject.live_updates.websocketUrl defaults to websocketPath.
+    websocketPath: /cable
+    ssePath: /events
+    pathType: "Prefix"
+
+  ## If not defined, a secret will be generated automatically, and used.
+  auth:
+    existingSecret:
+    secretKey: secret
+
+  ## Network Policies (see the main level networkPolicy above for descriptions)
+  networkPolicy:
+    enabled: false
+    allowExternal: true
+    allowExternalEgress: true
+    addExternalClientAccess: true
+    extraIngress: []
+    extraEgress: []
+    ingressPodMatchLabels: {}
+    ingressNSMatchLabels: {}
+    ingressNSPodMatchLabels: {}
+
+  image:
+    registry: "docker.io"
+    repository: "anycable/anycable-go"
+    imagePullPolicy: "IfNotPresent"
+    ## 1.6.16 to 1.6.18 close only one connection per remote disconnect (anycable/anycable a0d532fa)
+    tag: "1.6.15"
+    ## Define image sha256 digest (optional).
+    ## If set, the chart will render `repository:tag@sha256:digest`.
+    # sha256:
+
+  strategy:
+    type: "RollingUpdate"
+
+  podAnnotations: {}
+
+  ## Additional environment variables for the AnyCable server.
+  ## Ref.: https://docs.anycable.io/anycable-go/configuration
+  #
+  extraEnvVars: []
+
+  service:
+    type: "ClusterIP"
+    port: 2345
+
+  ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
+  ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
+  ##
+  resourcesPreset: ~
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "512Mi"
+      cpu: "1"
+
 ## OpenProject related settings.
 ##
 ## Ref.: https://www.openproject.org/docs/installation-and-operations/configuration/environment/#supported-environment-variables
@@ -658,6 +728,26 @@ openproject:
         # if empty, will fallback to the secret defined for the included hocuspocus backend (see hocuspocus: under root)
         existingSecret:
         secretKey: secret
+
+  ## Live updates through an AnyCable server (requires OpenProject 18.0 or newer).
+  ## Without them, pages showing changes will keep polling for them.
+  ##
+  ## Default values connect to the AnyCable server included in the chart (see anycable: under root).
+  ## An external AnyCable server calls OpenProject's /_anycable endpoint, protected only by a token derived from the
+  ## shared secret. Preferably run it in the cluster and let it call the OpenProject service directly
+  ## (e.g. http://<release>.<namespace>.svc:8080/_anycable), and block /_anycable on any internet-facing proxy.
+  live_updates:
+    enabled: false
+    # URL browsers connect to. If empty, the included AnyCable server's path. Required for an external one.
+    websocketUrl:
+    # URL OpenProject sends live updates to. If empty, the included AnyCable server. Required for an external one.
+    broadcastUrl:
+
+    auth:
+      # if empty, will fallback to the secret defined for the included AnyCable server (see anycable: under root).
+      # Required for an external one.
+      existingSecret:
+      secretKey: secret
 
   ## Modify PostgreSQL statement timout.
   ## Increase in case you get errors such as "ERROR: canceling statement due to statement timeout".
