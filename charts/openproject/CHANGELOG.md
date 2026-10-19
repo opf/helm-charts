@@ -1,5 +1,11 @@
 # openproject
 
+## 13.15.0
+
+### Minor Changes
+
+- c4e7365: Add configurable liveness and readiness probes to the cron and hocuspocus deployments, and allow per-component probe timing overrides for cron, hocuspocus, and workers.
+
 ## 13.14.0
 
 ### Minor Changes
