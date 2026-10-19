@@ -30,6 +30,67 @@ Returns the Hocuspocus imagePullPolicy with a safe fallback.
 {{- end -}}
 
 {{/*
+Returns the AnyCable image to be used including registry, tag and optional digest.
+
+If a sha256 digest is provided, we render `image:tag@sha256:digest` (tag is kept for traceability).
+*/}}
+{{- define "openproject.anycable.image" -}}
+{{- $img := .Values.anycable.image -}}
+{{- $registry := required "anycable.image.registry is required" $img.registry -}}
+{{- $repository := required "anycable.image.repository is required" $img.repository -}}
+{{- $tag := required "anycable.image.tag is required" ($img.tag | toString) -}}
+{{- if $img.sha256 -}}
+{{ $registry }}/{{ $repository }}:{{ $tag }}@sha256:{{ $img.sha256 }}
+{{- else -}}
+{{ $registry }}/{{ $repository }}:{{ $tag }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the AnyCable imagePullPolicy with a safe fallback.
+*/}}
+{{- define "openproject.anycable.imagePullPolicy" -}}
+{{- default .Values.image.imagePullPolicy .Values.anycable.image.imagePullPolicy -}}
+{{- end -}}
+
+{{/*
+Returns the path prefix OpenProject is served under, without a trailing slash (empty when served from the root).
+*/}}
+{{- define "openproject.relativeUrlRoot" -}}
+{{- .Values.openproject.railsRelativeUrlRoot | default "" | trimSuffix "/" -}}
+{{- end -}}
+
+{{/*
+Return the paths the included AnyCable server serves WebSocket and server-sent events connections on.
+The ingress routes them unchanged, so they are the same for the ingress, the AnyCable server and ANYCABLE_WEBSOCKET_URL.
+*/}}
+{{- define "openproject.anycable.websocketPath" -}}
+{{- printf "%s%s" (include "openproject.relativeUrlRoot" .) .Values.anycable.ingress.websocketPath -}}
+{{- end -}}
+
+{{- define "openproject.anycable.ssePath" -}}
+{{- printf "%s%s" (include "openproject.relativeUrlRoot" .) .Values.anycable.ingress.ssePath -}}
+{{- end -}}
+
+{{/*
+Returns the name of the secret and the key within it holding the secret shared between OpenProject and AnyCable.
+*/}}
+{{- define "openproject.anycable.secretKeyRef" -}}
+{{- if .Values.openproject.live_updates.auth.existingSecret -}}
+name: {{ .Values.openproject.live_updates.auth.existingSecret }}
+key: {{ .Values.openproject.live_updates.auth.secretKey }}
+{{- else if .Values.anycable.auth.existingSecret -}}
+name: {{ .Values.anycable.auth.existingSecret }}
+key: {{ .Values.anycable.auth.secretKey }}
+{{- else if not .Values.anycable.enabled -}}
+{{- fail "openproject.live_updates.auth.existingSecret is required when using an external AnyCable server (anycable.enabled=false)" -}}
+{{- else -}}
+name: anycable-secret-auto-generated
+key: secret
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns the OpenProject image pull secrets, if any are defined
 */}}
 {{- define "openproject.imagePullSecrets" -}}
@@ -324,6 +385,14 @@ Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3
       name: hocuspocus-secret-auto-generated
       key: secret
 {{- end }}
+{{- end }}
+{{- if .Values.openproject.live_updates.enabled }}
+# Shared with the AnyCable server: an external one (openproject.live_updates.auth),
+# the included one (anycable.auth), or else the auto generated secret (see secret_anycable.yaml)
+- name: ANYCABLE_SECRET
+  valueFrom:
+    secretKeyRef:
+      {{- include "openproject.anycable.secretKeyRef" . | nindent 6 }}
 {{- end }}
 {{- if not (hasKey (default (dict) .Values.environment) "SECRET_KEY_BASE") }}
 {{- if .Values.openproject.secretKeyBase.existingSecret }}
