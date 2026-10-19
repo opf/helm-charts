@@ -1,5 +1,11 @@
 # openproject
 
+## 13.15.1
+
+### Patch Changes
+
+- d7e8361: bump rustfs default version to 1.0.0
+
 ## 13.15.0
 
 ### Minor Changes
