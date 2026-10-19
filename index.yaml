@@ -206,6 +206,45 @@ entries:
         url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
     apiVersion: v2
     appVersion: 17.9.2
+    created: "2026-10-19T11:20:06.676042322Z"
+    dependencies:
+    - condition: postgresql.bundled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^12.1.6
+    - condition: memcached.bundled
+      name: memcached
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^6.3.2
+    - name: common
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ^2.2.2
+    description: A Helm chart for running OpenProject via Kubernetes
+    digest: 7ee3535b595ef825921e21526d9a92b082b1653f46a3551d08548238830aca0f
+    home: https://www.openproject.org/
+    icon: https://charts.openproject.org/logo.svg
+    maintainers:
+    - name: OpenProject
+      url: https://github.com/opf/helm-charts
+    name: openproject
+    type: application
+    urls:
+    - https://github.com/opf/helm-charts/releases/download/openproject-13.15.0/openproject-13.15.0.tgz
+    version: 13.15.0
+  - annotations:
+      artifacthub.io/license: GPL-3.0-only
+      artifacthub.io/links: |
+        - name: Homepage
+          url: https://www.openproject.org/
+        - name: OpenProject Community
+          url: https://community.openproject.org
+        - name: support
+          url: https://www.openproject.org/docs/development/report-a-bug/
+      artifacthub.io/signKey: |
+        fingerprint: CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+        url: https://keys.openpgp.org/vks/v1/by-fingerprint/CB1CA0488A75B7471EA1B087CF56DD6A0AE260E5
+    apiVersion: v2
+    appVersion: 17.9.2
     created: "2026-10-16T12:17:48.696491739Z"
     dependencies:
     - condition: postgresql.bundled
@@ -5772,4 +5811,4 @@ entries:
     urls:
     - https://github.com/opf/helm-charts/releases/download/openproject-llm-stack-1.0.0/openproject-llm-stack-1.0.0.tgz
     version: 1.0.0
-generated: "2026-10-16T12:17:48.69686608Z"
+generated: "2026-10-19T11:20:06.676412484Z"
