@@ -122,41 +122,6 @@ describe 'configuring anycable' do
     end
   end
 
-  context 'with a custom WebSocket path' do
-    let(:default_values) do
-      HelmTemplate.with_defaults(
-        <<~YAML
-          ingress:
-            enabled: true
-          anycable:
-            enabled: true
-            ingress:
-              websocketPath: /live/ws
-          openproject:
-            railsRelativeUrlRoot: /op
-            live_updates:
-              enabled: true
-        YAML
-      )
-    end
-
-    it 'uses it for the ingress, anycable and OpenProject', :aggregate_failures do
-      paths = template.dig('Ingress/optest-openproject', 'spec', 'rules').first['http']['paths'].map { |p| p['path'] }
-
-      expect(paths).to include('/op/live/ws', '/op/_anycable')
-      expect(paths).not_to include('/op/cable')
-      expect(env_var('optest-openproject-anycable', 'ANYCABLE_PATH')['value']).to eq '/op/live/ws'
-      expect(template.dig('Secret/optest-openproject-core', 'stringData', 'ANYCABLE_WEBSOCKET_URL')).to eq '/op/live/ws'
-    end
-
-    it 'keeps the server-sent events path OpenProject falls back to', :aggregate_failures do
-      paths = template.dig('Ingress/optest-openproject', 'spec', 'rules').first['http']['paths'].map { |p| p['path'] }
-
-      expect(paths).to include('/op/events')
-      expect(env_var('optest-openproject-anycable', 'ANYCABLE_SSE_PATH')['value']).to eq '/op/events'
-    end
-  end
-
   context 'with the anycable secret defined' do
     let(:default_values) do
       HelmTemplate.with_defaults(
@@ -190,7 +155,6 @@ describe 'configuring anycable' do
           openproject:
             live_updates:
               enabled: true
-              websocketUrl: wss://cable.example.com/cable
               broadcastUrl: http://anycable.other-namespace:2345/_broadcast
               auth:
                 existingSecret: external-secret
@@ -206,7 +170,7 @@ describe 'configuring anycable' do
     it 'configures OpenProject with the external server', :aggregate_failures do
       core = template.dig('Secret/optest-openproject-core', 'stringData')
 
-      expect(core['ANYCABLE_WEBSOCKET_URL']).to eq 'wss://cable.example.com/cable'
+      expect(core['ANYCABLE_WEBSOCKET_URL']).to eq '/cable'
       expect(core['ANYCABLE_HTTP_BROADCAST_URL']).to eq 'http://anycable.other-namespace:2345/_broadcast'
       expect(env_var('optest-openproject-web', 'ANYCABLE_SECRET').dig('valueFrom', 'secretKeyRef', 'name')).to eq 'external-secret'
     end
@@ -235,14 +199,12 @@ describe 'configuring anycable' do
 
     {
       'no secret' => ['auth', 'openproject.live_updates.auth.existingSecret is required'],
-      'no websocket URL' => ['websocketUrl', 'openproject.live_updates.websocketUrl is required'],
       'no broadcast URL' => ['broadcastUrl', 'openproject.live_updates.broadcastUrl is required']
     }.each do |missing, (key, message)|
       context "with an external anycable server and #{missing}" do
         let(:default_values) do
           live_updates = {
             'enabled' => true,
-            'websocketUrl' => 'wss://cable.example.com/cable',
             'broadcastUrl' => 'http://anycable.other-namespace:2345/_broadcast',
             'auth' => { 'existingSecret' => 'external-secret' }
           }.except(key)
@@ -318,7 +280,6 @@ describe 'configuring anycable' do
           openproject:
             live_updates:
               enabled: true
-              websocketUrl: wss://cable.example.com/cable
               broadcastUrl: http://anycable.other-namespace:2345/_broadcast
         YAML
       )

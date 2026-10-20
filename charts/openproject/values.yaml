@@ -589,13 +589,11 @@ hocuspocus:
 #
 anycable:
   enabled: false
-  ## The WebSocket path and the server-sent events path (/events) are routed to the AnyCable server, prefixed with
+  ## The WebSocket (/cable) and server-sent events (/events) paths are routed to the AnyCable server, prefixed with
   ## openproject.railsRelativeUrlRoot. So is /_anycable, keeping OpenProject's RPC endpoint off the public ingress.
   ## Server-sent events are a fallback for clients without WebSockets and need response buffering disabled
   ## (e.g. `nginx.ingress.kubernetes.io/proxy-buffering: "off"` in ingress.annotations).
   ingress:
-    ## The AnyCable server serves it on the same path, and openproject.live_updates.websocketUrl defaults to it.
-    websocketPath: /cable
     pathType: "Prefix"
 
   ## If not defined, a secret will be generated automatically, and used.
@@ -772,10 +770,10 @@ openproject:
   ## An external AnyCable server calls OpenProject's /_anycable endpoint, protected only by a token derived from the
   ## shared secret. Preferably run it in the cluster and let it call the OpenProject service directly
   ## (e.g. http://<release>.<namespace>.svc:8080/_anycable), and block /_anycable on any internet-facing proxy.
+  ## Browsers reach an external AnyCable server through OpenProject's host: route /cable and /events, prefixed with
+  ## openproject.railsRelativeUrlRoot, to the external server.
   live_updates:
     enabled: false
-    # URL browsers connect to. If empty, the included AnyCable server's path. Required for an external one.
-    websocketUrl:
     # URL OpenProject sends live updates to. If empty, the included AnyCable server. Required for an external one.
     broadcastUrl:
 

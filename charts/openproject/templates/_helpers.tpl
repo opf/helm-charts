@@ -61,14 +61,14 @@ Returns the path prefix OpenProject is served under, without a trailing slash (e
 {{- end -}}
 
 {{/*
-Return the paths the included AnyCable server serves WebSocket and server-sent events connections on.
+Return the paths AnyCable serves WebSocket and server-sent events connections on. Not configurable, as OpenProject's
+frontend falls back to /events below its relative URL root, and its session cookie is only sent below that root.
 The ingress routes them unchanged, so they are the same for the ingress, the AnyCable server and ANYCABLE_WEBSOCKET_URL.
 */}}
 {{- define "openproject.anycable.websocketPath" -}}
-{{- printf "%s%s" (include "openproject.relativeUrlRoot" .) .Values.anycable.ingress.websocketPath -}}
+{{- printf "%s/cable" (include "openproject.relativeUrlRoot" .) -}}
 {{- end -}}
 
-{{- /* Not configurable, as OpenProject's frontend always falls back to /events below its relative URL root */}}
 {{- define "openproject.anycable.ssePath" -}}
 {{- printf "%s/events" (include "openproject.relativeUrlRoot" .) -}}
 {{- end -}}
