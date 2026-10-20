@@ -2,7 +2,6 @@
 {{- if not .Values.openproject.live_updates.enabled }}
 {{- fail "anycable.enabled requires openproject.live_updates.enabled, as OpenProject only serves the AnyCable server's RPC endpoint with live updates enabled" }}
 {{- end }}
-{{- $root := include "openproject.relativeUrlRoot" . }}
 ---
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
@@ -26,10 +25,8 @@ spec:
   template:
     metadata:
       annotations:
-        {{- range $key, $val := .Values.podAnnotations }}
-        {{ $key }}: {{ $val | quote }}
-        {{- end }}
-        {{- range $key, $val := .Values.anycable.podAnnotations }}
+        {{- /* The anycable annotations take precedence over the global ones of the same name */}}
+        {{- range $key, $val := merge (deepCopy (.Values.anycable.podAnnotations | default dict)) (.Values.podAnnotations | default dict) }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
       labels:
@@ -67,29 +64,14 @@ spec:
           image: {{ include "openproject.anycable.image" . }}
           imagePullPolicy: {{ include "openproject.anycable.imagePullPolicy" . }}
           env:
-            - name: ANYCABLE_HOST
-              value: "0.0.0.0"
-            - name: ANYCABLE_PORT
-              value: "2345"
-            # Served on the same paths as OpenProject's ANYCABLE_WEBSOCKET_URL, as the ingress does not rewrite them
-            - name: ANYCABLE_PATH
-              value: {{ include "openproject.anycable.websocketPath" . | quote }}
-            - name: ANYCABLE_SSE_PATH
-              value: {{ include "openproject.anycable.ssePath" . | quote }}
-            - name: ANYCABLE_SSE
-              value: "true"
-            - name: ANYCABLE_BROADCAST_ADAPTER
-              value: "http"
-            # Connections and subscriptions are authorized by OpenProject through this endpoint
-            - name: ANYCABLE_RPC_HOST
-              value: {{ printf "http://%s:%v%s/_anycable" (include "common.names.fullname" .) .Values.service.ports.http.port $root | quote }}
-            - name: ANYCABLE_SECRET
-              valueFrom:
-                secretKeyRef:
-                  {{- include "openproject.anycable.secretKeyRef" . | nindent 18 }}
-            {{- if .Values.egress.tls.rootCA.fileName }}
-            - name: SSL_CERT_FILE
-              value: "/etc/ssl/certs/custom-ca.pem"
+            {{- $overridden := list }}
+            {{- range .Values.anycable.extraEnvVars }}
+            {{- $overridden = append $overridden .name }}
+            {{- end }}
+            {{- range (include "openproject.anycable.env" . | fromYamlArray) }}
+            {{- if not (has .name $overridden) }}
+            - {{ toYaml . | nindent 14 | trim }}
+            {{- end }}
             {{- end }}
             {{- with .Values.anycable.extraEnvVars }}
             {{- toYaml . | nindent 12 }}
