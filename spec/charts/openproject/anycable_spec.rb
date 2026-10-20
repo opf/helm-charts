@@ -122,7 +122,7 @@ describe 'configuring anycable' do
     end
   end
 
-  context 'with custom WebSocket and server-sent events paths' do
+  context 'with a custom WebSocket path' do
     let(:default_values) do
       HelmTemplate.with_defaults(
         <<~YAML
@@ -132,7 +132,6 @@ describe 'configuring anycable' do
             enabled: true
             ingress:
               websocketPath: /live/ws
-              ssePath: /live/sse
           openproject:
             railsRelativeUrlRoot: /op
             live_updates:
@@ -141,14 +140,20 @@ describe 'configuring anycable' do
       )
     end
 
-    it 'uses them for the ingress, anycable and OpenProject', :aggregate_failures do
+    it 'uses it for the ingress, anycable and OpenProject', :aggregate_failures do
       paths = template.dig('Ingress/optest-openproject', 'spec', 'rules').first['http']['paths'].map { |p| p['path'] }
 
-      expect(paths).to include('/op/live/ws', '/op/live/sse', '/op/_anycable')
-      expect(paths).not_to include('/op/cable', '/op/events')
+      expect(paths).to include('/op/live/ws', '/op/_anycable')
+      expect(paths).not_to include('/op/cable')
       expect(env_var('optest-openproject-anycable', 'ANYCABLE_PATH')['value']).to eq '/op/live/ws'
-      expect(env_var('optest-openproject-anycable', 'ANYCABLE_SSE_PATH')['value']).to eq '/op/live/sse'
       expect(template.dig('Secret/optest-openproject-core', 'stringData', 'ANYCABLE_WEBSOCKET_URL')).to eq '/op/live/ws'
+    end
+
+    it 'keeps the server-sent events path OpenProject falls back to', :aggregate_failures do
+      paths = template.dig('Ingress/optest-openproject', 'spec', 'rules').first['http']['paths'].map { |p| p['path'] }
+
+      expect(paths).to include('/op/events')
+      expect(env_var('optest-openproject-anycable', 'ANYCABLE_SSE_PATH')['value']).to eq '/op/events'
     end
   end
 
