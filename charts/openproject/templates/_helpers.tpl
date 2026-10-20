@@ -68,8 +68,9 @@ The ingress routes them unchanged, so they are the same for the ingress, the Any
 {{- printf "%s%s" (include "openproject.relativeUrlRoot" .) .Values.anycable.ingress.websocketPath -}}
 {{- end -}}
 
+{{- /* Not configurable, as OpenProject's frontend always falls back to /events below its relative URL root */}}
 {{- define "openproject.anycable.ssePath" -}}
-{{- printf "%s%s" (include "openproject.relativeUrlRoot" .) .Values.anycable.ingress.ssePath -}}
+{{- printf "%s/events" (include "openproject.relativeUrlRoot" .) -}}
 {{- end -}}
 
 {{/*
