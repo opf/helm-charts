@@ -626,8 +626,9 @@ anycable:
     ## If set, the chart will render `repository:tag@sha256:digest`.
     # sha256:
 
+  ## Re-create the pod during deployments, as OpenProject broadcasts to only one of two pods running side by side
   strategy:
-    type: "RollingUpdate"
+    type: "Recreate"
 
   podAnnotations: {}
 

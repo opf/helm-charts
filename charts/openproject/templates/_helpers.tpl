@@ -79,15 +79,61 @@ Returns the name of the secret and the key within it holding the secret shared b
 {{- if .Values.openproject.live_updates.auth.existingSecret -}}
 name: {{ .Values.openproject.live_updates.auth.existingSecret }}
 key: {{ .Values.openproject.live_updates.auth.secretKey }}
+{{- else if not .Values.anycable.enabled -}}
+{{- fail "openproject.live_updates.auth.existingSecret is required when using an external AnyCable server (anycable.enabled=false)" -}}
 {{- else if .Values.anycable.auth.existingSecret -}}
 name: {{ .Values.anycable.auth.existingSecret }}
 key: {{ .Values.anycable.auth.secretKey }}
-{{- else if not .Values.anycable.enabled -}}
-{{- fail "openproject.live_updates.auth.existingSecret is required when using an external AnyCable server (anycable.enabled=false)" -}}
 {{- else -}}
 name: anycable-secret-auto-generated
 key: secret
 {{- end -}}
+{{- end -}}
+
+{{/*
+Returns the egress rule allowing the web and worker pods to broadcast live updates to the included AnyCable server.
+*/}}
+{{- define "openproject.anycable.broadcastEgress" -}}
+{{- if .Values.anycable.enabled }}
+    # Allow broadcasting live updates to the included AnyCable server
+    - ports:
+        - port: 2345
+      to:
+        - podSelector:
+            matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" . ) | nindent 14 }}
+              openproject/process: anycable
+{{- end }}
+{{- end -}}
+
+{{/*
+Returns the environment variables the chart sets for the included AnyCable server.
+anycable.extraEnvVars of the same name replace them in anycable-deployment.yaml.
+*/}}
+{{- define "openproject.anycable.env" -}}
+- name: ANYCABLE_HOST
+  value: "0.0.0.0"
+- name: ANYCABLE_PORT
+  value: "2345"
+# Served on the same paths as OpenProject's ANYCABLE_WEBSOCKET_URL, as the ingress does not rewrite them
+- name: ANYCABLE_PATH
+  value: {{ include "openproject.anycable.websocketPath" . | quote }}
+- name: ANYCABLE_SSE_PATH
+  value: {{ include "openproject.anycable.ssePath" . | quote }}
+- name: ANYCABLE_SSE
+  value: "true"
+- name: ANYCABLE_BROADCAST_ADAPTER
+  value: "http"
+# Connections and subscriptions are authorized by OpenProject through this endpoint
+- name: ANYCABLE_RPC_HOST
+  value: {{ printf "http://%s:%v%s/_anycable" (include "common.names.fullname" .) .Values.service.ports.http.port (include "openproject.relativeUrlRoot" .) | quote }}
+- name: ANYCABLE_SECRET
+  valueFrom:
+    secretKeyRef:
+      {{- include "openproject.anycable.secretKeyRef" . | nindent 6 }}
+{{- if .Values.egress.tls.rootCA.fileName }}
+- name: SSL_CERT_FILE
+  value: "/etc/ssl/certs/custom-ca.pem"
+{{- end }}
 {{- end -}}
 
 {{/*

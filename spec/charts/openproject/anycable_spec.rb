@@ -274,4 +274,122 @@ describe 'configuring anycable' do
       expect(rpc_rule['to'].first.dig('podSelector', 'matchLabels')).to include('openproject/process' => 'web')
     end
   end
+
+  context 'with the chart network policies restricting egress' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          networkPolicy:
+            enabled: true
+            allowExternalEgress: false
+          anycable:
+            enabled: true
+          openproject:
+            live_updates:
+              enabled: true
+        YAML
+      )
+    end
+
+    %w[optest-openproject-web optest-openproject-worker-default].each do |policy|
+      it "allows #{policy} to broadcast to anycable" do
+        egress = template.dig("NetworkPolicy/#{policy}", 'spec', 'egress')
+        broadcast_rule = egress.find do |rule|
+          rule['to']&.any? { |to| to.dig('podSelector', 'matchLabels', 'openproject/process') == 'anycable' }
+        end
+
+        expect(broadcast_rule&.dig('ports')).to eq [{ 'port' => 2345 }]
+      end
+    end
+  end
+
+  context 'with an external anycable server and only the bundled server secret set' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          anycable:
+            auth:
+              existingSecret: leftover-bundled-secret
+          openproject:
+            live_updates:
+              enabled: true
+              websocketUrl: wss://cable.example.com/cable
+              broadcastUrl: http://anycable.other-namespace:2345/_broadcast
+        YAML
+      )
+    end
+
+    it 'fails to render instead of using the bundled server secret', :aggregate_failures do
+      expect(template.exit_code).not_to eq(0)
+      expect(template.stderr).to include('openproject.live_updates.auth.existingSecret is required')
+    end
+  end
+
+  context 'when rolling out anycable' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          anycable:
+            enabled: true
+          openproject:
+            live_updates:
+              enabled: true
+        YAML
+      )
+    end
+
+    it 'never runs two servers at once, as OpenProject broadcasts to only one of them' do
+      expect(template.dig('Deployment/optest-openproject-anycable', 'spec', 'strategy', 'type')).to eq 'Recreate'
+    end
+  end
+
+  context 'with the same pod annotation set globally and for anycable' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          podAnnotations:
+            example.com/team: global
+          anycable:
+            enabled: true
+            podAnnotations:
+              example.com/team: anycable
+          openproject:
+            live_updates:
+              enabled: true
+        YAML
+      )
+    end
+
+    # Psych keeps the last of duplicate keys, so count them in the rendered output
+    it 'renders the annotation once, preferring the anycable one', :aggregate_failures do
+      deployment = template.plain.split(/^---$/).find { |doc| doc.include?('name: optest-openproject-anycable') && doc.include?('kind: Deployment') }
+
+      expect(deployment.scan(%r{^\s+example\.com/team:}).size).to eq 1
+      expect(template.dig('Deployment/optest-openproject-anycable', 'spec', 'template', 'metadata', 'annotations', 'example.com/team')).to eq 'anycable'
+    end
+  end
+
+  context 'with extraEnvVars overriding a chart set variable' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          anycable:
+            enabled: true
+            extraEnvVars:
+              - name: ANYCABLE_BROADCAST_ADAPTER
+                value: redisx
+          openproject:
+            live_updates:
+              enabled: true
+        YAML
+      )
+    end
+
+    it 'renders each variable once, with the override', :aggregate_failures do
+      adapters = env_of('optest-openproject-anycable').select { |e| e['name'] == 'ANYCABLE_BROADCAST_ADAPTER' }
+
+      expect(adapters.size).to eq 1
+      expect(adapters.first['value']).to eq 'redisx'
+    end
+  end
 end
