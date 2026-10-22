@@ -30,5 +30,24 @@ describe 'egress TLS configuration' do
         'readOnly' => false
       )
     end
+
+    it 'makes hocuspocus use the ConfigMap as its CA store', :aggregate_failures do
+      hocuspocus = 'Deployment/optest-openproject-hocuspocus'
+
+      mount = template.find_volume_mount(hocuspocus, 'hocuspocus', 'ca-pemstore')
+      expect(mount).to include('mountPath' => '/etc/ssl/certs/custom-ca.pem', 'subPath' => 'rootCA.pem')
+
+      expect(template.env_named(hocuspocus, 'hocuspocus', 'SSL_CERT_FILE')['value']).to eq '/etc/ssl/certs/custom-ca.pem'
+      expect(template.env_named(hocuspocus, 'hocuspocus', 'NODE_EXTRA_CA_CERTS')['value']).to eq '/etc/ssl/certs/custom-ca.pem'
+      expect(template.env_named(hocuspocus, 'hocuspocus', 'NODE_OPTIONS')['value']).to eq '--use-openssl-ca'
+    end
+  end
+
+  context 'without a root CA ConfigMap' do
+    let(:default_values) { {} }
+
+    it 'does not set SSL_CERT_FILE for hocuspocus' do
+      expect(template.env_named('Deployment/optest-openproject-hocuspocus', 'hocuspocus', 'SSL_CERT_FILE')).to be_nil
+    end
   end
 end

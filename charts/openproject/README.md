@@ -278,9 +278,9 @@ kubectl -n openproject create configmap ca-bundle --from-file=ca-certificates.cr
 3. Set the following values. `SSL_CERT_DIR` must point to a directory that does not exist,
 because OpenSSL also loads the roots from the hashed certificate directory of the image.
 
-`egress.tls.rootCA` mounts the bundle into all pods and sets `SSL_CERT_FILE` for the OpenProject pods.
+`egress.tls.rootCA` mounts the bundle into all pods and sets `SSL_CERT_FILE`.
 The top-level `extraEnvVars` set `SSL_CERT_DIR` for the OpenProject pods.
-Hocuspocus needs both variables in `hocuspocus.extraEnvVars`.
+Hocuspocus needs `SSL_CERT_DIR` in `hocuspocus.extraEnvVars`.
 
 ```yaml
 egress:
@@ -295,8 +295,6 @@ extraEnvVars:
 
 hocuspocus:
   extraEnvVars:
-    - name: SSL_CERT_FILE
-      value: /etc/ssl/certs/custom-ca.pem
     - name: SSL_CERT_DIR
       value: /nonexistent
 ```
