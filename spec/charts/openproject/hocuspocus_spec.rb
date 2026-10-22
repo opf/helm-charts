@@ -257,4 +257,51 @@ describe 'configuring hocuspocus' do
       end
     end
   end
+
+  describe 'trust store' do
+    let(:deployment) { 'Deployment/optest-openproject-hocuspocus' }
+
+    context 'with default values' do
+      let(:default_values) { {} }
+
+      it 'makes node use the OpenSSL system CA store' do
+        expect(template.env_named(deployment, 'hocuspocus', 'NODE_OPTIONS')['value']).to eq '--use-openssl-ca'
+      end
+    end
+
+    context 'with extra env vars, volumes and volume mounts' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          hocuspocus:
+            extraEnvVars:
+              - name: SSL_CERT_FILE
+                value: /etc/ssl/custom/ca-certificates.crt
+              - name: SSL_CERT_DIR
+                value: /nonexistent
+            extraVolumes:
+              - name: ca-bundle
+                configMap:
+                  name: ca-bundle
+            extraVolumeMounts:
+              - name: ca-bundle
+                mountPath: /etc/ssl/custom
+        YAML
+        )
+      end
+
+      it 'adds them to the hocuspocus deployment', :aggregate_failures do
+        expect(template.env_named(deployment, 'hocuspocus', 'SSL_CERT_FILE')['value']).to eq '/etc/ssl/custom/ca-certificates.crt'
+        expect(template.env_named(deployment, 'hocuspocus', 'SSL_CERT_DIR')['value']).to eq '/nonexistent'
+        expect(template.env_named(deployment, 'hocuspocus', 'NODE_OPTIONS')['value']).to eq '--use-openssl-ca'
+
+        expect(template.find_volume(deployment, 'ca-bundle').dig('configMap', 'name')).to eq 'ca-bundle'
+        expect(template.find_volume_mount(deployment, 'hocuspocus', 'ca-bundle')['mountPath']).to eq '/etc/ssl/custom'
+      end
+
+      it 'does not add them to the web deployment', :aggregate_failures do
+        expect(template.env_named('Deployment/optest-openproject-web', 'openproject', 'SSL_CERT_DIR')).to be_nil
+        expect(template.find_volume('Deployment/optest-openproject-web', 'ca-bundle')).to be_nil
+      end
+    end
+  end
 end

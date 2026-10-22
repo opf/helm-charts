@@ -208,9 +208,15 @@ ingress:
 
 egress:
   tls:
+    ## Root CA for outgoing TLS connections, read from a config map.
+    ## All pods mount the file at /etc/ssl/certs/custom-ca.pem and use it as SSL_CERT_FILE.
     rootCA:
       configMap: ""
       fileName: ""
+      ## If false, the pods trust the roots in the config map and all roots of the image.
+      ## If true, the pods trust only the roots in the config map, e.g. to distrust a compromised root CA.
+      ## The config map must then contain all roots that the pods need, including the public ones.
+      replaceSystemStore: false
 
 ## Network Policies
 ## Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
@@ -543,6 +549,15 @@ hocuspocus:
     type: "Recreate"
 
   podAnnotations:
+
+  # Optionally specify an extra list of environment variables for the hocuspocus container.
+  extraEnvVars: []
+
+  # Optionally specify an extra list of additional volumes for the hocuspocus pod.
+  extraVolumes: []
+
+  # Optionally specify an extra list of additional volumeMounts for the hocuspocus container.
+  extraVolumeMounts: []
 
   service:
     port: 1234

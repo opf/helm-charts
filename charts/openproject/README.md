@@ -255,6 +255,44 @@ To make OpenProject use this CA for outgoing TLS connection, set the following o
   --set egress.tls.rootCA.fileName=rootCA.pem
 ```
 
+### Distrust a root CA
+
+If a root CA in the image must not be trusted before a fixed image is available, replace the trust store with your own CA bundle.
+The example below removes the roots of the compromised eMudhra intermediates (see https://emudhra.we-have-a-problem.com/).
+
+1. Create a CA bundle without these roots. If you use your own root CA, append it to the bundle.
+
+```
+docker run --rm --user root --entrypoint sh openproject/openproject:17-slim -c \
+  'sed -i -E "s@^(mozilla/(Comodo_AAA_Services_root|emSign_ECC_Root_CA_-_G3)\.crt)\$@!\1@" /etc/ca-certificates.conf \
+   && update-ca-certificates >/dev/null 2>&1 \
+   && cat /etc/ssl/certs/ca-certificates.crt' > ca-certificates.crt
+```
+
+2. Put the bundle into a config map.
+
+```
+kubectl -n openproject create configmap ca-bundle --from-file=ca-certificates.crt
+```
+
+3. Set the following values.
+
+```yaml
+egress:
+  tls:
+    rootCA:
+      configMap: ca-bundle
+      fileName: ca-certificates.crt
+      replaceSystemStore: true
+```
+
+`egress.tls.rootCA` mounts the bundle into all pods and sets `SSL_CERT_FILE`.
+Without `replaceSystemStore`, the pods also trust all roots of the image, because OpenSSL loads them from the hashed certificate directory.
+`replaceSystemStore: true` disables this directory with `SSL_CERT_DIR`, so the pods trust only the roots in the bundle.
+Do not set it if the config map contains only your own root CA, because the pods then cannot connect to public TLS services.
+
+The bundle does not get updates. Remove these values when a fixed image is available.
+
 ## Secrets
 
 There are various sensitive credentials used by the chart.

@@ -261,6 +261,10 @@ Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3
 {{- if .Values.egress.tls.rootCA.fileName }}
 - name: SSL_CERT_FILE
   value: "/etc/ssl/certs/custom-ca.pem"
+{{- if .Values.egress.tls.rootCA.replaceSystemStore }}
+- name: SSL_CERT_DIR
+  value: "/nonexistent"
+{{- end }}
 {{- end }}
 {{- if .Values.rustfs.bundled }}
 {{/* The credentials secret (auto-generated or user-provided) stores these under RustFS's own
