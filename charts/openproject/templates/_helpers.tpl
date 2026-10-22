@@ -30,6 +30,114 @@ Returns the Hocuspocus imagePullPolicy with a safe fallback.
 {{- end -}}
 
 {{/*
+Returns the AnyCable image to be used including registry, tag and optional digest.
+
+If a sha256 digest is provided, we render `image:tag@sha256:digest` (tag is kept for traceability).
+*/}}
+{{- define "openproject.anycable.image" -}}
+{{- $img := .Values.anycable.image -}}
+{{- $registry := required "anycable.image.registry is required" $img.registry -}}
+{{- $repository := required "anycable.image.repository is required" $img.repository -}}
+{{- $tag := required "anycable.image.tag is required" ($img.tag | toString) -}}
+{{- if $img.sha256 -}}
+{{ $registry }}/{{ $repository }}:{{ $tag }}@sha256:{{ $img.sha256 }}
+{{- else -}}
+{{ $registry }}/{{ $repository }}:{{ $tag }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the AnyCable imagePullPolicy with a safe fallback.
+*/}}
+{{- define "openproject.anycable.imagePullPolicy" -}}
+{{- default .Values.image.imagePullPolicy .Values.anycable.image.imagePullPolicy -}}
+{{- end -}}
+
+{{/*
+Returns the path prefix OpenProject is served under, without a trailing slash (empty when served from the root).
+*/}}
+{{- define "openproject.relativeUrlRoot" -}}
+{{- .Values.openproject.railsRelativeUrlRoot | default "" | trimSuffix "/" -}}
+{{- end -}}
+
+{{/*
+Return the paths AnyCable serves WebSocket and server-sent events connections on. Not configurable, as OpenProject's
+frontend falls back to /events below its relative URL root, and its session cookie is only sent below that root.
+The ingress routes them unchanged, so they are the same for the ingress, the AnyCable server and ANYCABLE_WEBSOCKET_URL.
+*/}}
+{{- define "openproject.anycable.websocketPath" -}}
+{{- printf "%s/cable" (include "openproject.relativeUrlRoot" .) -}}
+{{- end -}}
+
+{{- define "openproject.anycable.ssePath" -}}
+{{- printf "%s/events" (include "openproject.relativeUrlRoot" .) -}}
+{{- end -}}
+
+{{/*
+Returns the name of the secret and the key within it holding the secret shared between OpenProject and AnyCable.
+*/}}
+{{- define "openproject.anycable.secretKeyRef" -}}
+{{- if .Values.openproject.live_updates.auth.existingSecret -}}
+name: {{ .Values.openproject.live_updates.auth.existingSecret }}
+key: {{ .Values.openproject.live_updates.auth.secretKey }}
+{{- else if not .Values.anycable.enabled -}}
+{{- fail "openproject.live_updates.auth.existingSecret is required when using an external AnyCable server (anycable.enabled=false)" -}}
+{{- else if .Values.anycable.auth.existingSecret -}}
+name: {{ .Values.anycable.auth.existingSecret }}
+key: {{ .Values.anycable.auth.secretKey }}
+{{- else -}}
+name: anycable-secret-auto-generated
+key: secret
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the egress rule allowing the web and worker pods to broadcast live updates to the included AnyCable server.
+*/}}
+{{- define "openproject.anycable.broadcastEgress" -}}
+{{- if .Values.anycable.enabled }}
+    # Allow broadcasting live updates to the included AnyCable server
+    - ports:
+        - port: 2345
+      to:
+        - podSelector:
+            matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" .Values.commonLabels "context" . ) | nindent 14 }}
+              openproject/process: anycable
+{{- end }}
+{{- end -}}
+
+{{/*
+Returns the environment variables the chart sets for the included AnyCable server.
+anycable.extraEnvVars of the same name replace them in anycable-deployment.yaml.
+*/}}
+{{- define "openproject.anycable.env" -}}
+- name: ANYCABLE_HOST
+  value: "0.0.0.0"
+- name: ANYCABLE_PORT
+  value: "2345"
+# Served on the same paths as OpenProject's ANYCABLE_WEBSOCKET_URL, as the ingress does not rewrite them
+- name: ANYCABLE_PATH
+  value: {{ include "openproject.anycable.websocketPath" . | quote }}
+- name: ANYCABLE_SSE_PATH
+  value: {{ include "openproject.anycable.ssePath" . | quote }}
+- name: ANYCABLE_SSE
+  value: "true"
+- name: ANYCABLE_BROADCAST_ADAPTER
+  value: "http"
+# Connections and subscriptions are authorized by OpenProject through this endpoint
+- name: ANYCABLE_RPC_HOST
+  value: {{ printf "http://%s:%v%s/_anycable" (include "common.names.fullname" .) .Values.service.ports.http.port (include "openproject.relativeUrlRoot" .) | quote }}
+- name: ANYCABLE_SECRET
+  valueFrom:
+    secretKeyRef:
+      {{- include "openproject.anycable.secretKeyRef" . | nindent 6 }}
+{{- if .Values.egress.tls.rootCA.fileName }}
+- name: SSL_CERT_FILE
+  value: "/etc/ssl/certs/custom-ca.pem"
+{{- end }}
+{{- end -}}
+
+{{/*
 Returns the OpenProject image pull secrets, if any are defined
 */}}
 {{- define "openproject.imagePullSecrets" -}}
@@ -324,6 +432,14 @@ Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3
       name: hocuspocus-secret-auto-generated
       key: secret
 {{- end }}
+{{- end }}
+{{- if .Values.openproject.live_updates.enabled }}
+# Shared with the AnyCable server: an external one (openproject.live_updates.auth),
+# the included one (anycable.auth), or else the auto generated secret (see secret_anycable.yaml)
+- name: ANYCABLE_SECRET
+  valueFrom:
+    secretKeyRef:
+      {{- include "openproject.anycable.secretKeyRef" . | nindent 6 }}
 {{- end }}
 {{- if not (hasKey (default (dict) .Values.environment) "SECRET_KEY_BASE") }}
 {{- if .Values.openproject.secretKeyBase.existingSecret }}

@@ -28,6 +28,7 @@ spec:
           protocol: UDP
         - port: 53
           protocol: TCP
+    {{- include "openproject.anycable.broadcastEgress" . }}
     {{- if .Values.networkPolicy.extraEgress }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.extraEgress "context" $ ) | nindent 4 }}
     {{- end }}
