@@ -19,9 +19,9 @@ jobs:
         with:
           version: v3.10.0
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.9'
+          python-version: '3.13'
           check-latest: true
 
       - name: Set up chart-testing
