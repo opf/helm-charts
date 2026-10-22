@@ -84,6 +84,10 @@ spec:
               value: /etc/ssl/certs/custom-ca.pem
             - name: SSL_CERT_FILE
               value: /etc/ssl/certs/custom-ca.pem
+            {{- if .Values.egress.tls.rootCA.replaceSystemStore }}
+            - name: SSL_CERT_DIR
+              value: /nonexistent
+            {{- end }}
             {{- end }}
             {{- with .Values.hocuspocus.extraEnvVars }}
             {{- toYaml . | nindent 12 }}

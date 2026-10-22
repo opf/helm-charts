@@ -275,12 +275,7 @@ docker run --rm --user root --entrypoint sh openproject/openproject:17-slim -c \
 kubectl -n openproject create configmap ca-bundle --from-file=ca-certificates.crt
 ```
 
-3. Set the following values. `SSL_CERT_DIR` must point to a directory that does not exist,
-because OpenSSL also loads the roots from the hashed certificate directory of the image.
-
-`egress.tls.rootCA` mounts the bundle into all pods and sets `SSL_CERT_FILE`.
-The top-level `extraEnvVars` set `SSL_CERT_DIR` for the OpenProject pods.
-Hocuspocus needs `SSL_CERT_DIR` in `hocuspocus.extraEnvVars`.
+3. Set the following values.
 
 ```yaml
 egress:
@@ -288,16 +283,13 @@ egress:
     rootCA:
       configMap: ca-bundle
       fileName: ca-certificates.crt
-
-extraEnvVars:
-  - name: SSL_CERT_DIR
-    value: /nonexistent
-
-hocuspocus:
-  extraEnvVars:
-    - name: SSL_CERT_DIR
-      value: /nonexistent
+      replaceSystemStore: true
 ```
+
+`egress.tls.rootCA` mounts the bundle into all pods and sets `SSL_CERT_FILE`.
+Without `replaceSystemStore`, the pods also trust all roots of the image, because OpenSSL loads them from the hashed certificate directory.
+`replaceSystemStore: true` disables this directory with `SSL_CERT_DIR`, so the pods trust only the roots in the bundle.
+Do not set it if the config map contains only your own root CA, because the pods then cannot connect to public TLS services.
 
 The bundle does not get updates. Remove these values when a fixed image is available.
 

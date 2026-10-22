@@ -43,6 +43,79 @@ describe 'egress TLS configuration' do
     end
   end
 
+  describe 'replaceSystemStore' do
+    let(:containers) do
+      {
+        'Deployment/optest-openproject-web' => 'openproject',
+        'Deployment/optest-openproject-worker-default' => 'openproject',
+        'Deployment/optest-openproject-cron' => 'cron',
+        /optest-openproject-seeder/ => 'seeder',
+        'Deployment/optest-openproject-hocuspocus' => 'hocuspocus'
+      }
+    end
+
+    context 'when enabled with a root CA ConfigMap' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          cron:
+            enabled: true
+          egress:
+            tls:
+              rootCA:
+                configMap: ca-bundle
+                fileName: ca-certificates.crt
+                replaceSystemStore: true
+        YAML
+        )
+      end
+
+      it 'disables the hashed certificate directory in all containers', :aggregate_failures do
+        containers.each do |item, container|
+          expect(template.env_named(item, container, 'SSL_CERT_FILE')['value']).to eq '/etc/ssl/certs/custom-ca.pem'
+          expect(template.env_named(item, container, 'SSL_CERT_DIR')['value']).to eq '/nonexistent'
+        end
+      end
+    end
+
+    context 'when not enabled with a root CA ConfigMap' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          cron:
+            enabled: true
+          egress:
+            tls:
+              rootCA:
+                configMap: ca-bundle
+                fileName: ca-certificates.crt
+        YAML
+        )
+      end
+
+      it 'keeps the hashed certificate directory in all containers' do
+        containers.each do |item, container|
+          expect(template.env_named(item, container, 'SSL_CERT_DIR')).to be_nil
+        end
+      end
+    end
+
+    context 'when enabled without a root CA ConfigMap' do
+      let(:default_values) do
+        HelmTemplate.with_defaults(<<~YAML
+          egress:
+            tls:
+              rootCA:
+                replaceSystemStore: true
+        YAML
+        )
+      end
+
+      it 'keeps the hashed certificate directory' do
+        expect(template.env_named('Deployment/optest-openproject-web', 'openproject', 'SSL_CERT_DIR')).to be_nil
+        expect(template.env_named('Deployment/optest-openproject-hocuspocus', 'hocuspocus', 'SSL_CERT_DIR')).to be_nil
+      end
+    end
+  end
+
   context 'without a root CA ConfigMap' do
     let(:default_values) { {} }
 
