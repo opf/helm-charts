@@ -544,6 +544,15 @@ hocuspocus:
 
   podAnnotations:
 
+  # Optionally specify an extra list of environment variables for the hocuspocus container.
+  extraEnvVars: []
+
+  # Optionally specify an extra list of additional volumes for the hocuspocus pod.
+  extraVolumes: []
+
+  # Optionally specify an extra list of additional volumeMounts for the hocuspocus container.
+  extraVolumeMounts: []
+
   service:
     port: 1234
 

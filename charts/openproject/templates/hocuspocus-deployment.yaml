@@ -55,6 +55,9 @@ spec:
           configMap:
             name: "{{- .Values.egress.tls.rootCA.configMap }}"
         {{- end }}
+        {{- with .Values.hocuspocus.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
+        {{- end }}
       containers:
         - name: "hocuspocus"
           {{- include "openproject.containerSecurityContext" . | indent 10 }}
@@ -74,9 +77,14 @@ spec:
                   name: hocuspocus-secret-auto-generated
                   key: secret
             {{- end }}
+            - name: NODE_OPTIONS
+              value: --use-openssl-ca
             {{- if .Values.egress.tls.rootCA.fileName }}
             - name: NODE_EXTRA_CA_CERTS
               value: /etc/ssl/certs/custom-ca.pem
+            {{- end }}
+            {{- with .Values.hocuspocus.extraEnvVars }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           volumeMounts:
             {{- include "hocuspocus.tmpVolumeMounts" . | indent 12 }}
@@ -85,6 +93,9 @@ spec:
               mountPath: /etc/ssl/certs/custom-ca.pem
               subPath: {{ .Values.egress.tls.rootCA.fileName }}
               readOnly: false
+            {{- end }}
+            {{- with .Values.hocuspocus.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
             {{- end }}
           ports:
             - name: http
