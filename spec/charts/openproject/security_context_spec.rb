@@ -142,4 +142,26 @@ describe 'security context' do
 
     include_examples 'a Pod Security Standards "restricted"-compatible workload'
   end
+
+  context 'with the bundled anycable deployment' do
+    let(:template) do
+      HelmTemplate.new(
+        HelmTemplate.with_defaults(
+          <<~YAML
+            anycable:
+              enabled: true
+            openproject:
+              live_updates:
+                enabled: true
+          YAML
+        )
+      )
+    end
+
+    it 'renders the anycable deployment' do
+      expect(template.dig('Deployment/optest-openproject-anycable')).not_to be_nil
+    end
+
+    include_examples 'a Pod Security Standards "restricted"-compatible workload'
+  end
 end
