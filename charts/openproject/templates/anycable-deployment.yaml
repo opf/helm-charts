@@ -8,10 +8,12 @@ kind: Deployment
 metadata:
   name: {{ include "common.names.fullname" . }}-anycable
   namespace: {{ include "common.names.namespace" . | quote }}
-  labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
     openproject/process: anycable
     app.kubernetes.io/component: anycable
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
 spec:
   # OpenProject broadcasts to a single AnyCable server over HTTP, so all clients have to be connected to that one.
   # Running more replicas requires a pub/sub adapter (ANYCABLE_PUBSUB_ADAPTER) via anycable.extraEnvVars.
@@ -29,6 +31,7 @@ spec:
         {{- range $key, $val := merge (deepCopy (.Values.anycable.podAnnotations | default dict)) (.Values.podAnnotations | default dict) }}
         {{ $key }}: {{ $val | quote }}
         {{- end }}
+        {{- include "openproject.envChecksums" . | nindent 8 }}
       labels:
         {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 8 }}
         openproject/process: anycable

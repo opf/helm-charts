@@ -258,7 +258,7 @@ describe 'configuring anycable' do
       )
     end
 
-    %w[optest-openproject-web optest-openproject-worker-default].each do |policy|
+    %w[optest-openproject-web optest-openproject-worker-default optest-openproject-cron].each do |policy|
       it "allows #{policy} to broadcast to anycable" do
         egress = template.dig("NetworkPolicy/#{policy}", 'spec', 'egress')
         broadcast_rule = egress.find do |rule|
@@ -472,6 +472,42 @@ describe 'configuring anycable' do
       expect(template.find_volume(anycable, 'ca-bundle').dig('configMap', 'name')).to eq 'ca-bundle'
       expect(template.find_volume_mount(anycable, 'anycable', 'ca-bundle')['mountPath']).to eq '/etc/ssl/custom'
       expect(template.find_volume('Deployment/optest-openproject-web', 'ca-bundle')).to be_nil
+    end
+  end
+
+  context 'with commonLabels and commonAnnotations' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          commonLabels:
+            environment: production
+          commonAnnotations:
+            example.com/owner: platform
+          anycable:
+            enabled: true
+            networkPolicy:
+              enabled: true
+          openproject:
+            live_updates:
+              enabled: true
+        YAML
+      )
+    end
+
+    it 'applies commonLabels and commonAnnotations to all anycable resources', :aggregate_failures do
+      %w[
+        Deployment/optest-openproject-anycable
+        Service/optest-openproject-anycable
+        NetworkPolicy/optest-openproject-anycable
+        Secret/anycable-secret-auto-generated
+      ].each do |resource|
+        expect(template.labels(resource)).to include('environment' => 'production')
+        expect(template.annotations(resource)).to include('example.com/owner' => 'platform')
+      end
+
+      expect(template.template_labels('Deployment/optest-openproject-anycable')).to include('environment' => 'production')
+      expect(template.dig('Deployment/optest-openproject-anycable', 'spec', 'selector', 'matchLabels')).not_to have_key('environment')
+      expect(template.template_annotations('Deployment/optest-openproject-anycable')).to include('checksum/env-core')
     end
   end
 end
