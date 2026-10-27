@@ -415,7 +415,7 @@ worker:
   ## (sets OPENPROJECT_GOOD_JOB_SHUTDOWN_TIMEOUT).
   ## Can be overridden per worker under `workers.<name>.shutdownTimeout`.
   #
-  shutdownTimeout: 30
+  shutdownTimeout: 60
 
   ## Grace period in seconds for worker pods to shut down before Kubernetes sends SIGKILL.
   ## Defaults to `shutdownTimeout + 30` so GoodJob can finish or requeue running jobs before

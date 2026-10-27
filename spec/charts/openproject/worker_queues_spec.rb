@@ -71,9 +71,9 @@ describe 'imagePullSecrets configuration' do
     it 'Creates the default worker', :aggregate_failures do
       expect(template.keys).to include 'Deployment/optest-openproject-worker-default'
       expect(template.env_named('Deployment/optest-openproject-worker-default', 'openproject', 'OPENPROJECT_GOOD_JOB_SHUTDOWN_TIMEOUT')['value'])
-        .to eq('30')
+        .to eq('60')
       expect(template.template_spec('Deployment/optest-openproject-worker-default')['terminationGracePeriodSeconds'])
-        .to eq(60)
+        .to eq(90)
     end
   end
 
