@@ -411,6 +411,21 @@ worker:
   #
   topologySpreadConstraints: []
 
+  ## Seconds that a worker waits for running jobs to finish on SIGTERM before stopping them
+  ## (sets OPENPROJECT_GOOD_JOB_SHUTDOWN_TIMEOUT).
+  ## Can be overridden per worker under `workers.<name>.shutdownTimeout`.
+  #
+  shutdownTimeout: 30
+
+  ## Grace period in seconds for worker pods to shut down before Kubernetes sends SIGKILL.
+  ## Defaults to `shutdownTimeout + 30` so GoodJob can finish or requeue running jobs before
+  ## the pod is killed.
+  ## Can be overridden per worker under `workers.<name>.terminationGracePeriodSeconds`.
+  ##
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination
+  #
+  terminationGracePeriodSeconds:
+
 ## Node labels for seeder job pod assignment.
 ## If not specified, falls back to the global nodeSelector above.
 ##
@@ -486,6 +501,10 @@ workers:
     # It needs to be an integer greater than 0.
     maxThreads:
     replicaCount: 1
+    # Override worker.shutdownTimeout for this worker
+    shutdownTimeout:
+    # Override worker.terminationGracePeriodSeconds for this worker (defaults to shutdownTimeout + 30)
+    terminationGracePeriodSeconds:
 
     # Enable monitoring probe for background workers
     probes:
