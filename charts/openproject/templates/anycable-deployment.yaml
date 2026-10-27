@@ -87,18 +87,22 @@ spec:
             - name: http
               containerPort: 2345
               protocol: "TCP"
+          {{- $liveness := include "openproject.mergedProbe" (dict "probe" .Values.probes.liveness "overrides" .Values.anycable.probes.liveness) | fromYaml }}
+          {{- $readiness := include "openproject.mergedProbe" (dict "probe" .Values.probes.readiness "overrides" .Values.anycable.probes.readiness) | fromYaml }}
+          {{- if and $liveness.enabled .Values.anycable.probes.enabled }}
           livenessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 5
-            periodSeconds: 10
+          {{- include "openproject.probeSettings" $liveness | nindent 12 }}
+          {{- end }}
+          {{- if and $readiness.enabled .Values.anycable.probes.enabled }}
           readinessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 2
-            periodSeconds: 5
+          {{- include "openproject.probeSettings" $readiness | nindent 12 }}
+          {{- end }}
           {{- if .Values.anycable.resources }}
           resources:
             {{- toYaml .Values.anycable.resources | nindent 12 }}

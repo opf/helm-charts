@@ -638,6 +638,14 @@ anycable:
     type: "ClusterIP"
     port: 2345
 
+  ## Enable liveness and readiness probes for the AnyCable server.
+  ## Settings default to the global `probes.liveness` and `probes.readiness` (see below).
+  ## Any global probe setting can be overridden for anycable only.
+  probes:
+    enabled: true
+    liveness: {}
+    readiness: {}
+
   ## Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if resources is set (resources is recommended for production).
   ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
   ##
