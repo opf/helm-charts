@@ -134,6 +134,10 @@ anycable.extraEnvVars of the same name replace them in anycable-deployment.yaml.
 {{- if .Values.egress.tls.rootCA.fileName }}
 - name: SSL_CERT_FILE
   value: "/etc/ssl/certs/custom-ca.pem"
+{{- if .Values.egress.tls.rootCA.replaceSystemStore }}
+- name: SSL_CERT_DIR
+  value: "/nonexistent"
+{{- end }}
 {{- end }}
 {{- end -}}
 

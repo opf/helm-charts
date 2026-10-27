@@ -446,4 +446,32 @@ describe 'configuring anycable' do
       end
     end
   end
+
+  context 'with extra volumes and volume mounts' do
+    let(:anycable) { 'Deployment/optest-openproject-anycable' }
+    let(:default_values) do
+      HelmTemplate.with_defaults(
+        <<~YAML
+          anycable:
+            enabled: true
+            extraVolumes:
+              - name: ca-bundle
+                configMap:
+                  name: ca-bundle
+            extraVolumeMounts:
+              - name: ca-bundle
+                mountPath: /etc/ssl/custom
+          openproject:
+            live_updates:
+              enabled: true
+        YAML
+      )
+    end
+
+    it 'adds them to the anycable deployment only', :aggregate_failures do
+      expect(template.find_volume(anycable, 'ca-bundle').dig('configMap', 'name')).to eq 'ca-bundle'
+      expect(template.find_volume_mount(anycable, 'anycable', 'ca-bundle')['mountPath']).to eq '/etc/ssl/custom'
+      expect(template.find_volume('Deployment/optest-openproject-web', 'ca-bundle')).to be_nil
+    end
+  end
 end

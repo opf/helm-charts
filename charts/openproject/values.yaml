@@ -634,6 +634,12 @@ anycable:
   #
   extraEnvVars: []
 
+  # Optionally specify an extra list of additional volumes for the AnyCable pod.
+  extraVolumes: []
+
+  # Optionally specify an extra list of additional volumeMounts for the AnyCable container.
+  extraVolumeMounts: []
+
   service:
     type: "ClusterIP"
     port: 2345
