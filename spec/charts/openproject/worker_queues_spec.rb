@@ -70,6 +70,65 @@ describe 'imagePullSecrets configuration' do
 
     it 'Creates the default worker', :aggregate_failures do
       expect(template.keys).to include 'Deployment/optest-openproject-worker-default'
+      expect(template.env_named('Deployment/optest-openproject-worker-default', 'openproject', 'OPENPROJECT_GOOD_JOB_SHUTDOWN_TIMEOUT')['value'])
+        .to eq('60')
+      expect(template.template_spec('Deployment/optest-openproject-worker-default')['terminationGracePeriodSeconds'])
+        .to eq(90)
+    end
+  end
+
+  context 'when configuring shutdownTimeout' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        worker:
+          shutdownTimeout: 45
+        workers:
+          default:
+            queues: ""
+          exports:
+            queues: "exports"
+            shutdownTimeout: 120
+            probes:
+              enabled: false
+      YAML
+      )
+    end
+
+    it 'sets OPENPROJECT_GOOD_JOB_SHUTDOWN_TIMEOUT and defaults terminationGracePeriodSeconds to shutdownTimeout + 30', :aggregate_failures do
+      expect(template.env_named('Deployment/optest-openproject-worker-default', 'openproject', 'OPENPROJECT_GOOD_JOB_SHUTDOWN_TIMEOUT')['value'])
+        .to eq('45')
+      expect(template.template_spec('Deployment/optest-openproject-worker-default')['terminationGracePeriodSeconds'])
+        .to eq(75)
+
+      expect(template.env_named('Deployment/optest-openproject-worker-exports', 'openproject', 'OPENPROJECT_GOOD_JOB_SHUTDOWN_TIMEOUT')['value'])
+        .to eq('120')
+      expect(template.template_spec('Deployment/optest-openproject-worker-exports')['terminationGracePeriodSeconds'])
+        .to eq(150)
+    end
+  end
+
+  context 'when configuring terminationGracePeriodSeconds explicitly' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        worker:
+          terminationGracePeriodSeconds: 90
+        workers:
+          default:
+            queues: ""
+          exports:
+            queues: "exports"
+            terminationGracePeriodSeconds: 180
+            probes:
+              enabled: false
+      YAML
+      )
+    end
+
+    it 'uses the explicit worker and per-worker terminationGracePeriodSeconds overrides', :aggregate_failures do
+      expect(template.template_spec('Deployment/optest-openproject-worker-default')['terminationGracePeriodSeconds'])
+        .to eq(90)
+      expect(template.template_spec('Deployment/optest-openproject-worker-exports')['terminationGracePeriodSeconds'])
+        .to eq(180)
     end
   end
 end
