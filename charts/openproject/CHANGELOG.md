@@ -1,5 +1,12 @@
 # openproject
 
+## 13.17.1
+
+### Patch Changes
+
+- 5c32ed7: Upgrade OpenProject core version to 17.9.5 (patch update)
+- 8bcc265: Upgrade OpenProject core version to 17.9.6 (patch update)
+
 ## 13.17.0
 
 ### Minor Changes
