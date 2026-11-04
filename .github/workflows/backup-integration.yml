@@ -13,8 +13,8 @@ on:
       - '.github/workflows/backup-integration.yml'
   workflow_dispatch:
 
-  permissions:
-    contents: read
+permissions:
+  contents: read
 
 jobs:
   backup-integration:
