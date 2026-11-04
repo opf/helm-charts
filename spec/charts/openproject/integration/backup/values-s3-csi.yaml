@@ -1,0 +1,5 @@
+# Additional values for ATTACHMENTS=s3-csi: the backup reads the attachments bucket from a volume
+# provided by an S3 CSI driver (set up by the spec) instead of mounting it via FUSE itself.
+backup:
+  s3Attachments:
+    existingClaim: "openproject-attachments"

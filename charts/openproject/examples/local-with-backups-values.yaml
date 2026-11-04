@@ -1,0 +1,43 @@
+# Quickstart: Install via bin/install-local-with-backups (see DEVELOPMENT.md, section "Backups").
+#
+# Enables backups with replication. The two S3 services they go to are deployed by
+# bin/install-local-with-backups into separate namespaces, each with its own credentials:
+#
+#   backup-s3          primary kopia repository  (bucket "openproject-backup")
+#   backup-replica-s3  replica                   (bucket "openproject-backup-replica")
+#
+# These are local development credentials only. In a real installation, use existing secrets
+# (backup.existingSecret, backup.s3.auth.existingSecret, backup.replica.s3.auth.existingSecret).
+backup:
+  enabled: true
+
+  # Every 5 minutes, so there are always recent snapshots to look at locally.
+  schedule: "*/5 * * * *"
+
+  s3:
+    # "http://" disables TLS, which is fine for these in-cluster services.
+    endpoint: "http://rustfs.backup-s3.svc.cluster.local:9000"
+    region: "us-east-1"
+    bucket: "openproject-backup"
+    auth:
+      accessKeyId: "backup-access"
+      secretAccessKey: "backup-secret-key"
+
+  replica:
+    enabled: true
+    s3:
+      endpoint: "http://rustfs.backup-replica-s3.svc.cluster.local:9000"
+      region: "us-east-1"
+      bucket: "openproject-backup-replica"
+      auth:
+        accessKeyId: "replica-access"
+        secretAccessKey: "replica-secret-key"
+
+  cache:
+    persistent: false # no need for a persistent kopia cache locally
+
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "100Mi"

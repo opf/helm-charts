@@ -1,0 +1,12 @@
+# Additional values for ATTACHMENTS=s3: OpenProject stores attachments in a bucket
+# on the backup-s3 service, which the backup job mounts via rclone.
+s3:
+  enabled: true
+  auth:
+    accessKeyId: "backup-s3-access"
+    secretAccessKey: "backup-s3-secret-key"
+  bucketName: "openproject-attachments"
+  region: "us-east-1"
+  endpoint: "http://backup-s3:9000"
+  pathStyle: true
+  directUploads: false

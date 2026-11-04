@@ -1,0 +1,148 @@
+#!/bin/bash
+# Installs OpenProject locally (e.g. on k3d) with backups and backup replication enabled, for
+# trying out and developing the backups (see DEVELOPMENT.md, section "Backups").
+#
+# The backups go to two separate S3 services (single-node RustFS instances), each deployed into its
+# own namespace with its own credentials, like two independent storage providers would be:
+#
+#   backup-s3          primary kopia repository  (bucket "openproject-backup")
+#   backup-replica-s3  replica                   (bucket "openproject-backup-replica")
+#
+# OpenProject itself is installed into the namespace "openproject", like with bin/install-dev, using
+# examples/local-with-backups-values.yaml. Additional helm options are passed on, e.g.:
+#
+#   bin/install-local-with-backups --set backup.replica.schedule='*/30 * * * *'
+#
+# Use --s3-only to only set up the S3 services and buckets, e.g. to then add backups to an existing
+# installation (see DEVELOPMENT.md).
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+NAMESPACE=openproject
+RUSTFS_IMAGE="docker.io/rustfs/rustfs:1.0.4"
+# The chart's kopia image, which ships rclone, used to create the buckets.
+KOPIA_IMAGE="$(helm template . --set backup.enabled=true --set backup.s3.endpoint=x --set backup.s3.bucket=x \
+  --set backup.s3.auth.accessKeyId=x --set backup.s3.auth.secretAccessKey=x \
+  --show-only templates/backup-verification-cronjob.yaml 2>/dev/null | sed -n 's/.*image: "\(.*\)"/\1/p' | head -1)"
+
+S3_ONLY=""
+if [ "${1:-}" = "--s3-only" ]; then
+  S3_ONLY=1
+  shift
+fi
+
+# Deploys a single-node RustFS instance as service "rustfs" (port 9000) into the given namespace
+# and creates the bucket.
+deploy_s3() {
+  local namespace="$1" access_key="$2" secret_key="$3" bucket="$4"
+
+  kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f - > /dev/null
+  kubectl -n "$namespace" apply -f - > /dev/null <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rustfs-credentials
+stringData:
+  RUSTFS_ACCESS_KEY: "$access_key"
+  RUSTFS_SECRET_KEY: "$secret_key"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rustfs-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rustfs
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: { app: rustfs }
+  template:
+    metadata:
+      labels: { app: rustfs }
+    spec:
+      containers:
+        - name: rustfs
+          image: $RUSTFS_IMAGE
+          envFrom:
+            - secretRef: { name: rustfs-credentials }
+          env:
+            - { name: RUSTFS_VOLUMES, value: /data }
+            - { name: RUSTFS_ADDRESS, value: ":9000" }
+            - { name: RUSTFS_CONSOLE_ADDRESS, value: ":9001" }
+            - { name: RUSTFS_CONSOLE_ENABLE, value: "true" }
+            - { name: RUSTFS_REGION, value: us-east-1 }
+          ports:
+            - { name: s3, containerPort: 9000 }
+            - { name: console, containerPort: 9001 }
+          readinessProbe:
+            httpGet: { path: /health, port: 9000 }
+          volumeMounts:
+            - { name: data, mountPath: /data }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: rustfs-data }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rustfs
+spec:
+  selector: { app: rustfs }
+  ports:
+    - { name: s3, port: 9000, targetPort: s3 }
+    - { name: console, port: 9001, targetPort: console }
+EOF
+
+  echo "Waiting for S3 service in namespace $namespace ..."
+  kubectl -n "$namespace" rollout status deploy/rustfs --timeout=300s > /dev/null
+
+  # The chart expects the buckets to exist.
+  kubectl -n "$namespace" run "create-bucket-$RANDOM" --rm -i --quiet --restart=Never \
+    --image="$KOPIA_IMAGE" --image-pull-policy=IfNotPresent \
+    --env=RCLONE_CONFIG_S3_TYPE=s3 --env=RCLONE_CONFIG_S3_PROVIDER=Other \
+    --env=RCLONE_CONFIG_S3_ENDPOINT=http://rustfs:9000 \
+    --env=RCLONE_CONFIG_S3_ACCESS_KEY_ID="$access_key" --env=RCLONE_CONFIG_S3_SECRET_ACCESS_KEY="$secret_key" \
+    --env=RCLONE_LOG_LEVEL=ERROR \
+    --command -- rclone mkdir "s3:$bucket"
+  echo "Bucket $bucket is ready in namespace $namespace."
+}
+
+# Must match examples/local-with-backups-values.yaml.
+deploy_s3 backup-s3 backup-access backup-secret-key openproject-backup
+deploy_s3 backup-replica-s3 replica-access replica-secret-key openproject-backup-replica
+
+if [ -n "$S3_ONLY" ]; then
+  exit 0
+fi
+
+# Same development settings as bin/install-dev.
+helm upgrade \
+  --create-namespace --namespace "$NAMESPACE" \
+  --install openproject \
+  --set develop=true \
+  --set ingress.host=openproject.localhost \
+  --set openproject.realtime_collaboration.hocuspocus.protocol=ws \
+  --set persistence.accessModes=['ReadWriteOnce'] \
+  -f examples/local-with-backups-values.yaml \
+  "$@" .
+
+cat <<EOF
+
+Once OpenProject is up (kubectl -n $NAMESPACE get pods), try the backups with bin/backup, e.g.:
+
+  bin/backup -n $NAMESPACE create-snapshot   # run a backup now
+  bin/backup -n $NAMESPACE sync-replica      # replicate it
+  bin/backup -n $NAMESPACE ui                # browse the snapshots in the kopia web UI
+
+See DEVELOPMENT.md, section "Backups", for more.
+EOF

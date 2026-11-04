@@ -448,6 +448,170 @@ strategy:
   #     maxSurge: 30%
   #     maxUnavailable: 30%
 
+## Backup configuration using kopia for encrypted, deduplicated and compressed backups.
+##
+## Each snapshot has the same layout as OpenProject's own backups:
+##   openproject.sql  plain SQL database dump (restore with psql)
+##   attachment/      all attachments
+##   custom_style/    custom logos, icons and fonts
+##
+## When attachments are stored locally (s3.enabled=false), the assets PVC is
+## mounted read-only and snapshotted directly.
+## When attachments are stored in S3 (s3.enabled=true or rustfs.bundled=true), the bucket should be provided
+## as a volume, e.g. via an S3 CSI driver (see backup.s3Attachments below). Otherwise the
+## backup mounts the bucket itself via rclone/FUSE, which requires a privileged container
+## and therefore does not work in namespaces enforcing the "baseline" or "restricted" Pod
+## Security Standard; the installation fails in that case. See the chart's README,
+## section "Backups of S3 attachments".
+##
+## The S3 buckets for the backup repository (and the replica) must already exist;
+## the chart does not create them. The kopia repository inside is initialized on the first run.
+##
+## The user must provide at minimum:
+##   1. S3 credentials/config for the kopia backup repository  (backup.s3.*)
+##   2. (optional) S3 credentials/config for a replica bucket  (backup.replica.s3.*)
+#
+backup:
+  enabled: false
+
+  ## Password used to encrypt the kopia repository.
+  ## IMPORTANT: Record this value — it is required to restore backups.
+  ## If neither kopiaPassword nor existingSecret is provided, a password is
+  ## auto-generated and kept across helm upgrades (helm.sh/resource-policy: keep).
+  ## A full reinstall (helm uninstall + install) will produce a NEW password and
+  ## old backups will be inaccessible unless the original password is supplied.
+  #
+  kopiaPassword: ""
+
+  ## Name of an existing secret containing the kopia password.
+  ## Must contain the key defined in secretKeys.kopiaPassword.
+  #
+  existingSecret: ""
+  secretKeys:
+    kopiaPassword: "kopiaPassword"
+
+  ## Primary S3-compatible storage for the kopia backup repository.
+  #
+  s3:
+    ## Endpoint, e.g. "s3.amazonaws.com" or "minio.example.com:9000".
+    ## Prefix with "http://" to connect without TLS (e.g. for an in-cluster S3 service).
+    endpoint: ""
+    ## Region — optional for non-AWS providers.
+    region: ""
+    bucket: ""
+    auth:
+      accessKeyId: ""
+      secretAccessKey: ""
+      ## Alternative to plain credentials above.
+      ## Secret must contain keys BACKUP_ACCESS_KEY_ID and BACKUP_SECRET_ACCESS_KEY.
+      existingSecret: ""
+
+  ## Optional: replicate the kopia repository to a second S3 bucket.
+  #
+  replica:
+    enabled: false
+    s3:
+      endpoint: ""
+      region: ""
+      bucket: ""
+      auth:
+        accessKeyId: ""
+        secretAccessKey: ""
+        ## Secret must contain keys REPLICA_ACCESS_KEY_ID and REPLICA_SECRET_ACCESS_KEY.
+        existingSecret: ""
+    ## Cron schedule for the replication job.
+    schedule: "0 0 * * *"
+    ## Set to false to enable the replication CronJob actively.
+    suspend: false
+    ## Optional heartbeat URL to ping after a successful replication.
+    monitorHeartbeatUrl: ""
+
+  ## Cron schedule for the main backup job (three times daily by default).
+  schedule: "0 6,12,18 * * *"
+
+  ## Optional URL to ping after a successful backup (e.g. UptimeRobot heartbeat).
+  monitorHeartbeatUrl: ""
+
+  ## Backup verification — downloads and verifies all stored backup data.
+  ## Suspended by default to limit S3 traffic; activate per-cluster as needed.
+  #
+  verification:
+    suspend: true
+    schedule: "30 21 1,15 * *"
+    ## Optional heartbeat URL to ping after successful verification.
+    monitorHeartbeatUrl: ""
+
+  ## Where OpenProject stores attachments when they are stored locally (s3.enabled=false).
+  ## Only needed if OPENPROJECT_ATTACHMENTS__STORAGE__PATH is overridden in a way the chart
+  ## cannot see (e.g. via extraEnvVarsSecret); an override in `environment` is picked up
+  ## automatically. Defaults to OpenProject's default, /var/openproject/assets/files.
+  ## Must be on the assets volume, i.e. below /var/openproject/assets.
+  #
+  attachmentsStoragePath: ""
+
+  ## Attachments stored in S3 (s3.enabled=true or rustfs.bundled=true).
+  #
+  s3Attachments:
+    ## Name of an existing PVC (in the release namespace) providing the OpenProject S3 bucket
+    ## (s3.bucketName, or rustfs.bucketName) as a volume, e.g. via an S3 CSI driver. Recommended, as the backup then
+    ## does not need a privileged container. If empty, the backup mounts the bucket via
+    ## rclone/FUSE in a privileged container instead.
+    existingClaim: ""
+    ## Location of OpenProject's "uploads" directory within that volume. The default is right
+    ## if the volume is the root of the bucket. Use "" if the volume is the "uploads" prefix itself.
+    path: "uploads"
+
+  ## Service account for the backup pods. Defaults to the namespace's default service account.
+  ## On OpenShift this can be a service account granted the "privileged" SCC, so the backup can
+  ## mount S3 attachments via FUSE without a CSI driver (see the chart's README).
+  #
+  serviceAccountName: ""
+
+  ## Kopia cache PVC — keeps already-uploaded content to speed up subsequent backups.
+  #
+  cache:
+    ## Set to false to use an emptyDir instead of a PVC (cache is rebuilt on every run).
+    persistent: true
+    size: "10Gi"
+    storageClassName: ""
+    annotations: {}
+
+  ## Container resources for all backup jobs.
+  #
+  resources:
+    limits:
+      memory: "4Gi"
+    requests:
+      memory: "500Mi"
+
+  ## Kopia image used for backup, replication and verification.
+  ## Must include kopia, bash and curl; plus rclone and fuse when attachments are stored in S3.
+  ## The official kopia image ships all of these.
+  #
+  image:
+    registry: "docker.io"
+    repository: "kopia/kopia"
+    tag: "0.23.1"
+    imagePullPolicy: "IfNotPresent"
+
+  ## Database dump, taken by an init container before each backup.
+  ##
+  ## The image's major version should match the database server's: pg_dump refuses to dump newer
+  ## servers, and dumps of a newer pg_dump may not restore cleanly into an older server.
+  ##
+  ## With the bundled PostgreSQL (postgresql.bundled=true), leave the tag empty to use the bundled
+  ## server's major version automatically (from postgresql.image.tag, e.g. "15-alpine").
+  ## With an external database, the tag MUST be set to the server's major version, e.g. "16-alpine"
+  ## for PostgreSQL 16; the installation fails otherwise. Remember to update it when upgrading
+  ## the database server.
+  #
+  dbDump:
+    image:
+      registry: "docker.io"
+      repository: "postgres"
+      tag: ""
+      imagePullPolicy: "IfNotPresent"
+
 ## Cron job running the incoming email [1] task.
 ##
 ## Ref: https://www.openproject.org/docs/installation-and-operations/configuration/incoming-emails/

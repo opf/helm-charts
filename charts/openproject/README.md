@@ -141,6 +141,10 @@ pod-security.kubernetes.io/enforce: restricted
 pod-security.kubernetes.io/enforce-version: latest
 ```
 
+The backup jobs (`backup.enabled`) are restricted-compatible too, except when attachments are stored in S3 and the
+bucket is not provided to them as a volume: they then need a privileged container, and the installation fails in
+namespaces enforcing `baseline` or `restricted`. See [Backups of S3 attachments](#backups-of-s3-attachments).
+
 The bundled PostgreSQL and memcached subcharts also render with restricted-compatible security contexts at the pinned chart versions. If you enable Bitnami's PostgreSQL `volumePermissions` init container, that pod may fail restricted enforcement because it runs as root. The bundled RustFS Deployment (see `rustfs.bundled`) uses this chart's own restricted-compatible security context too.
 
 ### ReadWriteMany volumes
@@ -176,6 +180,179 @@ helm upgrade --reuse-values --namespace openproject my-openproject --set environ
 Find out more about the [configuration through environment variables](https://www.openproject.org/docs/installation-and-operations/configuration/environment/) section.
 
 
+
+## Backups
+
+With `backup.enabled=true` the chart takes encrypted, deduplicated [kopia](https://kopia.io) snapshots
+of the database and all attachments into an S3 bucket, and can replicate them to a second bucket
+(`backup.replica`). See the `backup` section in [values.yaml](./values.yaml) for all options.
+The buckets must exist already; the chart does not create them.
+
+Each snapshot has the same layout as OpenProject's own backups:
+
+```
+openproject.sql   database dump (plain SQL)
+attachment/       attachments
+custom_style/     custom logos, icons and fonts
+```
+
+The database dump is taken with `pg_dump` from the `backup.dbDump.image` (`postgres`) image, whose major version
+should match the database server's. With the bundled PostgreSQL this happens automatically. **With an external
+database, set `backup.dbDump.image.tag` to the server's major version** (e.g. `16-alpine` for PostgreSQL 16, and
+update it when upgrading the server); the installation fails if it is not set.
+
+**Keep the kopia password safe** — without it the backups cannot be restored. Unless you set
+`backup.kopiaPassword` or `backup.existingSecret`, it is generated and stored in the secret
+`backup-kopia-password-auto-generated`:
+
+```shell
+kubectl -n <namespace> get secret backup-kopia-password-auto-generated -o jsonpath='{.data.kopiaPassword}' | base64 -d
+```
+
+### Backups of S3 attachments
+
+If attachments are stored in S3 (`s3.enabled=true` or `rustfs.bundled=true`), the backup has to read the bucket as
+a file system. There are two ways to provide it:
+
+1. **As a volume, via an S3 CSI driver (recommended).** The driver mounts the bucket on the nodes, so the backup pods
+   need no privileges. **This is required for backups of S3 attachments to work in namespaces enforcing the
+   `baseline` or `restricted` [Pod Security Standard](#kubernetes-pod-security-standards).**
+2. **Via FUSE in the backup container** (the default if no volume is configured). The backup then mounts the bucket
+   itself with rclone, which requires a privileged container. Pod Security Admission rejects those in namespaces
+   enforcing `baseline` or `restricted`, so the chart refuses to install in that case. On OpenShift, a service
+   account with the `privileged` SCC can be used for this instead, see [below](#openshift-fuse-with-a-privileged-service-account).
+
+#### Installing an S3 CSI driver
+
+Any CSI driver that provides the bucket as a `PersistentVolumeClaim` works, e.g. [Mountpoint for Amazon S3](https://github.com/awslabs/mountpoint-s3-csi-driver)
+on EKS. The following example uses [k8s-csi-s3](https://github.com/yandex-cloud/k8s-csi-s3), which works with any
+S3-compatible storage. Installing a CSI driver needs cluster admin permissions. Its node plugin runs privileged, but
+in its own namespace (here `kube-system`), not in OpenProject's.
+
+1. Install the driver. Only the driver is needed, not its storage class or secret, as the existing bucket is bound
+   statically below:
+
+   ```shell
+   helm upgrade --install csi-s3 csi-s3 --repo https://yandex-cloud.github.io/k8s-csi-s3/charts \
+     --namespace kube-system --set secret.create=false --set storageClass.create=false
+   ```
+
+2. Create a secret with credentials for the attachments bucket, a `PersistentVolume` for the bucket and a
+   `PersistentVolumeClaim` bound to it in OpenProject's namespace. Credentials with read-only access to the bucket
+   are sufficient.
+
+   ```yaml
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: openproject-attachments-s3
+     namespace: openproject
+   stringData:
+     accessKeyID: <access key>
+     secretAccessKey: <secret key>
+     endpoint: https://s3.example.com   # S3 endpoint, as reachable from the cluster nodes' driver pods
+     # region: eu-central-1
+   ---
+   apiVersion: v1
+   kind: PersistentVolume
+   metadata:
+     name: openproject-attachments
+   spec:
+     capacity:
+       storage: 1Ti          # not enforced, but required
+     accessModes: [ReadWriteMany]
+     claimRef:
+       namespace: openproject
+       name: openproject-attachments
+     csi:
+       driver: ru.yandex.s3.csi
+       volumeHandle: <bucket>   # the OpenProject attachments bucket (s3.bucketName)
+       nodePublishSecretRef: { name: openproject-attachments-s3, namespace: openproject }
+       nodeStageSecretRef: { name: openproject-attachments-s3, namespace: openproject }
+       volumeAttributes:
+         mounter: geesefs
+         options: --memory-limit 1000 --dir-mode 0777 --file-mode 0666
+   ---
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: openproject-attachments
+     namespace: openproject
+   spec:
+     storageClassName: ""
+     volumeName: openproject-attachments
+     accessModes: [ReadWriteMany]
+     resources:
+       requests:
+         storage: 1Ti
+   ```
+
+   By default, k8s-csi-s3 runs geesefs on the nodes via systemd. On nodes without systemd (e.g. kind or k3d), add
+   `--no-systemd` to the `options`.
+
+3. Point the backup at the claim:
+
+   ```yaml
+   backup:
+     s3Attachments:
+       existingClaim: openproject-attachments
+       # Location of OpenProject's "uploads" directory within the volume. The default is right if the volume is
+       # the root of the bucket; use "" if it is the "uploads" prefix (volumeHandle: <bucket>/uploads).
+       # path: uploads
+   ```
+
+The backup mounts the claim read-only. It only creates the `uploads/attachment` and `uploads/custom_style` directories
+if they do not exist yet.
+
+#### OpenShift: FUSE with a privileged service account
+
+OpenShift admits pods based on Security Context Constraints (SCCs) of their service account. Instead of a CSI driver,
+you can let only the backup pods run privileged by giving them their own service account with the `privileged` SCC:
+
+```shell
+oc -n <namespace> create serviceaccount openproject-backup
+oc -n <namespace> adm policy add-scc-to-user privileged -z openproject-backup
+```
+
+```yaml
+backup:
+  serviceAccountName: openproject-backup
+```
+
+All other OpenProject pods keep using their own service account and SCC. If the namespace additionally has a
+`pod-security.kubernetes.io/enforce` label of `baseline` or `restricted`, Pod Security Admission still rejects the
+privileged backup pods and the chart refuses to install; use a CSI driver in that case.
+
+### Accessing backups
+
+[`bin/backup`](./bin/backup) helps you work with the backups from your machine. It reads the repository
+connection and password from the cluster, so you only need `kubectl` access to the namespace and a local
+[kopia installation](https://kopia.io/docs/installation/) (plus FUSE for mounting):
+
+```shell
+bin/backup -n <namespace> list                       # list snapshots
+bin/backup -n <namespace> mount                      # browse all snapshots by date in a shell
+bin/backup -n <namespace> mount <snapshot-id>        # browse one snapshot
+bin/backup -n <namespace> restore latest ./restore   # restore a snapshot to a local directory
+bin/backup -n <namespace> create-snapshot            # run a backup now (also: sync-replica, verify)
+bin/backup -n <namespace> ui                         # kopia web UI, see below
+```
+
+`bin/backup ui` needs neither a local kopia nor network access to the bucket: it starts the
+kopia web UI in a temporary pod in the namespace (connected read-only, using the same secrets as the
+backup jobs), forwards it to `http://localhost:51515` and prints the login. There you can browse all
+snapshots and download individual files. Pressing Ctrl-C deletes the pod again.
+
+Add `--replica` to use the replica repository, `-r <release>` if the release is not called `openproject`, and
+`--port <port>` to change the local port of the web UI. If the S3 endpoint is a service inside the cluster
+(`<service>.<namespace>.svc…`, or just `<service>` in the release's namespace), the helper forwards it to a local
+port automatically; use `--endpoint <host:port>` to connect to the S3 storage some other way. The repositories are
+connected read-only, so the helper cannot modify the backups.
+
+To restore the database, import `openproject.sql`, e.g. `psql "$DATABASE_URL" < openproject.sql`, and copy
+`attachment/` and `custom_style/` back to the attachments storage (the `files/` directory on the assets volume,
+or `uploads/` in the S3 bucket). Use a current `psql` of the same major version, ideally from the image the backup
+uses (`backup.dbDump.image`): older patch releases fail on the `\restrict` lines current `pg_dump` versions write.
 
 ## Uninstalling the Chart
 
@@ -533,6 +710,9 @@ memcached:
   podSecurityContext:
     enabled: false
 ```
+
+Backups (`backup.enabled`) of attachments stored in S3 either need an S3 CSI driver or a service account with the
+`privileged` SCC for the backup pods, see [Backups of S3 attachments](#backups-of-s3-attachments).
 
 If Openshift routes with TLS termination `edge` are to be used, TLS of the ingress must be deactivated.
 
