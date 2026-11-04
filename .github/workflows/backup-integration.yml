@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'charts/openproject/templates/backup-*'
+      - 'charts/openproject/files/backup/**'
       - 'charts/openproject/templates/secret_backup*'
       - 'charts/openproject/templates/_helpers.tpl'
       - 'charts/openproject/values.yaml'
