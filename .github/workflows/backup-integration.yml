@@ -41,3 +41,8 @@ jobs:
         env:
           ATTACHMENTS: ${{ matrix.attachments }}
         run: bundle exec rspec --tag integration spec/charts/openproject/integration/backup_spec.rb
+
+      # FUSE mounts can be denied by the runner's AppArmor profiles (e.g. for fusermount3).
+      - name: Show AppArmor denials
+        if: failure()
+        run: sudo dmesg | grep -i 'apparmor="DENIED"' | tail -50 || true
