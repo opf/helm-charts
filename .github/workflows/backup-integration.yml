@@ -13,6 +13,9 @@ on:
       - '.github/workflows/backup-integration.yml'
   workflow_dispatch:
 
+  permissions:
+    contents: read
+
 jobs:
   backup-integration:
     runs-on: ubuntu-latest
