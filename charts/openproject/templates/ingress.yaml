@@ -38,6 +38,18 @@ spec:
             pathType: {{ .Values.hocuspocus.ingress.pathType }}
             backend: {{- include "common.ingress.backend" (dict "serviceName" (printf "%s-%s" (include "common.names.fullname" $) "hocuspocus") "servicePort" "http" "context" $) | nindent 14 }}
           {{- end }}
+          {{- if .Values.anycable.enabled }}
+          {{- $anycableBackend := include "common.ingress.backend" (dict "serviceName" (printf "%s-%s" (include "common.names.fullname" $) "anycable") "servicePort" "http" "context" $) }}
+          {{- /* WebSocket, server-sent events, and /_anycable: only the AnyCable server may call OpenProject's RPC endpoint,
+                 so public requests to it are sent to the AnyCable server instead, which does not serve that path (404).
+                 OpenProject exempts this fixed path from its host name check, so it is not configurable. */}}
+          {{- $rpcPath := printf "%s/_anycable" (include "openproject.relativeUrlRoot" .) }}
+          {{- range $path := list (include "openproject.anycable.websocketPath" .) (include "openproject.anycable.ssePath" .) $rpcPath }}
+          - path: {{ $path }}
+            pathType: {{ $.Values.anycable.ingress.pathType }}
+            backend: {{- $anycableBackend | nindent 14 }}
+          {{- end }}
+          {{- end }}
           - path: {{ .Values.ingress.path }}
             pathType: {{ .Values.ingress.pathType }}
             backend: {{- include "common.ingress.backend" (dict "serviceName" (include "common.names.fullname" $) "servicePort" "http" "context" $) | nindent 14 }}

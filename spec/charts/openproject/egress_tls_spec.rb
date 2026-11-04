@@ -50,7 +50,8 @@ describe 'egress TLS configuration' do
         'Deployment/optest-openproject-worker-default' => 'openproject',
         'Deployment/optest-openproject-cron' => 'cron',
         /optest-openproject-seeder/ => 'seeder',
-        'Deployment/optest-openproject-hocuspocus' => 'hocuspocus'
+        'Deployment/optest-openproject-hocuspocus' => 'hocuspocus',
+        'Deployment/optest-openproject-anycable' => 'anycable'
       }
     end
 
@@ -59,6 +60,11 @@ describe 'egress TLS configuration' do
         HelmTemplate.with_defaults(<<~YAML
           cron:
             enabled: true
+          anycable:
+            enabled: true
+          openproject:
+            live_updates:
+              enabled: true
           egress:
             tls:
               rootCA:
@@ -82,6 +88,11 @@ describe 'egress TLS configuration' do
         HelmTemplate.with_defaults(<<~YAML
           cron:
             enabled: true
+          anycable:
+            enabled: true
+          openproject:
+            live_updates:
+              enabled: true
           egress:
             tls:
               rootCA:
