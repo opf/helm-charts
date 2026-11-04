@@ -6,7 +6,8 @@ require 'json'
 #
 # Installs OpenProject with backups and replication enabled, backed by two independent
 # in-cluster S3 services (rustfs), writes marker data, runs two backups, the replication and the
-# verification job, and then restores the latest snapshot from both repositories.
+# verification job, and then restores the latest snapshot from both repositories. A minimal HTTP
+# server stands in for the heartbeat monitor pinged after successful backups and verifications.
 #
 #   bin/rspec --tag integration spec/charts/openproject/integration/backup_spec.rb
 #
@@ -23,6 +24,7 @@ describe 'backups', :integration do
 
   release = 'openproject'
   rustfs_image = ENV.fetch('RUSTFS_IMAGE', 'rustfs/rustfs:1.0.4')
+  heartbeat_image = ENV.fetch('HEARTBEAT_IMAGE', 'busybox:1.37')
   kopia_image = chart_values['backup']['image'].values_at('registry', 'repository').join('/') +
                 ":#{chart_values['backup']['image']['tag']}"
 
@@ -128,6 +130,52 @@ describe 'backups', :integration do
             ports:
               - port: 9000
         YAML
+      end
+
+      # A stand-in for a heartbeat monitor (e.g. UptimeRobot): an HTTP server answering any of the
+      # heartbeat URLs configured in backup/values.yaml and logging each request ("url:/<path>").
+      def deploy_heartbeat_monitor
+        kube.apply(<<~YAML)
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: heartbeat
+          spec:
+            selector:
+              matchLabels: { app: heartbeat }
+            template:
+              metadata:
+                labels: { app: heartbeat }
+              spec:
+                containers:
+                  - name: httpd
+                    image: #{@heartbeat_image}
+                    command:
+                      - sh
+                      - -c
+                      - mkdir -p /tmp/www && touch /tmp/www/backup /tmp/www/replica /tmp/www/verification /tmp/www/ok && exec httpd -f -vv -p 8080 -h /tmp/www
+                    ports:
+                      - containerPort: 8080
+                    readinessProbe:
+                      tcpSocket: { port: 8080 }
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: heartbeat
+          spec:
+            selector: { app: heartbeat }
+            ports:
+              - port: 8080
+        YAML
+      end
+
+      # The number of successful heartbeat requests received for the given path.
+      def heartbeats(path)
+        log = kube.kubectl('logs', 'deploy/heartbeat')
+        requests = log.scan(/^(\S+): url:(\S+)$/).to_h
+        responses = log.scan(/^(\S+): response:(\d+)$/).to_h
+        requests.count { |client, url| url == path && responses[client] == '200' }
       end
 
       # A long-running pod with the chart's kopia image (which ships rclone) to inspect the buckets
@@ -266,14 +314,15 @@ describe 'backups', :integration do
         @s3 = attachments.start_with?('s3')
         @attachments_bucket = attachments_bucket
         @rustfs_image = rustfs_image
+        @heartbeat_image = heartbeat_image
         @kopia_image = kopia_image
         @kube = KubeNamespace.new("backup-test-#{attachments}")
 
         kube.create!
         deploy_s3('backup-s3')
         deploy_s3('replica-s3')
-        kube.kubectl('rollout', 'status', 'deploy/backup-s3', '--timeout=180s')
-        kube.kubectl('rollout', 'status', 'deploy/replica-s3', '--timeout=180s')
+        deploy_heartbeat_monitor
+        %w[backup-s3 replica-s3 heartbeat].each { |deployment| kube.kubectl('rollout', 'status', "deploy/#{deployment}", '--timeout=180s') }
         deploy_toolbox
 
         # The chart expects the buckets to exist.
@@ -281,8 +330,8 @@ describe 'backups', :integration do
         tool('rclone', 'mkdir', "backup_s3:#{attachments_bucket}") if @s3
         provide_attachments_volume if scenario[:csi]
 
-        # Enforced from here on, so it applies to everything the chart deploys. The S3 services and
-        # the toolbox above (test infrastructure) are already running and not affected.
+        # Enforced from here on, so it applies to everything the chart deploys. The S3 services, the
+        # heartbeat monitor and the toolbox above (test infrastructure) are already running and not affected.
         kube.enforce_pod_security!('restricted') if scenario[:restricted]
 
         kube.helm_install(
@@ -295,10 +344,13 @@ describe 'backups', :integration do
         # The first backup creates the kopia repository, the second one connects to the existing one.
         write_markers("first-#{rand(10**9)}")
         kube.run_cronjob("#{release}-backup", 'backup-1')
+        @heartbeats_after_first_backup = heartbeats('/backup')
         @token = "second-#{rand(10**9)}"
         write_markers(@token)
         kube.run_cronjob("#{release}-backup", 'backup-2')
 
+        @replica_heartbeats_before_replication = heartbeats('/replica')
+        @verification_heartbeats_before_verification = heartbeats('/verification')
         kube.run_cronjob("#{release}-backup-replica", 'replica-1')
         @verification_logs = kube.run_cronjob("#{release}-backup-verification", 'verification-1')
       end
@@ -310,6 +362,47 @@ describe 'backups', :integration do
 
       it 'verifies the backup' do
         expect(@verification_logs).to include('Verification of backup complete')
+      end
+
+      it 'pings the backup heartbeat after each backup', :aggregate_failures do
+        expect(@heartbeats_after_first_backup).to eq(1)
+        expect(heartbeats('/backup')).to eq(2)
+      end
+
+      it 'pings the replication heartbeat only after a replication', :aggregate_failures do
+        expect(@replica_heartbeats_before_replication).to eq(0)
+        expect(heartbeats('/replica')).to eq(1)
+      end
+
+      it 'pings the verification heartbeat only after a verification', :aggregate_failures do
+        expect(@verification_heartbeats_before_verification).to eq(0)
+        expect(heartbeats('/verification')).to eq(1)
+      end
+
+      # Runs the chart's heartbeat script in the toolbox pod, which uses the same image as the jobs.
+      def send_heartbeat(url)
+        script = File.read(File.join(KubeNamespace::ROOT, 'charts/openproject/files/backup/heartbeat.sh'))
+        tool('bash', '-s', '--', url, stdin: script, check: false)
+      end
+
+      it 'does not fail a job if the heartbeat monitor responds with an error', :aggregate_failures do
+        output, success = send_heartbeat('http://heartbeat:8080/missing')
+
+        expect(success).to be(true)
+        expect(output).to include('Warning: failed to send the heartbeat')
+        expect(kube.kubectl('logs', 'deploy/heartbeat').scan('url:/missing').size).to eq(4), 'expected 3 retries'
+      end
+
+      it 'does not fail a job if the heartbeat monitor is unreachable', :aggregate_failures do
+        output, success = send_heartbeat('http://no-such-monitor:8080/backup')
+
+        expect(success).to be(true)
+        expect(output).to include('Warning: failed to send the heartbeat')
+      end
+
+      it 'does not print a warning for a successful heartbeat' do
+        output, = send_heartbeat('http://heartbeat:8080/ok')
+        expect(output).not_to include('Warning')
       end
 
       it 'does not write anything into the attachments' do

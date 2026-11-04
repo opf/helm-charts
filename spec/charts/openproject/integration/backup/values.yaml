@@ -30,6 +30,7 @@ backup:
   replica:
     enabled: true
     suspend: true # triggered manually by the test
+    monitorHeartbeatUrl: "http://heartbeat:8080/replica"
     s3:
       endpoint: "http://replica-s3:9000"
       region: "us-east-1"
@@ -40,6 +41,11 @@ backup:
 
   # Never let the schedule fire during the test; jobs are created from the CronJobs explicitly.
   schedule: "0 0 31 2 *"
+
+  # The heartbeat monitor deployed by the spec, which logs the requests it receives.
+  monitorHeartbeatUrl: "http://heartbeat:8080/backup"
+  verification:
+    monitorHeartbeatUrl: "http://heartbeat:8080/verification"
 
   cache:
     persistent: false

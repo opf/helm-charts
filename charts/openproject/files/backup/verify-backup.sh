@@ -47,6 +47,4 @@ kopia snapshot verify --verify-files-percent=100 --file-parallelism=10 --paralle
 
 echo "[$(date)] Verification of backup complete"
 
-if [ -n "$BACKUP_VERIFICATION_MONITOR_HEARTBEAT_URL" ]; then
-  curl --insecure "$BACKUP_VERIFICATION_MONITOR_HEARTBEAT_URL"
-fi
+/scripts/heartbeat.sh "$BACKUP_VERIFICATION_MONITOR_HEARTBEAT_URL"

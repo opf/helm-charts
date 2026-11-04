@@ -14,6 +14,7 @@ set -u
 : "$KOPIA_CACHE_DIRECTORY"
 : "$KOPIA_PASSWORD"
 
+BACKUP_REPLICA_MONITOR_HEARTBEAT_URL="${BACKUP_REPLICA_MONITOR_HEARTBEAT_URL:-}"
 BACKUP_REGION="${BACKUP_REGION:-}"
 REPLICA_REGION="${REPLICA_REGION:-}"
 
@@ -55,3 +56,5 @@ kopia cache set \
 kopia repository sync-to s3 $REPLICA_SYNC_OPTS
 
 echo "[$(date)] Sync of backup replica complete"
+
+/scripts/heartbeat.sh "$BACKUP_REPLICA_MONITOR_HEARTBEAT_URL"

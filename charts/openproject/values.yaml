@@ -523,6 +523,8 @@ backup:
     schedule: "0 0 * * *"
     ## Set to false to enable the replication CronJob actively.
     suspend: false
+    ## Optional heartbeat URL to ping after a successful replication.
+    monitorHeartbeatUrl: ""
 
   ## Cron schedule for the main backup job (three times daily by default).
   schedule: "0 6,12,18 * * *"

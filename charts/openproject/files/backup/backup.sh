@@ -111,6 +111,4 @@ kopia snapshot create /mnt/backup --override-source "openproject@backup-cronjob:
 
 echo "[$(date)] Full backup complete"
 
-if [ -n "$BACKUP_MONITOR_HEARTBEAT_URL" ]; then
-  curl --insecure "$BACKUP_MONITOR_HEARTBEAT_URL"
-fi
+/scripts/heartbeat.sh "$BACKUP_MONITOR_HEARTBEAT_URL"
