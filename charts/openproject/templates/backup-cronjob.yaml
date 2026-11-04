@@ -159,16 +159,16 @@ spec:
                 - name: tmp
                   mountPath: /tmp
                 - name: db-dump
-                  mountPath: /backup/openproject.sql
+                  mountPath: /mnt/backup/openproject.sql
                   subPath: openproject.sql
                   readOnly: true
                 {{- if $attachmentsClaim }}
                 - name: data
-                  mountPath: /backup/attachment
+                  mountPath: /mnt/backup/attachment
                   subPath: {{ list $attachmentsSubPath "attachment" | compact | join "/" }}
                   readOnly: true
                 - name: data
-                  mountPath: /backup/custom_style
+                  mountPath: /mnt/backup/custom_style
                   subPath: {{ list $attachmentsSubPath "custom_style" | compact | join "/" }}
                   readOnly: true
                 {{- end }}

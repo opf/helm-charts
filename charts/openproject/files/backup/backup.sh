@@ -1,10 +1,12 @@
 #!/bin/bash
-# Snapshots /backup, which mirrors the layout of OpenProject's own backups:
-#   /backup/openproject.sql  the database dump written by dump-db.sh
-#   /backup/attachment       attachments
-#   /backup/custom_style     custom logos, icons and fonts
+# Snapshots /mnt/backup, which mirrors the layout of OpenProject's own backups:
+#   /mnt/backup/openproject.sql  the database dump written by dump-db.sh
+#   /mnt/backup/attachment       attachments
+#   /mnt/backup/custom_style     custom logos, icons and fonts
 # The directories are subPath mounts of the assets PVC or, if attachments are stored
 # in S3, the respective prefixes of the OpenProject bucket mounted via rclone/fuse.
+# It's below /mnt as AppArmor's fusermount3 profile (e.g. on Ubuntu nodes) only allows FUSE
+# mounts in a few places like /mnt.
 set -e
 set -o pipefail
 set -u
@@ -70,18 +72,18 @@ if [ "$ATTACHMENTS_STORAGE" = "s3" ]; then
   # they end up in the container log. The mounts go away together with the container.
   declare -A mount_pids
   for dir in attachment custom_style; do
-    mkdir -p "/backup/$dir"
-    rclone mount --read-only "remote-files:/$OPENPROJECT_FOG_DIRECTORY/uploads/$dir" "/backup/$dir" &
+    mkdir -p "/mnt/backup/$dir"
+    rclone mount --read-only "remote-files:/$OPENPROJECT_FOG_DIRECTORY/uploads/$dir" "/mnt/backup/$dir" &
     mount_pids[$dir]=$!
   done
 
   for dir in attachment custom_style; do
     for _ in $(seq 1 30); do
-      mountpoint -q "/backup/$dir" && break
+      mountpoint -q "/mnt/backup/$dir" && break
       kill -0 "${mount_pids[$dir]}" 2> /dev/null || break
       sleep 1
     done
-    if ! mountpoint -q "/backup/$dir"; then
+    if ! mountpoint -q "/mnt/backup/$dir"; then
       echo "Failed to mount $dir from the attachments bucket."
       exit 1
     fi
@@ -103,8 +105,9 @@ kopia policy set --global \
   --compression zstd-fastest
 
 # A fixed source, independent of the user the container runs as (root with FUSE, else the
-# OpenProject user), so all snapshots form one history whichever way attachments are mounted.
-kopia snapshot create /backup --override-source "openproject@backup-cronjob:/backup"
+# OpenProject user) and of where the files are mounted, so all snapshots form one history
+# whichever way attachments are mounted.
+kopia snapshot create /mnt/backup --override-source "openproject@backup-cronjob:/backup"
 
 echo "[$(date)] Full backup complete"
 

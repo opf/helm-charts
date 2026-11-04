@@ -94,7 +94,7 @@ describe 'backup pod security' do
       expect(secret_value('ATTACHMENTS_STORAGE')).to eq('local')
       expect(pod_spec('backup')['volumes']).to include('name' => 'data', 'persistentVolumeClaim' => { 'claimName' => 'op-bucket' })
       mounts = backup_container['volumeMounts'].to_h { |m| [m['mountPath'], m['subPath']] }
-      expect(mounts).to include('/backup/attachment' => 'uploads/attachment', '/backup/custom_style' => 'uploads/custom_style')
+      expect(mounts).to include('/mnt/backup/attachment' => 'uploads/attachment', '/mnt/backup/custom_style' => 'uploads/custom_style')
       expect(backup_container['envFrom'].map { |e| e['secretRef']['name'] }).not_to include('optest-openproject-s3')
     end
 
@@ -105,7 +105,7 @@ describe 'backup pod security' do
 
       it 'snapshots the root of the volume' do
         mounts = backup_container['volumeMounts'].to_h { |m| [m['mountPath'], m['subPath']] }
-        expect(mounts).to include('/backup/attachment' => 'attachment', '/backup/custom_style' => 'custom_style')
+        expect(mounts).to include('/mnt/backup/attachment' => 'attachment', '/mnt/backup/custom_style' => 'custom_style')
       end
     end
   end

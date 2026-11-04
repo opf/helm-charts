@@ -28,8 +28,8 @@ describe 'backup attachments storage path' do
 
   shared_examples 'backs up attachments from' do |relative_path|
     it 'mounts attachment and custom_style from that path', :aggregate_failures do
-      expect(sub_path('/backup/attachment')).to eq([relative_path, 'attachment'].compact.join('/'))
-      expect(sub_path('/backup/custom_style')).to eq([relative_path, 'custom_style'].compact.join('/'))
+      expect(sub_path('/mnt/backup/attachment')).to eq([relative_path, 'attachment'].compact.join('/'))
+      expect(sub_path('/mnt/backup/custom_style')).to eq([relative_path, 'custom_style'].compact.join('/'))
       expect(prepare_container['command']).to eq(
         ['mkdir', '-p', *%w[attachment custom_style].map { |dir| ['/assets', relative_path, dir].compact.join('/') }]
       )
@@ -86,7 +86,7 @@ describe 'backup attachments storage path' do
 
     it 'ignores the local storage path and does not mount the assets volume', :aggregate_failures do
       expect(template.exit_code).to eq(0)
-      expect(sub_path('/backup/attachment')).to be_nil
+      expect(sub_path('/mnt/backup/attachment')).to be_nil
       expect(pod_spec['initContainers'].map { |c| c['name'] }).to eq(['db-dump'])
     end
   end
