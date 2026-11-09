@@ -1,5 +1,11 @@
 # openproject
 
+## 13.17.2
+
+### Patch Changes
+
+- d6bead7: Upgrade OpenProject core version to 17.9.7 (patch update)
+
 ## 13.17.1
 
 ### Patch Changes
