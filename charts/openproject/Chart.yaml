@@ -11,10 +11,6 @@ maintainers:
 - name: OpenProject
   url: https://github.com/opf/helm-charts
 dependencies:
-- name: postgresql
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: "^12.1.6"
-  condition: postgresql.bundled
 - name: memcached
   repository: oci://registry-1.docker.io/bitnamicharts
   condition: memcached.bundled

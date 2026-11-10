@@ -283,7 +283,13 @@ Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3
 {{- end }}
 {{/* PGPASSWORD too: DATABASE_URL carries no password, but docker/prod/migrate probes the DB with psql. */}}
 {{- range $envName := list "OPENPROJECT_DB_PASSWORD" "PGPASSWORD" }}
-{{- if $.Values.postgresql.auth.existingSecret }}
+{{- if $.Values.postgresql.bundled }}
+- name: {{ $envName }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "openproject.postgresql.secretName" $ }}
+      key: {{ $.Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- else if $.Values.postgresql.auth.existingSecret }}
 - name: {{ $envName }}
   valueFrom:
     secretKeyRef:

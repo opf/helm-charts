@@ -1,0 +1,24 @@
+{{- if and .Values.postgresql.bundled .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "openproject.postgresql.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      openproject/process: database
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {{- include "common.labels.matchLabels" . | nindent 14 }}
+      ports:
+        - port: 5432
+          protocol: TCP
+{{- end }}
