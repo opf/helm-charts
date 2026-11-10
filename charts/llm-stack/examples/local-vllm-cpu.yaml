@@ -72,9 +72,8 @@ vllmConfigs:
         nvidia.com/gpu: null
     # Persistence settings to cache HuggingFace/Model files locally
     persistence:
-      enabled: true
-      hostPath:
-        path: /Users/thomas/.k3cacheXXX
+      enabled: false
+      hostPath: {}
       #  path: /mnt/nvme/vllm-cache
       existingClaim: {}
       #  name: existingClaimName
