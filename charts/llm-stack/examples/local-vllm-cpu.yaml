@@ -1,19 +1,19 @@
 apisixConfig:
   routes:
-    selfHostedQwen:
+    selfHostedQwenCompletion:
       type: completion
       provider: selfHosted
       providerFormat: openai-compatible
       vllmConfigId: completionQwen
       models:
         - name: Qwen/Qwen2.5-0.5B-Instruct
-    selfHostedEmbedding:
+    selfHostedQwenEmbedding:
       type: embedding
       provider: selfHosted
       providerFormat: openai-compatible
-      vllmConfigId: embeddingHarrier
+      vllmConfigId: embeddingQwen
       models:
-        - name: harrier-270
+        - name: Qwen/Qwen3-Embedding-0.6B
 
 apisix:
   metrics:
@@ -32,9 +32,14 @@ vllmConfigs:
   completionQwen:
     image:
       name: "vllm/vllm-openai-cpu"
-      tag: "v0.29.0"
+      tag: "v0.33.0"
       pullPolicy: "IfNotPresent"
     replicaCount: 1
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 1
     service:
       type: ClusterIP
       port: 8000
@@ -52,7 +57,7 @@ vllmConfigs:
     # Environment variables (e.g., HF_TOKEN for private models, huggingface hub configurations)
     env:
       - name: OMP_NUM_THREADS
-        value: "4"
+        value: "2"
       - name: VLLM_CPU_KVCACHE_SPACE
         value: "1"
     # Resources request/limit including GPUs
@@ -67,48 +72,51 @@ vllmConfigs:
         nvidia.com/gpu: null
     # Persistence settings to cache HuggingFace/Model files locally
     persistence:
-      enabled: false
-      size: "50Gi"
-      accessModes:
-        - ReadWriteOnce
-      # storageClass: ""
-      # existingClaim: ""
+      enabled: true
+      hostPath:
+        path: /Users/thomas/.k3cacheXXX
+      #  path: /mnt/nvme/vllm-cache
+      existingClaim: {}
+      #  name: existingClaimName
+      persistentVolumeClaim: {}
+      #  storageClass: "sbs-default"
+      #  size: "100Gi"
+      #  accessModes:
+      #    - ReadWriteOnce
     # Node scheduling and placement configs
     nodeSelector: {}
     tolerations: []
     affinity: {}
     podAnnotations: {}
     podLabels: {}
+    startupProbe:
+      enabled: true
     livenessProbe:
       enabled: true
-      initialDelaySeconds: 240
     readinessProbe:
       enabled: true
-      initialDelaySeconds: 240
-    extraVolumes:
-      - name: dshm
-        emptyDir:
-          medium: Memory
-          sizeLimit: "2Gi" # Adjust this to your needed size limit
-    extraVolumeMounts:
-      - mountPath: /dev/shm
-        name: dshm
-  embeddingHarrier:
+    sharedMemorySize: "2Gi"
+    extraVolumes: {}
+    extraVolumeMounts: {}
+  embeddingQwen:
     image:
       name: "vllm/vllm-openai-cpu"
-      tag: "v0.29.0"
+      tag: "v0.33.0"
       pullPolicy: "IfNotPresent"
     replicaCount: 1
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 1
     service:
       type: ClusterIP
       port: 8000
       annotations: { }
-    model: microsoft/harrier-oss-v1-270m
+    model: Qwen/Qwen3-Embedding-0.6B
     extraArgs:
       - "--runner"
       - "pooling"
-      - "--served-model-name"
-      - "harrier-270"
       - "--gpu-memory-utilization"
       - "0.25"
       - "--dtype"
@@ -117,10 +125,12 @@ vllmConfigs:
       - "1024"
       - "--max-num-seqs"
       - "4"
+      - "--hf-overrides"
+      - '{"is_matryoshka": true}'
     # Environment variables (e.g., HF_TOKEN for private models, huggingface hub configurations)
     env:
       - name: OMP_NUM_THREADS
-        value: "2"
+        value: "1"
       - name: VLLM_CPU_KVCACHE_SPACE
         value: "1"
     # - name: HF_TOKEN
@@ -138,31 +148,30 @@ vllmConfigs:
     # Persistence settings to cache HuggingFace/Model files locally
     persistence:
       enabled: false
-      size: "50Gi"
-      accessModes:
-        - ReadWriteOnce
-      # storageClass: ""
-      # existingClaim: ""
+      hostPath: {}
+      #  path: /mnt/nvme/vllm-cache
+      existingClaim: {}
+      #  name: existingClaimName
+      persistentVolumeClaim: {}
+      #  storageClass: "sbs-default"
+      #  size: "100Gi"
+      #  accessModes:
+      #    - ReadWriteOnce
     # Node scheduling and placement configs
     nodeSelector: { }
     tolerations: [ ]
     affinity: { }
     podAnnotations: { }
     podLabels: { }
+    startupProbe:
+      enabled: true
     livenessProbe:
       enabled: true
-      initialDelaySeconds: 240
     readinessProbe:
       enabled: true
-      initialDelaySeconds: 240
-    extraVolumes:
-      - name: dshm
-        emptyDir:
-          medium: Memory
-          sizeLimit: "2Gi" # Adjust this to your needed size limit
-    extraVolumeMounts:
-      - mountPath: /dev/shm
-        name: dshm
+    sharedMemorySize: "2Gi"
+    extraVolumes: {}
+    extraVolumeMounts: {}
 
 devMonitoring:
   enabled: true

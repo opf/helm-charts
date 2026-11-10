@@ -9,6 +9,8 @@ metadata:
     app.kubernetes.io/component: vllm-{{ $id | kebabcase | lower }}
 spec:
   replicas: {{ $config.replicaCount | default 1 }}
+  strategy:
+    {{- toYaml $config.strategy | nindent 4 }}
   selector:
     matchLabels:
       {{- include "common.labels.matchLabels" (dict "customLabels" $.Values.commonLabels "context" $) | nindent 6 }}
@@ -52,17 +54,27 @@ spec:
             {{- toYaml $config.resources | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: cache-volume
+            - name: shm
+              mountPath: /dev/shm
+            - name: cache
               mountPath: {{ $config.persistence.mountPath | default "/root/.cache" }}
             {{- if $config.extraVolumeMounts }}
             {{- toYaml $config.extraVolumeMounts | nindent 12 }}
             {{- end }}
+          {{- if $config.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ $config.startupProbe.path | default "/health" }}
+              port: http
+            periodSeconds: {{ $config.startupProbe.periodSeconds | default 2 }}
+            failureThreshold: {{ $config.startupProbe.failureThreshold | default 480 }}
+          {{- end }}
           {{- if $config.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
               path: {{ $config.livenessProbe.path | default "/health" }}
               port: http
-            initialDelaySeconds: {{ $config.livenessProbe.initialDelaySeconds | default 30 }}
+            initialDelaySeconds: {{ $config.livenessProbe.initialDelaySeconds | default 5 }}
             periodSeconds: {{ $config.livenessProbe.periodSeconds | default 10 }}
             timeoutSeconds: {{ $config.livenessProbe.timeoutSeconds | default 5 }}
             failureThreshold: {{ $config.livenessProbe.failureThreshold | default 3 }}
@@ -72,7 +84,7 @@ spec:
             httpGet:
               path: {{ $config.readinessProbe.path | default "/health" }}
               port: http
-            initialDelaySeconds: {{ $config.readinessProbe.initialDelaySeconds | default 30 }}
+            initialDelaySeconds: {{ $config.readinessProbe.initialDelaySeconds | default 5 }}
             periodSeconds: {{ $config.readinessProbe.periodSeconds | default 10 }}
             timeoutSeconds: {{ $config.readinessProbe.timeoutSeconds | default 5 }}
             failureThreshold: {{ $config.readinessProbe.failureThreshold | default 3 }}
@@ -90,10 +102,18 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
-        - name: cache-volume
-          {{- if $config.persistence.enabled }}
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ $config.sharedMemorySize | default "4Gi" }}
+        - name: cache
+          {{- if and $config.persistence.enabled (not $config.persistence.hostPath) }}
           persistentVolumeClaim:
-            claimName: {{ if $config.persistence.existingClaim }}{{ $config.persistence.existingClaim }}{{ else }}{{ include "common.names.fullname" $ }}-vllm-{{ $id | kebabcase | lower}}-cache{{ end }}
+            claimName: {{ if $config.persistence.existingClaim }}{{ $config.persistence.existingClaim.name }}{{ else }}{{ include "common.names.fullname" $ }}-vllm-{{ $id | kebabcase | lower}}-cache{{ end }}
+          {{- else if and $config.persistence.enabled $config.persistence.hostPath }}
+          hostPath:
+            path: {{ $config.persistence.hostPath.path }}
+            type: DirectoryOrCreate
           {{- else }}
           emptyDir: {}
           {{- end }}
