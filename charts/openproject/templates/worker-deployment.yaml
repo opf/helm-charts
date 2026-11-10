@@ -1,6 +1,7 @@
 {{- range $workerName, $workerValues := .Values.workers }}
 {{- with $ -}}
 {{- $shutdownTimeout := coalesce $workerValues.shutdownTimeout .Values.worker.shutdownTimeout -}}
+{{- $probes := mergeOverwrite (deepCopy .Values.worker.probes) (default dict $workerValues.probes) -}}
 ---
 apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
 kind: Deployment
@@ -121,9 +122,9 @@ spec:
             - name: "RAILS_MAX_THREADS"
               value: "{{ add $workerValues.maxThreads 3 }}" # worker threads + NOTIFY listener + 2 cron threads
             {{- end }}
-            {{- if $workerValues.probes.enabled }}
+            {{- if $probes.enabled }}
             - name: "GOOD_JOB_PROBE_PORT"
-              value: "{{ $workerValues.probes.port }}"
+              value: "{{ $probes.port }}"
             {{- end }}
           volumeMounts:
             {{- include "openproject.tmpVolumeMounts" . | indent 12 }}
@@ -138,20 +139,20 @@ spec:
               readOnly: false
             {{- end }}
             {{- include "openproject.extraVolumeMounts" . | indent 12 }}
-          {{- $liveness := include "openproject.mergedProbe" (dict "probe" .Values.probes.liveness "overrides" $workerValues.probes.liveness) | fromYaml }}
-          {{- $readiness := include "openproject.mergedProbe" (dict "probe" .Values.probes.readiness "overrides" $workerValues.probes.readiness) | fromYaml }}
-          {{- if and $liveness.enabled $workerValues.probes.enabled }}
+          {{- $liveness := include "openproject.mergedProbe" (dict "probe" .Values.probes.liveness "overrides" $probes.liveness) | fromYaml }}
+          {{- $readiness := include "openproject.mergedProbe" (dict "probe" .Values.probes.readiness "overrides" $probes.readiness) | fromYaml }}
+          {{- if and $liveness.enabled $probes.enabled }}
           livenessProbe:
             httpGet:
               path: "/status/connected"
-              port: {{ $workerValues.probes.port }}
+              port: {{ $probes.port }}
           {{- include "openproject.probeSettings" $liveness | nindent 12 }}
           {{- end }}
-          {{- if and $readiness.enabled $workerValues.probes.enabled }}
+          {{- if and $readiness.enabled $probes.enabled }}
           readinessProbe:
             httpGet:
               path: "/status"
-              port: {{ $workerValues.probes.port }}
+              port: {{ $probes.port }}
           {{- include "openproject.probeSettings" $readiness | nindent 12 }}
           {{- end }}
           {{- if (coalesce $workerValues.resources .Values.resources) }}

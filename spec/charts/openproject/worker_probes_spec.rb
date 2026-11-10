@@ -111,4 +111,55 @@ describe 'worker probes configuration' do
       expect(spec['livenessProbe']['periodSeconds']).to eq 15
     end
   end
+
+  context 'with an additional worker that does not configure probes' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        workers:
+          bim:
+            queues: "bim"
+      YAML
+      )
+    end
+    let(:bim_worker) { 'Deployment/optest-openproject-worker-bim' }
+
+    it 'uses the default worker probes', :aggregate_failures do
+      expect(template.keys).to include bim_worker
+      spec = template.find_container(bim_worker, 'openproject')
+      expect(spec['livenessProbe']['httpGet']['port']).to eq 7001
+      expect(spec['readinessProbe']['httpGet']['port']).to eq 7001
+
+      env = template.env_named(bim_worker, 'openproject', 'GOOD_JOB_PROBE_PORT')
+      expect(env['value']).to eq '7001'
+    end
+  end
+
+  context 'when changing the probes for all workers' do
+    let(:default_values) do
+      HelmTemplate.with_defaults(<<~YAML
+        worker:
+          probes:
+            port: 8001
+            liveness:
+              periodSeconds: 45
+        workers:
+          bim:
+            queues: "bim"
+            probes:
+              enabled: false
+      YAML
+      )
+    end
+
+    it 'applies them to every worker unless overridden', :aggregate_failures do
+      spec = template.find_container(worker, 'openproject')
+      expect(spec['livenessProbe']['httpGet']['port']).to eq 8001
+      expect(spec['livenessProbe']['periodSeconds']).to eq 45
+      expect(spec['readinessProbe']['httpGet']['port']).to eq 8001
+
+      bim = template.find_container('Deployment/optest-openproject-worker-bim', 'openproject')
+      expect(bim['livenessProbe']).to be_nil
+      expect(bim['readinessProbe']).to be_nil
+    end
+  end
 end

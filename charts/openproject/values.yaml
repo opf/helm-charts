@@ -426,6 +426,17 @@ worker:
   #
   terminationGracePeriodSeconds:
 
+  ## Monitoring probe for background workers.
+  ## Applies to every worker under `workers`, can be overridden per worker under `workers.<name>.probes`.
+  #
+  probes:
+    enabled: true
+    port: 7001
+    ## Settings default to the global `probes.liveness` and `probes.readiness` (see below).
+    ## Any global probe setting can be overridden for the workers only.
+    liveness: {}
+    readiness: {}
+
 ## Node labels for seeder job pod assignment.
 ## If not specified, falls back to the global nodeSelector above.
 ##
@@ -506,14 +517,12 @@ workers:
     # Override worker.terminationGracePeriodSeconds for this worker (defaults to shutdownTimeout + 30)
     terminationGracePeriodSeconds:
 
-    # Enable monitoring probe for background workers
-    probes:
-      enabled: true
-      port: 7001
-      ## Settings default to the global `probes.liveness` and `probes.readiness` (see below).
-      ## Any global probe setting can be overridden for this worker only.
-      liveness: {}
-      readiness: {}
+    # Override worker.probes for this worker, e.g.
+    #   probes:
+    #     port: 7002
+    #     liveness:
+    #       periodSeconds: 30
+    probes: {}
 
     strategy:
       type: "Recreate"
