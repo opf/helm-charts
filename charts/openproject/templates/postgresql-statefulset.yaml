@@ -1,0 +1,139 @@
+{{- if .Values.postgresql.bundled }}
+{{- $pg := .Values.postgresql }}
+{{- $name := include "openproject.postgresql.fullname" . }}
+{{- $legacyName := include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" $pg "context" $) }}
+{{- if and .Release.IsUpgrade (not $pg.persistence.existingClaim) (lookup "apps/v1" "StatefulSet" .Release.Namespace $legacyName) (not (lookup "apps/v1" "StatefulSet" .Release.Namespace $name)) }}
+{{- fail "Migrate the Bitnami database into a new PVC first, then set postgresql.persistence.existingClaim. See POSTGRESQL.md; do not reuse the Bitnami PVC." }}
+{{- end }}
+{{- $security := dict "Values" (mergeOverwrite (deepCopy .Values) (dict "podSecurityContext" (mergeOverwrite (deepCopy .Values.podSecurityContext) $pg.podSecurityContext) "containerSecurityContext" (mergeOverwrite (deepCopy .Values.containerSecurityContext) $pg.containerSecurityContext))) }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  serviceName: {{ $name }}
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      openproject/process: database
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 8 }}
+        openproject/process: database
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        checksum/init: {{ include (print $.Template.BasePath "/postgresql-init.yaml") . | sha256sum }}
+    spec:
+      {{- include "openproject.podSecurityContext" $security | nindent 6 }}
+      {{- include "openproject.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ include "openproject.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 120
+      {{- with coalesce $pg.runtimeClassName .Values.runtimeClassName }}
+      runtimeClassName: {{ . | quote }}
+      {{- end }}
+      {{- with coalesce $pg.nodeSelector .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce $pg.affinity .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce $pg.tolerations .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce $pg.topologySpreadConstraints .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: postgresql
+          {{- include "openproject.containerSecurityContext" $security | nindent 10 }}
+          image: {{ include "openproject.postgresql.image" . | quote }}
+          imagePullPolicy: {{ default .Values.image.imagePullPolicy $pg.image.pullPolicy }}
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          env:
+            - name: PGDATA
+              value: {{ $pg.dataDirectory | quote }}
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_DB
+              value: {{ $pg.auth.database | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "openproject.postgresql.secretName" . }}
+                  key: {{ $pg.auth.secretKeys.adminPasswordKey }}
+            - name: OPENPROJECT_DB_USER
+              value: {{ $pg.auth.username | quote }}
+            - name: OPENPROJECT_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "openproject.postgresql.secretName" . }}
+                  key: {{ $pg.auth.secretKeys.userPasswordKey }}
+            {{- with $pg.extraEnvVars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- range $kind := list "startup" "readiness" "liveness" }}
+          {{ $kind }}Probe:
+            exec:
+              command: [sh, -ec, 'pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"']
+            {{- index $pg.probes $kind | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $pg.resources }}
+          resources: {{- toYaml $pg.resources | nindent 12 }}
+          {{- else if and (coalesce $pg.resourcesPreset .Values.resourcesPreset) (ne (coalesce $pg.resourcesPreset .Values.resourcesPreset) "none") }}
+          resources: {{- include "common.resources.preset" (dict "type" (coalesce $pg.resourcesPreset .Values.resourcesPreset)) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
+            {{- with $pg.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: init
+          configMap:
+            name: {{ $name }}-init
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        {{- if $pg.persistence.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $pg.persistence.existingClaim | quote }}
+        {{- end }}
+        {{- with $pg.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+  {{- if not $pg.persistence.existingClaim }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: {{- toYaml $pg.persistence.accessModes | nindent 10 }}
+        {{- with $pg.persistence.storageClassName }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $pg.persistence.size | quote }}
+  {{- end }}
+{{- end }}

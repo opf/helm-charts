@@ -1,0 +1,23 @@
+{{- if .Values.postgresql.bundled }}
+{{- if or (eq .Values.postgresql.auth.username "postgres") (eq .Values.postgresql.auth.secretKeys.adminPasswordKey .Values.postgresql.auth.secretKeys.userPasswordKey) }}
+{{- fail "Bundled PostgreSQL requires a separate application username and distinct administrator/application password keys." }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openproject.postgresql.fullname" . }}-init
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  01-openproject.sh: |
+    #!/bin/bash
+    psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" --set ON_ERROR_STOP=1 \
+      --set app_user="$OPENPROJECT_DB_USER" --set app_password="$OPENPROJECT_DB_PASSWORD" --set app_database="$POSTGRES_DB" <<'SQL'
+    CREATE ROLE :"app_user" LOGIN PASSWORD :'app_password';
+    ALTER DATABASE :"app_database" OWNER TO :"app_user";
+    CREATE EXTENSION vector;
+    SQL
+{{- end }}

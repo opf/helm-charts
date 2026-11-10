@@ -47,10 +47,11 @@ describe 'database password env vars' do
     end
   end
 
-  context 'with an inline password' do
+  context 'with an inline password for an external database' do
     let(:default_values) do
       HelmTemplate.with_defaults(<<~YAML
         postgresql:
+          bundled: false
           auth:
             password: s3cr3t
       YAML
