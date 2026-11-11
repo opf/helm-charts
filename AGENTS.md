@@ -12,6 +12,7 @@ This is the OpenProject Helm Charts repository, containing Kubernetes deployment
 - `bundle install` - Install Ruby dependencies for testing
 - `bin/rspec` - Run the complete RSpec test suite for Helm templates
 - `bin/rspec spec/charts/openproject/<specific_test>.rb` - Run individual test files
+- `bin/rspec --tag integration` - Run the integration specs (`spec/charts/<chart>/integration/`), which install the chart into the current kube context (use a disposable cluster, e.g. k3d). They are excluded from the default run.
 
 ### Release Management
 - `npm run changeset:version` - Update version numbers and generate changelog using changesets
