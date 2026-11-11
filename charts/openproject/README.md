@@ -141,7 +141,7 @@ pod-security.kubernetes.io/enforce: restricted
 pod-security.kubernetes.io/enforce-version: latest
 ```
 
-The bundled PostgreSQL and memcached subcharts also render with restricted-compatible security contexts at the pinned chart versions. If you enable Bitnami's PostgreSQL `volumePermissions` init container, that pod may fail restricted enforcement because it runs as root. The bundled RustFS Deployment (see `rustfs.bundled`) uses this chart's own restricted-compatible security context too.
+The bundled PostgreSQL StatefulSet and memcached subchart also render with restricted-compatible security contexts. PostgreSQL runs as UID/GID 999 and uses Kubernetes volume ownership; it has no root permissions init container. The bundled RustFS Deployment (see `rustfs.bundled`) uses this chart's own restricted-compatible security context too.
 
 ### ReadWriteMany volumes
 
@@ -336,6 +336,9 @@ In the following sections we give examples for what this may look like using the
 
 ### PostgreSQL
 
+The chart bundles PostgreSQL 18 with pgvector. Existing Bitnami installations must migrate before upgrading.
+See [PostgreSQL migration, version pinning, and rollback](./POSTGRESQL.md).
+
 ```yaml
 stringData:
   postgres-password: postgresPassword
@@ -368,13 +371,13 @@ You can look up the respective options in the [`values.yaml`](./values.yaml) fil
 #### Default passwords
 
 If you provide neither an existing secret nor passwords directly in the `values.yaml` file,
-the postgres chart will generate a secret automatically.
+the chart generates a Secret once and retains it across upgrades and uninstall.
 
 This secret will contain both the user and admin passwords.
 You can print the base64 encoded passwords as follows.
 
 ```
-kubectl get secret -n <namespace> openproject-postgresql -o yaml | grep password
+kubectl get secret -n <namespace> openproject-database-auto-generated -o yaml
 ```
 
 ### OIDC (OpenID Connect)

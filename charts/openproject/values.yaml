@@ -1052,32 +1052,51 @@ postgresql:
   #
   bundled: true
 
-  ## Override image repository to use Bitnami Secure images
   image:
-    repository: bitnamilegacy/postgresql
-    tag: 15.4.0-debian-11-r45
-  volumePermissions:
-    image:
-      repository: bitnamilegacy/os-shell
-  metrics:
-    image:
-      repository: bitnamilegacy/postgres-exporter
+    registry: docker.io
+    repository: pgvector/pgvector
+    tag: pg18-bookworm
+    sha256: ""
+    pullPolicy: IfNotPresent
 
-  global:
-    containerSecurityContext:
-      enabled: true
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-          - "ALL"
-      seccompProfile:
-        type: "RuntimeDefault"
-      readOnlyRootFilesystem: true
-      runAsNonRoot: true
-
-  ## @param commonLabels Add labels to all the deployed resources
-  ##
-  commonLabels: {}
+  ## Initial cluster location. PostgreSQL 17 also requires an explicit dataDirectory override.
+  dataDirectory: /var/lib/postgresql/18/docker
+  service:
+    port: 5432
+  persistence:
+    existingClaim: ""
+    size: 8Gi
+    storageClassName: ""
+    accessModes: [ReadWriteOnce]
+  podSecurityContext:
+    fsGroup: 999
+    fsGroupChangePolicy: OnRootMismatch
+  containerSecurityContext:
+    runAsUser: 999
+    runAsGroup: 999
+  resources: {}
+  resourcesPreset: small
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  topologySpreadConstraints: []
+  runtimeClassName: ""
+  extraEnvVars: []
+  extraVolumes: []
+  extraVolumeMounts: []
+  probes:
+    startup:
+      periodSeconds: 5
+      timeoutSeconds: 5
+      failureThreshold: 60
+    readiness:
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    liveness:
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
 
   ## When "bundled" is set to false, you need to define the database connection details.
   #
@@ -1088,27 +1107,13 @@ postgresql:
   ## Database auth details.
   #
   auth:
-    ## To avoid having sensitive credentials in your values.yaml, the preferred way to provide a password
-    ## is to use an existing secret containing the PostgreSQL credentials.
-    ## Specify the name of this existing secret here.
-    ##
-    ## If neither an existing secret nor passwords are defined, a secret is generated automatically.
-    ##
-    ## The postgresql chart will create this secret (the name of which ends with `-postgresql` by default)
-    ## with generated user and admin passwords.
-    ## If you want to see the base64 encoded passwords you can output the secret like this:
-    ##
-    ## ```
-    ## kubectl get secret -n <namespace> openproject-postgresql -o yaml | grep password
-    ## ```
-    #
+    ## Existing secret must contain both administrator and application passwords.
+    ## Otherwise credentials are created once and retained across upgrades/uninstall.
+    ## Inline passwords apply only when creating that secret; rotate credentials manually.
     existingSecret: ""
-
-    ## In case your secret does not use the default keys in the secret, you can adjust them here.
-    ##
-    ## secretKeys:
-    ##   adminPasswordKey: "postgres-password"
-    ##   userPasswordKey: "password"
+    secretKeys:
+      adminPasswordKey: postgres-password
+      userPasswordKey: password
 
     ## Database username.
     #

@@ -31,6 +31,16 @@ spec:
           protocol: UDP
         - port: 53
           protocol: TCP
+    {{- if .Values.postgresql.bundled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "common.labels.matchLabels" . | nindent 14 }}
+              openproject/process: database
+      ports:
+        - port: 5432
+          protocol: TCP
+    {{- end }}
     {{- if .Values.networkPolicy.extraEgress }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.extraEgress "context" $ ) | nindent 4 }}
     {{- end }}
