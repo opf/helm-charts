@@ -1,5 +1,13 @@
 # openproject
 
+## 13.17.4
+
+### Patch Changes
+
+- 08079ed: use 120 seconds as a default for initialDelaySeconds across all probes
+  giving especially good_job workers enough time to boot before being restarted
+  due to failing liveness probes
+
 ## 13.17.3
 
 ### Patch Changes
