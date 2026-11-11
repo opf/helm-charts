@@ -93,7 +93,7 @@ Wait for the vllm liveness probe to start (~4 min) and make a test request:
 ```bash
 export LLM_STACK_MODEL=Qwen/Qwen2.5-0.5B-Instruct
 bash bin/test-request-llm-gen.sh
-export LLM_STACK_EMBEDDING_MODEL="harrier-270"
+export LLM_STACK_EMBEDDING_MODEL="Qwen/Qwen3-Embedding-0.6B"
 bash bin/test-request-embed.sh
 ```
 
@@ -122,7 +122,7 @@ helm install dev-release . -f examples/scaleway-vllm-combined.yaml -n llm-stack
 ```bash
 bash bin/test-request-llm-gen.sh
 bash bin/test-request-embed.sh
-export LLM_STACK_EMBEDDING_MODEL="harrier-270"
+export LLM_STACK_EMBEDDING_MODEL="Qwen/Qwen3-Embedding-0.6B"
 bash bin/test-request-embed.sh
 ```
 
