@@ -1,5 +1,6 @@
 {{- range $id, $config := .Values.vllmConfigs }}
-{{- if and $config.persistence.enabled (not $config.persistence.existingClaim) }}
+{{- if and $config.persistence.enabled (not $config.persistence.hostPath) (not $config.persistence.existingClaim) $config.persistence.persistentStorageClaim }}
+{{- $claim := $config.persistence.persistentStorageClaim }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -8,15 +9,17 @@ metadata:
   labels:
     {{- include "common.labels.standard" (dict "customLabels" $.Values.commonLabels "context" $) | nindent 4 }}
     app.kubernetes.io/component: vllm-{{ $id | kebabcase | lower }}
+  annotations:
+    helm.sh/resource-policy: keep
 spec:
   accessModes:
-    {{- toYaml $config.persistence.accessModes | nindent 4 }}
-  {{- if $config.persistence.storageClass }}
-  storageClassName: {{ $config.persistence.storageClass | quote }}
+    {{- toYaml $claim.accessModes | nindent 4 }}
+  {{- if $claim.storageClass }}
+  storageClassName: {{ $claim.storageClass | quote }}
   {{- end }}
   resources:
     requests:
-      storage: {{ $config.persistence.size | quote }}
+      storage: {{ $claim.size | quote }}
 ---
 {{- end }}
 {{- end }}

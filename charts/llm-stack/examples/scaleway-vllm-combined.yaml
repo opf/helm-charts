@@ -48,9 +48,14 @@ vllmConfigs:
   embeddingHarrier:
     image:
       name: "vllm/vllm-openai-cpu"
-      tag: "v0.29.0"
+      tag: "v0.33.0"
       pullPolicy: "IfNotPresent"
     replicaCount: 1
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 1
     service:
       # Do not name this service simply "vllm" as kubernetes env variables it will clash with vllm ones.
       type: ClusterIP
@@ -91,31 +96,30 @@ vllmConfigs:
     # Persistence settings to cache HuggingFace/Model files locally
     persistence:
       enabled: false
-      size: "50Gi"
-      accessModes:
-        - ReadWriteOnce
-      # storageClass: ""
-      # existingClaim: ""
+      hostPath: {}
+      #  path: /mnt/nvme/vllm-cache
+      existingClaim: {}
+      #  name: existingClaimName
+      persistentVolumeClaim: {}
+      #  storageClass: "sbs-default"
+      #  size: "100Gi"
+      #  accessModes:
+      #    - ReadWriteOnce
     # Node scheduling and placement configs
     nodeSelector: { }
     tolerations: [ ]
     affinity: { }
     podAnnotations: { }
     podLabels: { }
+    startupProbe:
+      enabled: true
     livenessProbe:
       enabled: true
-      initialDelaySeconds: 240
     readinessProbe:
       enabled: true
-      initialDelaySeconds: 240
-    extraVolumes:
-      - name: dshm
-        emptyDir:
-          medium: Memory
-          sizeLimit: "2Gi" # Adjust this to your needed size limit
-    extraVolumeMounts:
-      - mountPath: /dev/shm
-        name: dshm
+    sharedMemorySize: "2Gi"
+    extraVolumes: {}
+    extraVolumeMounts: {}
 
 
 devMonitoring:
