@@ -1,0 +1,127 @@
+{{- if .Values.anycable.enabled }}
+{{- if not .Values.openproject.live_updates.enabled }}
+{{- fail "anycable.enabled requires openproject.live_updates.enabled, as OpenProject only serves the AnyCable server's RPC endpoint with live updates enabled" }}
+{{- end }}
+---
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}-anycable
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    openproject/process: anycable
+    app.kubernetes.io/component: anycable
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  # OpenProject broadcasts to a single AnyCable server over HTTP, so all clients have to be connected to that one.
+  # Running more replicas requires a pub/sub adapter (ANYCABLE_PUBSUB_ADAPTER) via anycable.extraEnvVars.
+  replicas: 1
+  strategy:
+    {{ .Values.anycable.strategy | toYaml | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      openproject/process: anycable
+  template:
+    metadata:
+      annotations:
+        {{- /* The anycable annotations take precedence over the global ones of the same name */}}
+        {{- range $key, $val := merge (deepCopy (.Values.anycable.podAnnotations | default dict)) (.Values.podAnnotations | default dict) }}
+        {{ $key }}: {{ $val | quote }}
+        {{- end }}
+        {{- include "openproject.envChecksums" . | nindent 8 }}
+      labels:
+        {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 8 }}
+        openproject/process: anycable
+        app.kubernetes.io/component: anycable
+    spec:
+      {{- include "openproject.imagePullSecrets" . | indent 6 }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 | trim }}
+      {{- end }}
+      {{- include "openproject.podSecurityContext" . | indent 6 }}
+      {{- if .Values.runtimeClassName }}
+      runtimeClassName: {{ .Values.runtimeClassName | quote }}
+      {{- end }}
+      serviceAccountName: {{ include "common.names.fullname" . }}
+      {{- if or .Values.egress.tls.rootCA.fileName .Values.anycable.extraVolumes }}
+      volumes:
+        {{- if .Values.egress.tls.rootCA.fileName }}
+        - name: ca-pemstore
+          configMap:
+            name: "{{- .Values.egress.tls.rootCA.configMap }}"
+        {{- end }}
+        {{- with .Values.anycable.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: "anycable"
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
+          image: {{ include "openproject.anycable.image" . }}
+          imagePullPolicy: {{ include "openproject.anycable.imagePullPolicy" . }}
+          env:
+            {{- $overridden := list }}
+            {{- range .Values.anycable.extraEnvVars }}
+            {{- $overridden = append $overridden .name }}
+            {{- end }}
+            {{- range (include "openproject.anycable.env" . | fromYamlArray) }}
+            {{- if not (has .name $overridden) }}
+            - {{ toYaml . | nindent 14 | trim }}
+            {{- end }}
+            {{- end }}
+            {{- with .Values.anycable.extraEnvVars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- if or .Values.egress.tls.rootCA.fileName .Values.anycable.extraVolumeMounts }}
+          volumeMounts:
+            {{- if .Values.egress.tls.rootCA.fileName }}
+            - name: ca-pemstore
+              mountPath: /etc/ssl/certs/custom-ca.pem
+              subPath: {{ .Values.egress.tls.rootCA.fileName }}
+              readOnly: true
+            {{- end }}
+            {{- with .Values.anycable.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" . "context" $) | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 2345
+              protocol: "TCP"
+          {{- $liveness := include "openproject.mergedProbe" (dict "probe" .Values.probes.liveness "overrides" .Values.anycable.probes.liveness) | fromYaml }}
+          {{- $readiness := include "openproject.mergedProbe" (dict "probe" .Values.probes.readiness "overrides" .Values.anycable.probes.readiness) | fromYaml }}
+          {{- if and $liveness.enabled .Values.anycable.probes.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          {{- include "openproject.probeSettings" $liveness | nindent 12 }}
+          {{- end }}
+          {{- if and $readiness.enabled .Values.anycable.probes.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          {{- include "openproject.probeSettings" $readiness | nindent 12 }}
+          {{- end }}
+          {{- if .Values.anycable.resources }}
+          resources:
+            {{- toYaml .Values.anycable.resources | nindent 12 }}
+          {{- else if ne (coalesce .Values.anycable.resourcesPreset .Values.resourcesPreset) "none" }}
+          resources:
+            {{- include "common.resources.preset" (dict "type" (coalesce .Values.anycable.resourcesPreset .Values.resourcesPreset)) | nindent 12 }}
+          {{- end }}
+...
+{{- end }}
