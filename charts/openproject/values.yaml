@@ -389,6 +389,27 @@ web:
   ##
   annotations: {}
 
+## Caddy runs beside each web container and compresses eligible HTTP responses.
+proxy:
+  enabled: true
+  port: 8081
+  image:
+    registry: docker.io
+    repository: caddy
+    tag: 2.11.9-alpine
+    sha256: ""
+    imagePullPolicy: IfNotPresent
+  ## Trust only ingress/load-balancer addresses. Clear this list for direct public access.
+  trustedProxies: [private_ranges]
+  resources: {}
+  resourcesPreset: nano
+  probes:
+    liveness: {}
+    readiness: {}
+  extraEnvVars: []
+  extraVolumes: []
+  extraVolumeMounts: []
+
 ## Node labels for worker pod assignment.
 ## If not specified, falls back to the global nodeSelector above.
 ##

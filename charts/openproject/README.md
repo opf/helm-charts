@@ -51,6 +51,35 @@ helm upgrade --create-namespace --namespace openproject --install openproject op
 
 The namespace is optional, but we highly recommend it as it does make it easier to manage the resources created for OpenProject.
 
+## HTTP proxy and compression
+
+Each web pod includes Caddy. The existing HTTP Service sends requests through it to Puma.
+Caddy negotiates Zstandard or gzip for eligible responses and preserves already compressed responses.
+Application paths, cache headers, and the separate metrics endpoint remain intact.
+Assets still come from the application image; no shared asset volume or custom proxy image is needed.
+
+TLS stays at your ingress or load balancer. Hocuspocus keeps its existing ingress route.
+Caddy runs without root privileges or a writable root filesystem and scales with the web pods.
+
+`proxy.trustedProxies` controls which upstream addresses may supply forwarded client and scheme headers.
+The default trusts private address ranges for in-cluster ingress controllers.
+Prefer the specific source CIDRs of your ingress/load balancer where possible:
+
+```yaml
+proxy:
+  trustedProxies: ["10.42.0.0/16"] # Replace with your ingress source range.
+```
+
+For direct public NodePort/LoadBalancer access, set `proxy.trustedProxies: []` unless a trusted proxy sanitizes those headers.
+Account for source-address translation when choosing trusted ranges.
+Do not trust arbitrary client-supplied `X-Forwarded-*` headers.
+
+The Service port remains unchanged. Caddy listens on `proxy.port` (8081 by default), and Puma remains on 8080.
+Existing custom NetworkPolicies must allow the Caddy port; the chart's NetworkPolicy handles this automatically.
+Set `proxy.enabled: false` to route directly to Puma when your existing proxy provides the required compression.
+Image, resources, probes, and extra container mounts/environment are configurable under `proxy` in `values.yaml`.
+Pod scheduling, service accounts, and pull secrets follow the web pod settings.
+
 ## Configuration
 
 Configuration of the chart takes place through defined values, and a catch-all entry `environment` to provide all possible variables through ENV that OpenProject supports. To get more information about the possible values, please see [our guide on environment variables](https://www.openproject.org/docs/installation-and-operations/configuration/environment/).

@@ -36,6 +36,9 @@ spec:
         prometheus.io/port: {{ .Values.metrics.port | quote }}
         {{- end }}
         {{- include "openproject.envChecksums" . | nindent 8 }}
+        {{- if .Values.proxy.enabled }}
+        checksum/proxy: {{ include (print $.Template.BasePath "/proxy-configmap.yaml") . | sha256sum }}
+        {{- end }}
       labels:
         {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 8 }}
         openproject/process: web
@@ -64,6 +67,16 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "common.names.fullname" . }}
       volumes:
+        {{- if .Values.proxy.enabled }}
+        - name: proxy-config
+          configMap:
+            name: {{ include "common.names.fullname" . }}-proxy
+        - name: proxy-tmp
+          emptyDir: {}
+        {{- with .Values.proxy.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- end }}
         {{- include "openproject.tmpVolumeSpec" . | indent 8 }}
         {{- if .Values.egress.tls.rootCA.fileName }}
         - name: ca-pemstore
@@ -123,7 +136,7 @@ spec:
             {{- include "openproject.extraVolumeMounts" . | indent 12 }}
           ports:
             {{- range $key, $value := .Values.service.ports }}
-            - name: {{ $key }}
+            - name: {{ if and $.Values.proxy.enabled (eq $key "http") }}puma-http{{ else }}{{ $key }}{{ end }}
               containerPort: {{ $value.containerPort }}
               protocol: {{ $value.protocol }}
             {{- end }}
@@ -172,3 +185,6 @@ spec:
           resources:
             {{- include "common.resources.preset" (dict "type" .Values.resourcesPreset) | nindent 12 }}
           {{- end }}
+        {{- if .Values.proxy.enabled }}
+        {{- include "openproject.proxy.container" . | nindent 8 }}
+        {{- end }}

@@ -1,0 +1,28 @@
+{{- if .Values.proxy.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.names.fullname" . }}-proxy
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+  Caddyfile: |
+    {
+      admin off
+      auto_https off
+      persist_config off
+      {{- with .Values.proxy.trustedProxies }}
+      servers {
+        trusted_proxies static {{ join " " . }}
+        trusted_proxies_strict
+      }
+      {{- end }}
+    }
+    :{{ .Values.proxy.port }} {
+      encode zstd gzip
+      reverse_proxy 127.0.0.1:{{ .Values.service.ports.http.containerPort }}
+    }
+{{- end }}

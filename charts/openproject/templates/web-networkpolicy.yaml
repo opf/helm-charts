@@ -34,6 +34,9 @@ spec:
     {{- end }}
   ingress:
     - ports:
+        {{- if .Values.proxy.enabled }}
+        - port: {{ .Values.proxy.port }}
+        {{- end }}
         {{- range .Values.service.ports }}
         - port: {{ .containerPort }}
         {{- end }}
