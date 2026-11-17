@@ -51,6 +51,42 @@ helm upgrade --create-namespace --namespace openproject --install openproject op
 
 The namespace is optional, but we highly recommend it as it does make it easier to manage the resources created for OpenProject.
 
+## Bundled Memcached
+
+The chart runs one Memcached instance using the Docker Official Image `memcached:1.6.45-alpine`.
+It runs as UID/GID 11211 with a read-only root filesystem. UDP is disabled, and the Service is internal.
+No custom image is built or published.
+
+The [official image](https://github.com/docker-library/official-images/blob/master/library/memcached)
+tracks upstream releases and base-image updates. The chart pins a version; review image updates regularly.
+
+### Upgrading from Bitnami
+
+A normal Helm upgrade replaces the old cache with a new Deployment and internal Service.
+The chart updates the application's cache address automatically. Cache contents are discarded; no dump or PVC migration is needed.
+Database records and attachments remain in their existing storage. Expect a cold cache and a brief cache interruption during the upgrade.
+The new Deployment uses `Recreate` so updates do not send requests to two independent caches.
+
+Review your values and remove obsolete Bitnami options. Do not use `--reuse-values` for this transition.
+
+| Previous setting | New setting or action |
+| --- | --- |
+| `memcached.bundled`, `memcached.connection.*` | Retained. External cache connections are unchanged. |
+| `memcached.image.*` | Set `registry`, `repository`, `tag`, and optional `sha256` (without the prefix). Use the official image. |
+| `memcached.resources`, `resourcesPreset` | Retained; leave container memory headroom above `memcached.memoryLimit` for connections and server overhead. |
+| `memcached.arguments`, `extraFlags` | Set `memcached.memoryLimit` and `extraArgs`; review native Memcached flags. |
+| `memcached.nodeSelector`, `affinity`, `tolerations`, `topologySpreadConstraints` | Retained. |
+| `memcached.livenessProbe`, `readinessProbe` | `memcached.probes.liveness`, `probes.readiness`, merged with global probe settings. |
+| `memcached.auth`, `architecture`, `replicaCount`, `persistence`, `metrics`, `volumePermissions`, `global` | Removed. Use an external cache for authentication or a separately managed topology. |
+
+An enabled legacy `memcached.auth.enabled` is rejected instead of silently removing SASL authentication.
+For an external cache, set `memcached.bundled: false` and provide `memcached.connection.host` and `port`.
+Use application configuration for any external cache credentials.
+
+If you manage NetworkPolicies separately, allow application pods to reach the new Service on TCP 11211.
+The chart's NetworkPolicies include this rule. The new resource name ends in `-cache`; update external monitoring that references old names.
+Keep the previous chart package and values if rollback is needed. Reinstalling them starts another empty cache; there is no cache data to recover.
+
 ## Configuration
 
 Configuration of the chart takes place through defined values, and a catch-all entry `environment` to provide all possible variables through ENV that OpenProject supports. To get more information about the possible values, please see [our guide on environment variables](https://www.openproject.org/docs/installation-and-operations/configuration/environment/).
@@ -141,7 +177,7 @@ pod-security.kubernetes.io/enforce: restricted
 pod-security.kubernetes.io/enforce-version: latest
 ```
 
-The bundled PostgreSQL and memcached subcharts also render with restricted-compatible security contexts at the pinned chart versions. If you enable Bitnami's PostgreSQL `volumePermissions` init container, that pod may fail restricted enforcement because it runs as root. The bundled RustFS Deployment (see `rustfs.bundled`) uses this chart's own restricted-compatible security context too.
+The bundled PostgreSQL subchart and Memcached Deployment also render with restricted-compatible security contexts at the pinned chart versions. If you enable Bitnami's PostgreSQL `volumePermissions` init container, that pod may fail restricted enforcement because it runs as root. The bundled RustFS Deployment (see `rustfs.bundled`) uses this chart's own restricted-compatible security context too.
 
 ### ReadWriteMany volumes
 

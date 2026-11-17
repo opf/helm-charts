@@ -20,7 +20,7 @@ describe 'memcached configuration' do
     end
 
     it 'sets OPENPROJECT_CACHE__MEMCACHE__SERVER to release-based host:port' do
-      expect(subject).to include('OPENPROJECT_CACHE__MEMCACHE__SERVER' => 'optest-memcached:11211')
+      expect(subject).to include('OPENPROJECT_CACHE__MEMCACHE__SERVER' => 'optest-openproject-cache:11211')
     end
   end
 

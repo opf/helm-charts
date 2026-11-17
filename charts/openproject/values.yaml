@@ -325,26 +325,33 @@ memcached:
   #
   bundled: true
 
-  ## Override image repository to use Bitnami Secure images
   image:
-    repository: bitnamilegacy/memcached
-    tag: 1.6.24-debian-12-r0
+    registry: docker.io
+    repository: memcached
+    tag: 1.6.45-alpine
+    sha256: ""
+    imagePullPolicy: IfNotPresent
+  ## Memory used for cached items, in MiB. Leave headroom in the container memory limit.
+  memoryLimit: 64
+  extraArgs: []
+  resources: {}
+  resourcesPreset: nano
+  podSecurityContext: {}
+  containerSecurityContext:
+    runAsUser: 11211
+    runAsGroup: 11211
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  topologySpreadConstraints: []
+  runtimeClassName: ""
+  extraEnvVars: []
+  extraVolumes: []
+  extraVolumeMounts: []
+  probes:
+    liveness: {}
+    readiness: {}
 
-  global:
-    containerSecurityContext:
-      enabled: true
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-          - "ALL"
-      seccompProfile:
-        type: "RuntimeDefault"
-      readOnlyRootFilesystem: true
-      runAsNonRoot: true
-
-  ## @param commonLabels Add labels to all the deployed resources
-  ##
-  commonLabels: {}
   ## When "bundled" is set to false, you need to define the memcached connection details.
   #
   connection:

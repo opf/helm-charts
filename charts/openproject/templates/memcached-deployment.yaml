@@ -1,0 +1,96 @@
+{{- if .Values.memcached.bundled }}
+{{- $cache := .Values.memcached }}
+{{- if (default dict $cache.auth).enabled }}
+{{- fail "Bundled Memcached no longer configures Bitnami SASL authentication. Use an external authenticated cache before upgrading." }}
+{{- end }}
+{{- $security := dict "Values" (mergeOverwrite (deepCopy .Values) (dict "podSecurityContext" (mergeOverwrite (deepCopy .Values.podSecurityContext) $cache.podSecurityContext) "containerSecurityContext" (mergeOverwrite (deepCopy .Values.containerSecurityContext) $cache.containerSecurityContext))) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openproject.memcached.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      openproject/process: cache
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 8 }}
+        openproject/process: cache
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- range $key, $value := . }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+    spec:
+      {{- include "openproject.podSecurityContext" $security | nindent 6 }}
+      {{- include "openproject.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ include "openproject.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      {{- with coalesce $cache.runtimeClassName .Values.runtimeClassName }}
+      runtimeClassName: {{ . | quote }}
+      {{- end }}
+      {{- with coalesce $cache.nodeSelector .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce $cache.affinity .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce $cache.tolerations .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce $cache.topologySpreadConstraints .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: memcached
+          {{- include "openproject.containerSecurityContext" $security | nindent 10 }}
+          image: {{ include "openproject.memcached.image" . | quote }}
+          imagePullPolicy: {{ default .Values.image.imagePullPolicy $cache.image.imagePullPolicy }}
+          args:
+            - memcached
+            - -m
+            - {{ $cache.memoryLimit | quote }}
+            - -U
+            - "0"
+            {{- with $cache.extraArgs }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: memcached
+              containerPort: 11211
+              protocol: TCP
+          {{- with $cache.extraEnvVars }}
+          env: {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- range $kind := list "liveness" "readiness" }}
+          {{- $probe := include "openproject.mergedProbe" (dict "probe" (index $.Values.probes $kind) "overrides" (index $cache.probes $kind)) | fromYaml }}
+          {{- if $probe.enabled }}
+          {{ $kind }}Probe:
+            tcpSocket:
+              port: memcached
+            {{- include "openproject.probeSettings" $probe | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- if $cache.resources }}
+          resources: {{- toYaml $cache.resources | nindent 12 }}
+          {{- else if and (coalesce $cache.resourcesPreset .Values.resourcesPreset) (ne (coalesce $cache.resourcesPreset .Values.resourcesPreset) "none") }}
+          resources: {{- include "common.resources.preset" (dict "type" (coalesce $cache.resourcesPreset .Values.resourcesPreset)) | nindent 12 }}
+          {{- end }}
+          {{- with $cache.extraVolumeMounts }}
+          volumeMounts: {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with $cache.extraVolumes }}
+      volumes: {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
