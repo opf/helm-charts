@@ -19,8 +19,7 @@ describe 'configuring hocuspocus' do
     it 'does not add the hocuspocus ingress', :aggregate_failures do
       paths = template.dig('Ingress/optest-openproject', 'spec', 'rules').first['http']['paths']
 
-      expect(paths.size).to eq 1
-      expect(paths.first['path']).to eq '/'
+      expect(paths.map { |path| path['path'] }).to eq ['/assets', '/']
     end
 
     it 'does not auto generate a secret' do
@@ -43,9 +42,7 @@ describe 'configuring hocuspocus' do
     it 'adds the hocuspocus ingress', :aggregate_failures do
       paths = template.dig('Ingress/optest-openproject', 'spec', 'rules').first['http']['paths']
 
-      expect(paths.size).to eq 2
-      expect(paths.first['path']).to eq '/hocuspocus'
-      expect(paths.last['path']).to eq '/'
+      expect(paths.map { |path| path['path'] }).to eq ['/hocuspocus', '/assets', '/']
     end
   end
 

@@ -1,0 +1,118 @@
+{{- if include "openproject.assetServer.enabled" . }}
+{{- $assets := .Values.assetServer }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openproject.assetServer.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- $preset := coalesce $assets.resourcesPreset .Values.resourcesPreset }}
+  replicas: {{ $assets.replicas }}
+  selector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      openproject/process: assets
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 8 }}
+        openproject/process: assets
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/asset-server-configmap.yaml") . | sha256sum }}
+        {{- range $key, $value := .Values.podAnnotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+    spec:
+      {{- include "openproject.podSecurityContext" . | indent 6 }}
+      {{- include "openproject.imagePullSecrets" . | indent 6 }}
+      serviceAccountName: {{ include "openproject.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      {{- with coalesce $assets.runtimeClassName .Values.runtimeClassName }}
+      runtimeClassName: {{ . | quote }}
+      {{- end }}
+      {{- with coalesce $assets.nodeSelector .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce $assets.affinity .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce $assets.tolerations .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with coalesce $assets.topologySpreadConstraints .Values.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: copy-assets
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
+          image: {{ include "openproject.image" . }}
+          imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+          command: ["cp", "-R", "/app/public/assets/.", "/srv/assets/"]
+          {{- if $assets.resources }}
+          resources: {{- toYaml $assets.resources | nindent 12 }}
+          {{- else if and $preset (ne $preset "none") }}
+          resources: {{- include "common.resources.preset" (dict "type" $preset) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: assets
+              mountPath: /srv/assets
+      containers:
+        - name: caddy
+          {{- include "openproject.containerSecurityContext" . | indent 10 }}
+          image: {{ include "openproject.assetServer.image" . | quote }}
+          imagePullPolicy: {{ default .Values.image.imagePullPolicy $assets.image.imagePullPolicy }}
+          args: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+          env:
+            - name: XDG_CONFIG_HOME
+              value: /tmp/config
+            - name: XDG_DATA_HOME
+              value: /tmp/data
+            {{- with $assets.extraEnvVars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          {{- range $kind := list "liveness" "readiness" }}
+          {{- $probe := include "openproject.mergedProbe" (dict "probe" (index $.Values.probes $kind) "overrides" (index $assets.probes $kind)) | fromYaml }}
+          {{- if $probe.enabled }}
+          {{ $kind }}Probe:
+            tcpSocket:
+              port: http
+            {{- include "openproject.probeSettings" $probe | nindent 12 }}
+          {{- end }}
+          {{- end }}
+          {{- if $assets.resources }}
+          resources: {{- toYaml $assets.resources | nindent 12 }}
+          {{- else if and $preset (ne $preset "none") }}
+          resources: {{- include "common.resources.preset" (dict "type" $preset) | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: assets
+              mountPath: /srv/assets
+              readOnly: true
+            - name: config
+              mountPath: /etc/caddy
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            {{- with $assets.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: assets
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "openproject.assetServer.fullname" . }}
+        - name: tmp
+          emptyDir: {}
+        {{- with $assets.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{- end }}

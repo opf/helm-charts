@@ -317,6 +317,36 @@ image:
 #
 imagePullSecrets: []
 
+## Serve the frontend assets with Caddy instead of Puma.
+## The Ingress sends `<railsRelativeUrlRoot>/assets` to this server. It is deployed only when `ingress.enabled` is true.
+## Requests for files that it does not have, for example during a rolling update, go to the web service.
+#
+assetServer:
+  enabled: true
+  ## Compress assets that have no precompressed `.br` or `.gz` file in the image when the asset server sends them.
+  #
+  encode: true
+  replicas: 1
+  image:
+    registry: docker.io
+    repository: caddy
+    tag: 2.11.9-alpine
+    sha256: ""
+    imagePullPolicy: IfNotPresent
+  resources: {}
+  resourcesPreset: nano
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+  topologySpreadConstraints: []
+  runtimeClassName: ""
+  extraEnvVars: []
+  extraVolumes: []
+  extraVolumeMounts: []
+  probes:
+    liveness: {}
+    readiness: {}
+
 ## Configure memcached settings.
 #
 memcached:
