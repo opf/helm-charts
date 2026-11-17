@@ -1,0 +1,21 @@
+{{- if .Values.memcached.bundled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "openproject.memcached.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: memcached
+      port: 11211
+      targetPort: memcached
+      protocol: TCP
+  selector:
+    {{- include "common.labels.matchLabels" . | nindent 4 }}
+    openproject/process: cache
+{{- end }}

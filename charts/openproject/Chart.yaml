@@ -15,10 +15,6 @@ dependencies:
   repository: oci://registry-1.docker.io/bitnamicharts
   version: "^12.1.6"
   condition: postgresql.bundled
-- name: memcached
-  repository: oci://registry-1.docker.io/bitnamicharts
-  condition: memcached.bundled
-  version: "^6.3.2"
 - name: common
   repository: oci://registry-1.docker.io/bitnamicharts
   version: "^2.2.2"

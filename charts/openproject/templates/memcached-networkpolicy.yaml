@@ -1,0 +1,24 @@
+{{- if and .Values.memcached.bundled .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "openproject.memcached.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "common.labels.matchLabels" . | nindent 6 }}
+      openproject/process: cache
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {{- include "common.labels.matchLabels" . | nindent 14 }}
+      ports:
+        - port: 11211
+          protocol: TCP
+{{- end }}
