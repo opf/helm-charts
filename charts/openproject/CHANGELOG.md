@@ -1,5 +1,15 @@
 # openproject
 
+## 14.0.0
+
+### Major Changes
+
+- 14dc51b: Replace the Bitnami Memcached dependency with a single in-chart Deployment using the official `memcached:1.6.45-alpine` image. The cache uses a new internal Service and starts empty on upgrade. External cache connection settings remain supported. Review the README's Memcached values mapping before upgrading; Bitnami-specific authentication, persistence, metrics, and replica settings are no longer supported. Configured Bitnami SASL authentication blocks the upgrade until an external authenticated cache is selected.
+
+### Patch Changes
+
+- 14aa472: Upgrade OpenProject core version to 17.9.8 (patch update)
+
 ## 13.17.4
 
 ### Patch Changes
