@@ -45,7 +45,7 @@ spec:
               {{- include "common.labels.matchLabels" . | nindent 14 }}
               openproject/process: database
       ports:
-        - port: 5432
+        - port: {{ .Values.postgresql.service.port }}
           protocol: TCP
     {{- end }}
     {{- if .Values.networkPolicy.extraEgress }}

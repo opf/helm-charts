@@ -9,7 +9,7 @@ metadata:
   annotations: {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  type: ClusterIP
+  clusterIP: None
   ports:
     - name: postgresql
       port: {{ .Values.postgresql.service.port }}

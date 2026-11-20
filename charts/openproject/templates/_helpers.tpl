@@ -295,15 +295,9 @@ Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3
     secretKeyRef:
       name: {{ $.Values.postgresql.auth.existingSecret }}
       key: {{ $.Values.postgresql.auth.secretKeys.userPasswordKey }}
-{{- else if $.Values.postgresql.auth.password }}
-- name: {{ $envName }}
-  value: {{ $.Values.postgresql.auth.password }}
 {{- else }}
 - name: {{ $envName }}
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" $.Values.postgresql "context" $) }}
-      key: {{ $.Values.postgresql.auth.secretKeys.userPasswordKey }}
+  value: {{ required "External PostgreSQL requires postgresql.auth.existingSecret or postgresql.auth.password" $.Values.postgresql.auth.password | quote }}
 {{- end }}
 {{- end }}
 {{- if .Values.openproject.realtime_collaboration.enabled }}

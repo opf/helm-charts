@@ -18,7 +18,17 @@ spec:
     - from:
         - podSelector:
             matchLabels: {{- include "common.labels.matchLabels" . | nindent 14 }}
+            matchExpressions:
+              - key: openproject/process
+                operator: In
+                values:
+                  - web
+                  - cron
+                  - seeder
+                  {{- range $name, $_ := .Values.workers }}
+                  - {{ printf "worker-%s" $name | quote }}
+                  {{- end }}
       ports:
-        - port: 5432
+        - port: {{ .Values.postgresql.service.port }}
           protocol: TCP
 {{- end }}

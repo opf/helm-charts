@@ -9,7 +9,7 @@ describe 'bundled PostgreSQL' do
   let(:container) { pod['containers'].first }
 
   it 'uses the upstream vector image, a separate PVC, and non-root database user' do
-    expect(container['image']).to eq('docker.io/pgvector/pgvector:pg18-bookworm')
+    expect(container['image']).to match(%r{\Adocker\.io/pgvector/pgvector@sha256:[a-f0-9]{64}\z})
     expect(container.dig('securityContext', 'runAsUser')).to eq(999)
     expect(pod.dig('securityContext', 'fsGroup')).to eq(999)
     expect(container['volumeMounts']).to include(hash_including('mountPath' => '/var/lib/postgresql'))
@@ -17,10 +17,16 @@ describe 'bundled PostgreSQL' do
     expect(template['StatefulSet/optest-postgresql']).to be_nil
   end
 
+  it 'mounts a bounded memory volume at /dev/shm' do
+    expect(pod['volumes']).to include('name' => 'dshm', 'emptyDir' => { 'medium' => 'Memory', 'sizeLimit' => '256Mi' })
+    expect(container['volumeMounts']).to include('name' => 'dshm', 'mountPath' => '/dev/shm')
+  end
+
   it 'initializes a non-superuser application role and vector only on first database initialization' do
     script = template['ConfigMap/optest-openproject-database-init'].dig('data', '01-openproject.sh')
     expect(script).to include('CREATE ROLE :"app_user" LOGIN', 'CREATE EXTENSION vector;', 'ON_ERROR_STOP=1')
-    expect(script).not_to include('SUPERUSER')
+    expect(script).to include("<<'SQL'", '\getenv app_password OPENPROJECT_DB_PASSWORD')
+    expect(script).not_to include('--set app_password', 'SUPERUSER')
   end
 
   it 'connects the application to the new service using the same credential secret as PostgreSQL' do
@@ -60,6 +66,27 @@ describe 'bundled PostgreSQL' do
     end
   end
 
+  context 'with global and component probe settings' do
+    let(:values) do
+      { 'probes' => { 'startup' => { 'enabled' => false }, 'readiness' => { 'initialDelaySeconds' => 7 } },
+        'postgresql' => { 'probes' => { 'readiness' => { 'timeoutSeconds' => 9 } } } }
+    end
+
+    it 'applies global settings and component overrides' do
+      expect(container).not_to have_key('startupProbe')
+      expect(container['readinessProbe']).to include('initialDelaySeconds' => 7, 'timeoutSeconds' => 9)
+    end
+  end
+
+  context 'with missing external credentials' do
+    let(:values) { { 'postgresql' => { 'bundled' => false } } }
+
+    it 'reports the missing credentials during rendering' do
+      expect(template.exit_code).not_to eq(0)
+      expect(template.stderr).to include('postgresql.auth.existingSecret or postgresql.auth.password')
+    end
+  end
+
   context 'with existing credentials and storage' do
     let(:values) do
       { 'postgresql' => {
@@ -87,20 +114,32 @@ describe 'bundled PostgreSQL' do
     end
   end
 
-  context 'with restricted egress' do
-    let(:values) { { 'networkPolicy' => { 'enabled' => true, 'allowExternalEgress' => false } } }
+  context 'with restricted egress and a custom port' do
+    let(:values) do
+      { 'networkPolicy' => { 'enabled' => true, 'allowExternalEgress' => false },
+        'workers' => { 'mail' => {} },
+        'postgresql' => { 'service' => { 'port' => 5433 }, 'settings' => { 'max_connections' => 150 } } }
+    end
 
     it 'allows application traffic to the bundled database' do
-      expect(template['NetworkPolicy/optest-openproject-database']).not_to be_nil
-      %w[web worker-default cron seeder].each do |process|
+      service = template['Service/optest-openproject-database']['spec']
+      expect(service['clusterIP']).to eq('None')
+      expect(service['ports'].first['port']).to eq(5433)
+      expect(container['ports'].first['containerPort']).to eq(5433)
+      expect(container['args']).to eq(%w[postgres -c max_connections=150 -p 5433])
+      expect(template.env_named('StatefulSet/optest-openproject-database', 'postgresql', 'PGPORT')['value']).to eq('5433')
+      ingress = template['NetworkPolicy/optest-openproject-database'].dig('spec', 'ingress', 0)
+      expect(ingress['ports']).to eq([{ 'port' => 5433, 'protocol' => 'TCP' }])
+      expect(ingress.dig('from', 0, 'podSelector', 'matchExpressions', 0, 'values')).to contain_exactly('web', 'cron', 'seeder', 'worker-default', 'worker-mail')
+      %w[web worker-default worker-mail cron seeder].each do |process|
         rules = template["NetworkPolicy/optest-openproject-#{process}"].dig('spec', 'egress')
-        expect(rules).to include(hash_including('ports' => [{ 'port' => 5432, 'protocol' => 'TCP' }]))
+        expect(rules).to include(hash_including('ports' => [{ 'port' => 5433, 'protocol' => 'TCP' }]))
       end
     end
   end
 
   context 'with PostgreSQL 17 selected for a new cluster' do
-    let(:values) { { 'postgresql' => { 'image' => { 'tag' => 'pg17-bookworm' }, 'dataDirectory' => '/var/lib/postgresql/17/docker' } } }
+    let(:values) { { 'postgresql' => { 'image' => { 'tag' => 'pg17-bookworm', 'sha256' => '' }, 'dataDirectory' => '/var/lib/postgresql/17/docker' } } }
 
     it 'uses the explicitly selected image and data location' do
       expect(container['image']).to end_with(':pg17-bookworm')

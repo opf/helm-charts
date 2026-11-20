@@ -36,6 +36,8 @@ Accompanying README instructions for the demo video: [opf/helm-charts/demo](http
 
 ### Quick start
 
+**Upgrading a release that uses bundled Bitnami PostgreSQL requires a dump and restore before running the upgrade command below.** The new StatefulSet uses a separate PVC. For GitOps deployments, configure `postgresql.auth.existingSecret` before syncing. See the [migration and rollback guide](https://github.com/opf/helm-charts/blob/main/charts/openproject/POSTGRESQL.md).
+
 Add the OpenProject Helm repository:
 
 ```shell
@@ -372,8 +374,10 @@ In the following sections we give examples for what this may look like using the
 
 ### PostgreSQL
 
-The chart bundles PostgreSQL 18 with pgvector. Existing Bitnami installations must migrate before upgrading.
-See [PostgreSQL migration, version pinning, and rollback](./POSTGRESQL.md).
+**For GitOps, provision a Secret with the two keys below and set `postgresql.auth.existingSecret` before the first sync.**
+Argo CD renders the chart offline and can generate different passwords on each sync. PostgreSQL keeps the passwords stored in its database.
+
+The chart bundles PostgreSQL 18 with pgvector. For an existing Bitnami installation, pin the old chart and suspend automatic sync and pruning before the upgrade. Offline rendering cannot detect the old StatefulSet. Restore into a separate PVC and set `postgresql.persistence.existingClaim` before resuming sync. See the [PostgreSQL migration and rollback guide](https://github.com/opf/helm-charts/blob/main/charts/openproject/POSTGRESQL.md).
 
 ```yaml
 stringData:
@@ -407,7 +411,7 @@ You can look up the respective options in the [`values.yaml`](./values.yaml) fil
 #### Default passwords
 
 If you provide neither an existing secret nor passwords directly in the `values.yaml` file,
-the chart generates a Secret once and retains it across upgrades and uninstall.
+a direct Helm install generates a Secret once and retains it across upgrades and uninstall.
 
 This secret will contain both the user and admin passwords.
 You can print the base64 encoded passwords as follows.
@@ -554,17 +558,16 @@ But the easiest way is the use of the security contexts as shown above.
 
 Due to the default restrictions in OpenShift there may also be issues running
 PostgreSQL and memcached. Again, you may have to create an SCC to fix this
-or adjust the policies in the subcharts accordingly.
+or adjust the security contexts for these workloads.
 
 Assuming no further options for both, simply disabling the security context values to use the default works as well.
 
 ```
 postgresql:
-  primary:
-    containerSecurityContext:
-      enabled: false
-    podSecurityContext:
-      enabled: false
+  containerSecurityContext:
+    enabled: false
+  podSecurityContext:
+    enabled: false
 
 memcached:
   containerSecurityContext:

@@ -15,14 +15,15 @@ Changing the image tag or mounting the Bitnami PVC in the new container is not a
   Pin the chart version in Helm or GitOps. Setting the new chart's image to PostgreSQL 17 does not preserve Bitnami compatibility.
 - **Use the new bundled database:** follow the maintenance-window procedure below.
 - **Use an external database:** restore there, then set `postgresql.bundled: false`, connection details, and credentials.
-  The external connection settings have not changed.
+  Set `postgresql.auth.existingSecret` to the application credential Secret, including when you previously relied on an implicit Secret name. An inline `postgresql.auth.password` also works.
 
-For a fresh PostgreSQL 17 database, or a logical restore into a new PostgreSQL 17 PVC, set both:
+For a fresh PostgreSQL 17 database, or a logical restore into a new PostgreSQL 17 PVC, select the matching image and data directory:
 
 ```yaml
 postgresql:
   image:
     tag: pg17-bookworm
+    sha256: "" # Use this tag, or supply its verified digest in production.
   dataDirectory: /var/lib/postgresql/17/docker
 ```
 
@@ -284,9 +285,9 @@ Keep the old PVC and backups through your agreed retention period, then remove t
 
 The new PVC uses `fsGroup: 999` and needs a storage driver that supports Kubernetes volume ownership.
 There is no root permissions init container. For pre-provisioned storage, arrange compatible permissions before mounting it.
-Image, probes, resources, scheduling, extra environment variables, and extra mounts are configurable in `values.yaml`.
+The default `small` resource preset is for testing. Set `postgresql.resources` for production and budget for shared buffers, concurrent connections, and the memory-backed `/dev/shm` volume (256Mi by default). Set `postgresql.settings.shared_buffers` and `postgresql.settings.max_connections` to match your workload.
 
-Generated credentials are retained across upgrades and uninstall. For GitOps, supply an existing Secret.
+For GitOps, supply an existing Secret before the first sync. Offline rendering generates fresh random passwords on each render. Direct Helm installs can use the generated Secret, which Helm retains across upgrades and uninstall.
 Inline passwords only initialize that Secret once. Changing values or a Secret does not change passwords inside an existing database.
 Coordinate password changes in PostgreSQL, the Secret, and application restarts.
 

@@ -1063,11 +1063,17 @@ postgresql:
     registry: docker.io
     repository: pgvector/pgvector
     tag: pg18-bookworm
-    sha256: ""
+    ## Multi-platform image digest. Set the matching digest when changing PostgreSQL versions.
+    sha256: "38681dc6eaf55308e2a4c6de392d131652dcfac70e1263e35cd9b5ea3fe39782"
     pullPolicy: IfNotPresent
 
   ## Initial cluster location. PostgreSQL 17 also requires an explicit dataDirectory override.
   dataDirectory: /var/lib/postgresql/18/docker
+  ## PostgreSQL server settings, e.g. { max_connections: 150, shared_buffers: 256MB }.
+  settings: {}
+  ## Shared memory counts toward the database container's memory limit.
+  shmVolume:
+    sizeLimit: 256Mi
   service:
     port: 5432
   persistence:
@@ -1081,6 +1087,8 @@ postgresql:
   containerSecurityContext:
     runAsUser: 999
     runAsGroup: 999
+  ## The small preset is for testing (512Mi requested, 768Mi limit). For production,
+  ## set requests and limits for your workload, including /dev/shm in the memory budget.
   resources: {}
   resourcesPreset: small
   nodeSelector: {}
@@ -1093,6 +1101,7 @@ postgresql:
   extraVolumeMounts: []
   probes:
     startup:
+      initialDelaySeconds: 0
       periodSeconds: 5
       timeoutSeconds: 5
       failureThreshold: 60
@@ -1115,7 +1124,7 @@ postgresql:
   #
   auth:
     ## Existing secret must contain both administrator and application passwords.
-    ## Otherwise credentials are created once and retained across upgrades/uninstall.
+    ## Supply an existing Secret for GitOps. Direct Helm installs can generate and retain one.
     ## Inline passwords apply only when creating that secret; rotate credentials manually.
     existingSecret: ""
     secretKeys:
