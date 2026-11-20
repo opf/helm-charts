@@ -38,6 +38,16 @@ spec:
         - port: 11211
           protocol: TCP
     {{- end }}
+    {{- if .Values.postgresql.bundled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "common.labels.matchLabels" . | nindent 14 }}
+              openproject/process: database
+      ports:
+        - port: {{ .Values.postgresql.service.port }}
+          protocol: TCP
+    {{- end }}
     {{- if .Values.networkPolicy.extraEgress }}
     {{- include "common.tplvalues.render" ( dict "value" .Values.networkPolicy.extraEgress "context" $ ) | nindent 4 }}
     {{- end }}
