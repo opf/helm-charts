@@ -1,0 +1,21 @@
+{{- if include "openproject.assetServer.enabled" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "openproject.assetServer.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $) | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "common.labels.matchLabels" . | nindent 4 }}
+    openproject/process: assets
+{{- end }}

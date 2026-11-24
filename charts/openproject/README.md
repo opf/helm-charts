@@ -51,6 +51,21 @@ helm upgrade --create-namespace --namespace openproject --install openproject op
 
 The namespace is optional, but we highly recommend it as it does make it easier to manage the resources created for OpenProject.
 
+## Asset server
+
+When `ingress.enabled` is true, the chart runs a small Caddy Deployment (`caddy:2.11.9-alpine`) for the frontend assets.
+An init container copies `/app/public/assets` from the OpenProject image, so the assets always match the deployed version.
+The Ingress sends `<railsRelativeUrlRoot>/assets` to Caddy, and everything else to the web Service as before.
+
+Caddy sends the `.br` and `.gz` files from the image when the browser accepts them.
+It compresses other files on the fly with zstd or gzip. Set `assetServer.encode: false` to turn this off.
+Files with a content hash in their name get a one-year `immutable` cache header.
+Browsers revalidate all other files on each use, so they never keep outdated code after an upgrade.
+If a file is missing, for example while a rolling update runs, Caddy forwards the request to the web Service.
+
+Set `assetServer.enabled: false` to serve the assets from Puma again.
+Image, replicas, resources, probes and scheduling are configurable under `assetServer` in `values.yaml`.
+
 ## Bundled Memcached
 
 The chart runs one Memcached instance using the Docker Official Image `memcached:1.6.45-alpine`.
