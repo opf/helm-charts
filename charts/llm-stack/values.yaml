@@ -32,14 +32,56 @@ apisix:
             mounts:
               - key: ai_loop_guard.lua
                 path: /opts/custom_plugins/apisix/plugins/ai-loop-guard.lua
+        - name: strip-upstream-headers
+          configMap:
+            name: apisix-strip-upstream-headers-plugin-configmap
+            mounts:
+              - key: strip_upstream_headers.lua
+                path: /opts/custom_plugins/apisix/plugins/strip-upstream-headers.lua
     plugins:
       - key-auth
       - ai-proxy
       - ai-rate-limiting
       - ai-loop-guard
+      - strip-upstream-headers
       - prometheus
       - serverless-pre-function
       - mocking
+    pluginAttrs:
+      prometheus:
+        metrics:
+          http_status:
+            extra_labels:
+              - feature: $http_x_feature_id
+          http_latency:
+            extra_labels:
+              - feature: $http_x_feature_id
+              - matched_uri: $uri
+          bandwidth:
+            extra_labels:
+              - feature: $http_x_feature_id
+              - matched_uri: $uri
+          llm_prompt_tokens:
+            extra_labels:
+              - feature: $http_x_feature_id
+              - matched_uri: $uri
+          llm_prompt_tokens_dist:
+            extra_labels:
+              - feature: $http_x_feature_id
+              - matched_uri: $uri
+          llm_completion_tokens:
+            extra_labels:
+              - feature: $http_x_feature_id
+              - matched_uri: $uri
+          llm_completion_tokens_dist:
+            extra_labels:
+              - feature: $http_x_feature_id
+              - matched_uri: $uri
+          llm_latency:
+            extra_labels:
+              - feature: $http_x_feature_id
+              - matched_uri: $uri
+
   etcd:
     enabled: false
   metrics:
