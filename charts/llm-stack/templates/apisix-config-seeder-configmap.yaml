@@ -95,8 +95,10 @@ data:
                 "plugins": {
                     **auth_plugins,
                     "prometheus": {},
+                    "strip-upstream-headers": { "headers": ["X-Feature-Id", "X-Consumer-Username"]},
                     "ai-proxy": {
                         "provider": "{{ $route.providerFormat }}",
+                        "timeout": 180000,
                         "auth": {
                             "header": {
                                 "Authorization": f"Bearer {os.getenv("{{ $id }}-apiKey", "")}"
