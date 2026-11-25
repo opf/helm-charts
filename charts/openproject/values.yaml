@@ -537,13 +537,8 @@ workers:
     ## More information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15
     ##
     resourcesPreset: ~
-    resources:
-      requests:
-        memory: "512Mi"
-        cpu: "250m"
-      limits:
-        memory: "4Gi"
-        cpu: "4"
+    # Override the top-level resources for this worker
+    resources: {}
 
 ## hocuspocus - WebSocket backend for use with real time collaboration features in OpenProject (cf. openproject.realtime_collaboration)
 ##
