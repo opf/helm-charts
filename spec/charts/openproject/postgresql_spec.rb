@@ -8,8 +8,8 @@ describe 'bundled PostgreSQL' do
   let(:pod) { statefulset.dig('spec', 'template', 'spec') }
   let(:container) { pod['containers'].first }
 
-  it 'uses the upstream vector image, a separate PVC, and non-root database user' do
-    expect(container['image']).to match(%r{\Adocker\.io/pgvector/pgvector@sha256:[a-f0-9]{64}\z})
+  it 'uses the OpenProject PostgreSQL image with pgvector, a separate PVC, and non-root database user' do
+    expect(container['image']).to match(%r{\Adocker\.io/openproject/postgres@sha256:[a-f0-9]{64}\z})
     expect(container.dig('securityContext', 'runAsUser')).to eq(999)
     expect(pod.dig('securityContext', 'fsGroup')).to eq(999)
     expect(container['volumeMounts']).to include(hash_including('mountPath' => '/var/lib/postgresql'))
@@ -139,10 +139,10 @@ describe 'bundled PostgreSQL' do
   end
 
   context 'with PostgreSQL 17 selected for a new cluster' do
-    let(:values) { { 'postgresql' => { 'image' => { 'tag' => 'pg17-bookworm', 'sha256' => '' }, 'dataDirectory' => '/var/lib/postgresql/17/docker' } } }
+    let(:values) { { 'postgresql' => { 'image' => { 'tag' => '17', 'sha256' => '' }, 'dataDirectory' => '/var/lib/postgresql/17/docker' } } }
 
     it 'uses the explicitly selected image and data location' do
-      expect(container['image']).to end_with(':pg17-bookworm')
+      expect(container['image']).to end_with('openproject/postgres:17')
       expect(template.env_named('StatefulSet/optest-openproject-database', 'postgresql', 'PGDATA')['value']).to eq('/var/lib/postgresql/17/docker')
     end
   end

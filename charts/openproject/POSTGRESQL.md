@@ -1,6 +1,6 @@
 # Bundled PostgreSQL and migration from Bitnami
 
-The chart bundles one PostgreSQL 18 instance using `pgvector/pgvector:pg18-bookworm`.
+The chart bundles one PostgreSQL 18 instance using `openproject/postgres:18`, which includes pgvector.
 It creates a non-superuser application role and enables `vector` in new databases.
 It does not upgrade existing data files or enable extensions in existing databases.
 For replication, failover, or managed backups, use an external database.
@@ -22,7 +22,7 @@ For a fresh PostgreSQL 17 database, or a logical restore into a new PostgreSQL 1
 ```yaml
 postgresql:
   image:
-    tag: pg17-bookworm
+    tag: "17"
     sha256: "" # Use this tag, or supply its verified digest in production.
   dataDirectory: /var/lib/postgresql/17/docker
 ```

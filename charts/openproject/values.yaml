@@ -1061,10 +1061,10 @@ postgresql:
 
   image:
     registry: docker.io
-    repository: pgvector/pgvector
-    tag: pg18-bookworm
+    repository: openproject/postgres
+    tag: "18"
     ## Multi-platform image digest. Set the matching digest when changing PostgreSQL versions.
-    sha256: "38681dc6eaf55308e2a4c6de392d131652dcfac70e1263e35cd9b5ea3fe39782"
+    sha256: "0c1e25aea7f9c24ac53e7b1067d4e33b616801343fa71dc5371edf6ba6d54f05"
     pullPolicy: IfNotPresent
 
   ## Initial cluster location. PostgreSQL 17 also requires an explicit dataDirectory override.
