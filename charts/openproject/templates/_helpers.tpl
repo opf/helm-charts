@@ -283,21 +283,21 @@ Returns the internal (cluster-only) hostname of the bundled RustFS instance's S3
 {{- end }}
 {{/* PGPASSWORD too: DATABASE_URL carries no password, but docker/prod/migrate probes the DB with psql. */}}
 {{- range $envName := list "OPENPROJECT_DB_PASSWORD" "PGPASSWORD" }}
-{{- if $.Values.postgresql.auth.existingSecret }}
+{{- if $.Values.postgresql.bundled }}
+- name: {{ $envName }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "openproject.postgresql.secretName" $ }}
+      key: {{ $.Values.postgresql.auth.secretKeys.userPasswordKey }}
+{{- else if $.Values.postgresql.auth.existingSecret }}
 - name: {{ $envName }}
   valueFrom:
     secretKeyRef:
       name: {{ $.Values.postgresql.auth.existingSecret }}
       key: {{ $.Values.postgresql.auth.secretKeys.userPasswordKey }}
-{{- else if $.Values.postgresql.auth.password }}
-- name: {{ $envName }}
-  value: {{ $.Values.postgresql.auth.password }}
 {{- else }}
 - name: {{ $envName }}
-  valueFrom:
-    secretKeyRef:
-      name: {{ include "common.names.dependency.fullname" (dict "chartName" "postgresql" "chartValues" $.Values.postgresql "context" $) }}
-      key: {{ $.Values.postgresql.auth.secretKeys.userPasswordKey }}
+  value: {{ required "External PostgreSQL requires postgresql.auth.existingSecret or postgresql.auth.password" $.Values.postgresql.auth.password | quote }}
 {{- end }}
 {{- end }}
 {{- if .Values.openproject.realtime_collaboration.enabled }}

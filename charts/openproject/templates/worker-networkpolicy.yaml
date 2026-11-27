@@ -1,6 +1,6 @@
 {{- if .Values.networkPolicy.enabled }}
 {{- range $workerName, $workerValues := .Values.workers }}
-{{- with $ -}}
+{{- with $ }}
 ---
 apiVersion: {{ include "common.capabilities.networkPolicy.apiVersion" . }}
 kind: NetworkPolicy
@@ -39,6 +39,16 @@ spec:
               openproject/process: cache
       ports:
         - port: 11211
+          protocol: TCP
+    {{- end }}
+    {{- if .Values.postgresql.bundled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "common.labels.matchLabels" . | nindent 14 }}
+              openproject/process: database
+      ports:
+        - port: {{ .Values.postgresql.service.port }}
           protocol: TCP
     {{- end }}
     {{- if .Values.networkPolicy.extraEgress }}
